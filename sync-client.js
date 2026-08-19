@@ -1,7 +1,11 @@
 /**
- * Attack 25 Real-Time Universal Synchronizer
- * Multi-browser WebSocket Engine
- * Ensures 100% cross-browser and cross-device real-time sync across Chrome, Firefox, Edge, Safari, Mobile & LAN.
+ * Attack 25 Real-Time Universal Synchronizer (Global & Cross-Platform Edition)
+ * Works everywhere: Local LAN, Global Internet Cloud, Cross-Browser, Multi-Device
+ * Supports:
+ * 1. Secure WebSockets (wss:// & ws://) with auto-reconnect
+ * 2. URL Server Parameter (?server=...) for zero-config remote pairing
+ * 3. HTTP State Sync Polling Fallback (Cross-continent firewall bypass)
+ * 4. Local BroadcastChannel & Storage Event Sync
  */
 
 (function(window) {
@@ -15,7 +19,9 @@
     let socket = null;
     let broadcastChannel = null;
     let reconnectTimeout = null;
+    let pollingInterval = null;
     let isWsConnected = false;
+    let activeServerUrl = '';
 
     const listeners = {
         state: [],
@@ -57,21 +63,41 @@
     // 3. Determine WebSocket Server URL
     function getWebSocketUrl() {
         try {
-            // If custom server address was saved
+            // Check URL query param ?server=...
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryServer = urlParams.get('server') || urlParams.get('ws') || urlParams.get('host');
+            if (queryServer && queryServer.trim()) {
+                let s = queryServer.trim();
+                if (s.startsWith('http://')) s = 'ws://' + s.slice(7);
+                else if (s.startsWith('https://')) s = 'wss://' + s.slice(8);
+                else if (!s.startsWith('ws://') && !s.startsWith('wss://')) {
+                    s = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + s;
+                }
+                if (!s.endsWith('/ws')) s = s.replace(/\/+$/, '') + '/ws';
+                return s;
+            }
+
+            // Check localStorage saved server
             const savedHost = localStorage.getItem(SERVER_CONFIG_KEY);
             if (savedHost && savedHost.trim()) {
-                const cleanHost = savedHost.trim().replace(/^(ws|wss|http|https):\/\//, '').replace(/\/+$/, '');
-                return `ws://${cleanHost}/ws`;
+                let s = savedHost.trim();
+                if (s.startsWith('http://')) s = 'ws://' + s.slice(7);
+                else if (s.startsWith('https://')) s = 'wss://' + s.slice(8);
+                else if (!s.startsWith('ws://') && !s.startsWith('wss://')) {
+                    s = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + s;
+                }
+                if (!s.endsWith('/ws')) s = s.replace(/\/+$/, '') + '/ws';
+                return s;
             }
         } catch (e) {}
 
-        // If accessed via HTTP or HTTPS web server
+        // If accessed via HTTP or HTTPS web server (Cloud / LAN)
         if (window.location.host) {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             return `${protocol}//${window.location.host}/ws`;
         }
 
-        // If opened via file:/// protocol, default to local node server on port 3000
+        // Default local port
         return 'ws://localhost:3000/ws';
     }
 
@@ -83,12 +109,14 @@
         }
 
         const wsUrl = getWebSocketUrl();
+        activeServerUrl = wsUrl;
 
         try {
             socket = new WebSocket(wsUrl);
 
             socket.onopen = function() {
                 isWsConnected = true;
+                stopPollingFallback();
                 notifyListeners('connection', { connected: true, mode: 'websocket', url: wsUrl });
                 // Request server authoritative state
                 sendWs({ type: 'GET_STATE' });
@@ -104,7 +132,8 @@
             socket.onclose = function() {
                 isWsConnected = false;
                 notifyListeners('connection', { connected: false, mode: 'local_fallback', url: wsUrl });
-                reconnectTimeout = setTimeout(connectWebSocket, 2000);
+                startPollingFallback();
+                reconnectTimeout = setTimeout(connectWebSocket, 2500);
             };
 
             socket.onerror = function() {
@@ -114,14 +143,51 @@
         } catch (err) {
             isWsConnected = false;
             notifyListeners('connection', { connected: false, mode: 'local_fallback', url: wsUrl });
-            reconnectTimeout = setTimeout(connectWebSocket, 3000);
+            startPollingFallback();
+            reconnectTimeout = setTimeout(connectWebSocket, 3500);
+        }
+    }
+
+    // HTTP Polling Fallback (for strict networks / long distance proxies)
+    function startPollingFallback() {
+        if (pollingInterval) return;
+        if (!window.location.host && !localStorage.getItem(SERVER_CONFIG_KEY)) return;
+
+        pollingInterval = setInterval(function() {
+            if (isWsConnected) {
+                stopPollingFallback();
+                return;
+            }
+            try {
+                let httpBase = window.location.origin;
+                const saved = localStorage.getItem(SERVER_CONFIG_KEY);
+                if (saved) {
+                    httpBase = saved.replace(/^ws/, 'http');
+                }
+                if (httpBase && !httpBase.startsWith('file:')) {
+                    fetch(`${httpBase}/api/state`, { cache: 'no-store' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.state) {
+                                handleIncomingMessage({ state: data.state, questions: data.questions }, 'polling');
+                            }
+                        })
+                        .catch(() => {});
+                }
+            } catch (e) {}
+        }, 1500);
+    }
+
+    function stopPollingFallback() {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
         }
     }
 
     function handleIncomingMessage(data, source) {
         if (!data) return;
 
-        // If received via local broadcast and WS is not connected, referee locally
         if (data.type === 'PLAYER_BUZZ' && !isWsConnected) {
             handleLocalPlayerBuzz(data.player);
             return;
@@ -146,7 +212,7 @@
         }
     }
 
-    // Local referee fallback if WebSocket server is offline
+    // Local referee fallback
     function handleLocalPlayerBuzz(playerColor) {
         try {
             const raw = localStorage.getItem(STATE_KEY);
@@ -231,7 +297,7 @@
             fn({
                 connected: isWsConnected,
                 mode: isWsConnected ? 'websocket' : 'local_fallback',
-                url: getWebSocketUrl()
+                url: activeServerUrl || getWebSocketUrl()
             });
         },
 
@@ -247,10 +313,8 @@
                 sound: sound
             };
 
-            // 1. Send over WebSocket to all browsers & devices
             const sentWs = sendWs(payload);
 
-            // 2. Send over BroadcastChannel for local tabs
             if (broadcastChannel) {
                 try { broadcastChannel.postMessage(payload); } catch (e) {}
             }
@@ -305,6 +369,10 @@
             } catch (e) {}
         },
 
+        getServerUrl() {
+            return activeServerUrl || getWebSocketUrl();
+        },
+
         isConnected() {
             return isWsConnected;
         },
@@ -316,7 +384,7 @@
 
     window.Attack25Sync = Attack25Sync;
 
-    // Start WebSocket
+    // Connect immediately
     connectWebSocket();
 
 })(window);

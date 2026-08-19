@@ -2,11 +2,11 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<title>Panel Quiz Attack 25 - Projector Display</title>
+<title>Panel Quiz Attack 25 - Universal Cloud Projector</title>
 
-<!-- Universal Real-time Synchronizer (Relative path) -->
+<!-- Universal Real-time Synchronizer (Global Edition) -->
 <script src="sync-client.js"></script>
 
 <style>
@@ -14,7 +14,6 @@
 /* =====================================================
    FONT UTM IMPACT
 ===================================================== */
-
 @font-face {
     font-family: "UTM Impact";
     src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
@@ -32,7 +31,10 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #05070c;
+    background: #04060a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 body {
@@ -45,6 +47,15 @@ body {
 /* =====================================================
    KHUNG THIẾT KẾ GỐC: 1280 x 720
 ===================================================== */
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
 
 #game {
     position: relative;
@@ -53,41 +64,21 @@ body {
     overflow: hidden;
     transform-origin: center center;
     background: radial-gradient(circle at center, #173c71 0%, #0b1730 60%, #05070c 100%);
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.95);
+    flex-shrink: 0;
 }
-
-
-/* =====================================================
-   SCALE TỰ ĐỘNG GIỮ ĐÚNG TỶ LỆ 16:9
-===================================================== */
-
-@media (min-aspect-ratio: 16/9) {
-    #game {
-        transform: scale(calc(100vh / 720));
-    }
-}
-
-@media (max-aspect-ratio: 16/9) {
-    #game {
-        transform: scale(calc(100vw / 1280));
-    }
-}
-
 
 /* =====================================================
    STYLE CHUNG CHO HÌNH ẢNH
 ===================================================== */
-
 img {
     display: block;
     object-fit: contain;
 }
 
-
 /* =====================================================
    BACKGROUND
 ===================================================== */
-
 .background {
     position: absolute;
     left: 0;
@@ -104,11 +95,9 @@ img {
     object-fit: cover;
 }
 
-
 /* =====================================================
    BOARD BACKGROUND
 ===================================================== */
-
 .board-background {
     position: absolute;
     left: 0;
@@ -124,11 +113,9 @@ img {
     height: 100%;
 }
 
-
 /* =====================================================
    BẢNG 5 x 5
 ===================================================== */
-
 .panel-board {
     position: absolute;
     left: 122.42px;
@@ -147,7 +134,6 @@ img {
 /* =====================================================
    DEFAULT PANEL
 ===================================================== */
-
 .default-panel {
     position: relative;
     width: 155.712px;
@@ -156,7 +142,7 @@ img {
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    transition: transform 0.2s ease, filter 0.2s ease;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
 }
 
 .default-panel img {
@@ -174,8 +160,8 @@ img {
 
 .default-panel.active {
     z-index: 10;
-    transform: scale(1.04);
-    box-shadow: 0 0 25px rgba(232, 163, 38, 0.9), inset 0 0 15px rgba(255, 211, 111, 0.8);
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(232, 163, 38, 0.95), inset 0 0 15px rgba(255, 211, 111, 0.85);
     border-radius: 4px;
     animation: activeGlow 1.2s infinite alternate ease-in-out;
 }
@@ -186,8 +172,8 @@ img {
         filter: brightness(1.05);
     }
     100% {
-        box-shadow: 0 0 30px rgba(255, 193, 7, 1), inset 0 0 20px rgba(255, 235, 59, 0.9);
-        filter: brightness(1.25);
+        box-shadow: 0 0 32px rgba(255, 193, 7, 1), inset 0 0 22px rgba(255, 235, 59, 0.95);
+        filter: brightness(1.3);
     }
 }
 
@@ -201,11 +187,9 @@ img {
     opacity: 0.5;
 }
 
-
 /* =====================================================
    SỐ TRÊN BẢNG 5 x 5
 ===================================================== */
-
 .panel-number {
     position: relative;
     z-index: 5;
@@ -226,11 +210,9 @@ img {
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
 }
 
-
 /* =====================================================
    SCORE BACKGROUND
 ===================================================== */
-
 .score-background {
     position: absolute;
     left: 1012.8px;
@@ -246,11 +228,9 @@ img {
     height: 100%;
 }
 
-
 /* =====================================================
    SCOREBOARD
 ===================================================== */
-
 .score-item {
     position: absolute;
     width: 83.52px;
@@ -269,11 +249,9 @@ img {
     pointer-events: none;
 }
 
-
 /* =====================================================
    TEXT ĐIỂM
 ===================================================== */
-
 .score-text {
     position: absolute;
     left: 0;
@@ -294,21 +272,17 @@ img {
     user-select: none;
 }
 
-
 /* =====================================================
    SCOREBOARD POSITIONS
 ===================================================== */
-
 .score-red { left: 981.12px; top: 79.68px; }
 .score-green { left: 981.12px; top: 226.56px; }
 .score-white { left: 981.12px; top: 369.6px; }
 .score-blue { left: 981.12px; top: 516.48px; }
 
-
 /* =====================================================
    TÊN NGƯỜI CHƠI
 ===================================================== */
-
 .player-name {
     position: absolute;
     left: 1064.64px;
@@ -335,12 +309,9 @@ img {
 .player-3 { top: 369.6px; }
 .player-4 { top: 516.48px; }
 
-
 /* =====================================================
    BUZZER SPOTLIGHT & OVERLAY (HIỆU ỨNG CHUÔNG)
 ===================================================== */
-
-/* Spotlights behind buzzed player */
 .player-buzzer-spotlight {
     position: absolute;
     left: 970px;
@@ -360,26 +331,26 @@ img {
 
 .player-buzzer-spotlight.spotlight-red {
     top: 71px;
-    background: radial-gradient(ellipse at center, rgba(224, 49, 49, 0.75) 0%, rgba(224, 49, 49, 0) 75%);
-    box-shadow: 0 0 30px #e03131;
+    background: radial-gradient(ellipse at center, rgba(224, 49, 49, 0.8) 0%, rgba(224, 49, 49, 0) 75%);
+    box-shadow: 0 0 35px #e03131;
 }
 
 .player-buzzer-spotlight.spotlight-green {
     top: 218px;
-    background: radial-gradient(ellipse at center, rgba(47, 179, 68, 0.75) 0%, rgba(47, 179, 68, 0) 75%);
-    box-shadow: 0 0 30px #2fb344;
+    background: radial-gradient(ellipse at center, rgba(47, 179, 68, 0.8) 0%, rgba(47, 179, 68, 0) 75%);
+    box-shadow: 0 0 35px #2fb344;
 }
 
 .player-buzzer-spotlight.spotlight-white {
     top: 361px;
-    background: radial-gradient(ellipse at center, rgba(248, 249, 250, 0.8) 0%, rgba(248, 249, 250, 0) 75%);
-    box-shadow: 0 0 30px #ffffff;
+    background: radial-gradient(ellipse at center, rgba(248, 249, 250, 0.85) 0%, rgba(248, 249, 250, 0) 75%);
+    box-shadow: 0 0 35px #ffffff;
 }
 
 .player-buzzer-spotlight.spotlight-blue {
     top: 508px;
-    background: radial-gradient(ellipse at center, rgba(47, 128, 237, 0.75) 0%, rgba(47, 128, 237, 0) 75%);
-    box-shadow: 0 0 30px #2f80ed;
+    background: radial-gradient(ellipse at center, rgba(47, 128, 237, 0.8) 0%, rgba(47, 128, 237, 0) 75%);
+    box-shadow: 0 0 35px #2f80ed;
 }
 
 @keyframes spotlightPulse {
@@ -433,79 +404,291 @@ img {
     to { filter: brightness(1.3); box-shadow: 0 0 45px #ffd43b; }
 }
 
+/* =====================================================
+   FLOATING HUD TOOLBAR (AUTO-HIDING FOR PROJECTORS)
+===================================================== */
+.projector-hud {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 30px;
+    padding: 4px 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    opacity: 1;
+}
+
+.projector-hud.idle {
+    opacity: 0.15;
+    transform: translateY(-4px);
+}
+
+.projector-hud:hover, .projector-hud:focus-within {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+.hud-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #e2e8f0;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 4px 8px;
+    border-radius: 20px;
+    transition: background 0.2s ease;
+}
+
+.hud-pill:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+}
+
+.hud-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.hud-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* Audio Unblock Notification Banner */
+.audio-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid #f59f00;
+    color: #f8fafc;
+    padding: 10px 24px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 1000;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: bounce 2s infinite ease-in-out;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-6px); }
+}
+
 </style>
 </head>
 
 <body>
 
-<div id="game">
+<!-- HUD CONTROLS FOR PROJECTOR / SCREEN SETUP -->
+<div class="projector-hud" id="projectorHud">
+    <button class="hud-pill" id="hudConnStatus" title="Nhấp để cấu hình IP/Domain máy chủ WebSocket từ xa">
+        <div class="status-dot" id="hudDot"></div>
+        <span id="hudText">WS CONNECTING...</span>
+    </button>
+    <button class="hud-btn" id="btnAudioToggle" title="Bật/Tắt âm thanh (Phím M)">
+        🔊 Âm thanh
+    </button>
+    <button class="hud-btn" id="btnFullscreen" title="Toàn màn hình (Phím F hoặc F11)">
+        ⛶ Toàn màn hình
+    </button>
+</div>
 
-    <!-- LAYER 1: BACKGROUND -->
-    <div class="background">
-        <img src="background.png" alt="" onerror="this.style.display='none'">
+<!-- AUDIO UNBLOCK PROMPT (Disappears after first user interaction) -->
+<div class="audio-banner" id="audioBanner" style="display: none;">
+    <span>🔊 Nhấp chuột bất kỳ đâu để kích hoạt âm thanh máy chiếu</span>
+</div>
+
+<div id="game-container">
+    <div id="game">
+
+        <!-- LAYER 1: BACKGROUND -->
+        <div class="background">
+            <img src="background.png" alt="" onerror="this.style.display='none'">
+        </div>
+
+        <!-- LAYER 2: BOARD BACKGROUND -->
+        <div class="board-background">
+            <img src="board.png" alt="">
+        </div>
+
+        <!-- LAYER 3: BẢNG 5 x 5 -->
+        <div class="panel-board" id="panelBoard"></div>
+
+        <!-- LAYER 4: SCORE BACKGROUND -->
+        <div class="score-background">
+            <img src="ScoreBackground.png" alt="">
+        </div>
+
+        <!-- BUZZER SPOTLIGHTS -->
+        <div class="player-buzzer-spotlight spotlight-red" id="spotlightRed"></div>
+        <div class="player-buzzer-spotlight spotlight-green" id="spotlightGreen"></div>
+        <div class="player-buzzer-spotlight spotlight-white" id="spotlightWhite"></div>
+        <div class="player-buzzer-spotlight spotlight-blue" id="spotlightBlue"></div>
+
+        <!-- SCOREBOARDS (4 ĐỘI) -->
+        <div class="score-item score-red">
+            <img src="RedScoreboard.png" alt="">
+            <div class="score-text" id="scoreRed">0</div>
+        </div>
+
+        <div class="score-item score-green">
+            <img src="GreenScoreboard.png" alt="">
+            <div class="score-text" id="scoreGreen">0</div>
+        </div>
+
+        <div class="score-item score-white">
+            <img src="WhiteScoreboard.png" alt="">
+            <div class="score-text" id="scoreWhite">0</div>
+        </div>
+
+        <div class="score-item score-blue">
+            <img src="BlueScoreboard.png" alt="">
+            <div class="score-text" id="scoreBlue">0</div>
+        </div>
+
+        <!-- TÊN 4 NGƯỜI CHƠI -->
+        <div class="player-name player-1" id="player1">PLAYER 1</div>
+        <div class="player-name player-2" id="player2">PLAYER 2</div>
+        <div class="player-name player-3" id="player3">PLAYER 3</div>
+        <div class="player-name player-4" id="player4">PLAYER 4</div>
+
+        <!-- TOP BUZZER ALERT BANNER -->
+        <div class="screen-buzzer-alert" id="screenBuzzerAlert">
+            <span id="alertIcon">🔔</span>
+            <span id="alertText">SẴN SÀNG BẤM CHUÔNG!</span>
+        </div>
+
     </div>
-
-    <!-- LAYER 2: BOARD BACKGROUND -->
-    <div class="board-background">
-        <img src="board.png" alt="">
-    </div>
-
-    <!-- LAYER 3: BẢNG 5 x 5 -->
-    <div class="panel-board" id="panelBoard"></div>
-
-    <!-- LAYER 4: SCORE BACKGROUND -->
-    <div class="score-background">
-        <img src="ScoreBackground.png" alt="">
-    </div>
-
-    <!-- LAYER 4.5: BUZZER SPOTLIGHTS -->
-    <div class="player-buzzer-spotlight spotlight-red" id="spotlightRed"></div>
-    <div class="player-buzzer-spotlight spotlight-green" id="spotlightGreen"></div>
-    <div class="player-buzzer-spotlight spotlight-white" id="spotlightWhite"></div>
-    <div class="player-buzzer-spotlight spotlight-blue" id="spotlightBlue"></div>
-
-    <!-- LAYER 5: 4 SCOREBOARDS -->
-    <div class="score-item score-red" id="cardRed">
-        <img src="RedScoreboard.png" alt="">
-        <div class="score-text" id="scoreRed">0</div>
-    </div>
-
-    <div class="score-item score-green" id="cardGreen">
-        <img src="GreenScoreboard.png" alt="">
-        <div class="score-text" id="scoreGreen">0</div>
-    </div>
-
-    <div class="score-item score-white" id="cardWhite">
-        <img src="WhiteScoreboard.png" alt="">
-        <div class="score-text" id="scoreWhite">0</div>
-    </div>
-
-    <div class="score-item score-blue" id="cardBlue">
-        <img src="BlueScoreboard.png" alt="">
-        <div class="score-text" id="scoreBlue">0</div>
-    </div>
-
-    <!-- LAYER 6: TÊN NGƯỜI CHƠI -->
-    <div class="player-name player-1" id="player1">PLAYER 1</div>
-    <div class="player-name player-2" id="player2">PLAYER 2</div>
-    <div class="player-name player-3" id="player3">PLAYER 3</div>
-    <div class="player-name player-4" id="player4">PLAYER 4</div>
-
-    <!-- LAYER 7: ON-SCREEN BUZZER ALERT BANNER -->
-    <div class="screen-buzzer-alert" id="screenBuzzerAlert">
-        <span id="alertIcon">🔔</span>
-        <span id="alertText">ĐÃ MỞ CHUÔNG TRẢ LỜI</span>
-    </div>
-
 </div>
 
 <script>
 
 /* =====================================================
+   UNIVERSAL RESOLUTION AUTO-SCALER (4K, 1080p, TV, Mobile)
+===================================================== */
+const gameElement = document.getElementById("game");
+const BASE_WIDTH = 1280;
+const BASE_HEIGHT = 720;
+
+function autoScaleProjector() {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    const scaleX = windowWidth / BASE_WIDTH;
+    const scaleY = windowHeight / BASE_HEIGHT;
+    const scale = Math.min(scaleX, scaleY);
+
+    gameElement.style.transform = `scale(${scale})`;
+}
+
+window.addEventListener('resize', autoScaleProjector);
+window.addEventListener('orientationchange', autoScaleProjector);
+autoScaleProjector();
+
+// Auto-Hide HUD for cinematic projector presentation
+const hud = document.getElementById('projectorHud');
+let hudTimer = null;
+
+function resetHudTimer() {
+    if (!hud) return;
+    hud.classList.remove('idle');
+    clearTimeout(hudTimer);
+    hudTimer = setTimeout(() => {
+        hud.classList.add('idle');
+    }, 3000);
+}
+
+window.addEventListener('mousemove', resetHudTimer);
+window.addEventListener('touchstart', resetHudTimer);
+resetHudTimer();
+
+
+/* =====================================================
+   SCREEN WAKE LOCK (Keep TV / Projector Display Awake)
+===================================================== */
+let wakeLock = null;
+async function requestScreenWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+        }
+    } catch (err) {}
+}
+requestScreenWakeLock();
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        requestScreenWakeLock();
+    }
+});
+
+
+/* =====================================================
+   FULLSCREEN & SHORTCUTS
+===================================================== */
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+document.getElementById('btnFullscreen').addEventListener('click', toggleFullScreen);
+document.body.addEventListener('dblclick', toggleFullScreen);
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+    } else if (e.key === 's' || e.key === 'S') {
+        promptServerConfig();
+    }
+});
+
+
+/* =====================================================
    SYNTHESIZER SOUND ENGINE (WEB AUDIO API)
 ===================================================== */
-
 let audioCtx = null;
+let isMuted = false;
 
 function getAudioContext() {
     if (!audioCtx) {
@@ -514,10 +697,36 @@ function getAudioContext() {
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
     }
+    const banner = document.getElementById('audioBanner');
+    if (banner) banner.style.display = 'none';
     return audioCtx;
 }
 
+// Check initial audio state
+setTimeout(() => {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') {
+        const banner = document.getElementById('audioBanner');
+        if (banner) banner.style.display = 'flex';
+    }
+}, 500);
+
+window.addEventListener('click', () => {
+    getAudioContext();
+}, { once: true });
+
+document.getElementById('audioBanner').addEventListener('click', () => {
+    getAudioContext();
+});
+
+document.getElementById('btnAudioToggle').addEventListener('click', () => {
+    isMuted = !isMuted;
+    document.getElementById('btnAudioToggle').textContent = isMuted ? '🔇 Đã tắt âm' : '🔊 Âm thanh';
+    if (!isMuted) getAudioContext();
+});
+
 function playSound(type) {
+    if (isMuted) return;
     try {
         const ctx = getAudioContext();
         const now = ctx.currentTime;
@@ -575,21 +784,13 @@ function playSound(type) {
             osc.start(now);
             osc.stop(now + 0.25);
         }
-    } catch (e) {
-        console.warn("Audio playback error:", e);
-    }
+    } catch (e) {}
 }
-
-// Unlock audio on first user click anywhere
-window.addEventListener('click', () => {
-    getAudioContext();
-}, { once: true });
 
 
 /* =====================================================
    TẠO BẢNG 5 x 5
 ===================================================== */
-
 const panelBoard = document.getElementById("panelBoard");
 const panelElements = {};
 
@@ -625,7 +826,6 @@ for (let row = 0; row < 5; row++) {
 /* =====================================================
    DỮ LIỆU ĐIỂM & TRẠNG THÁI
 ===================================================== */
-
 const scores = { red: 0, green: 0, white: 0, blue: 0 };
 
 function setScore(player, score) {
@@ -648,7 +848,6 @@ function setPlayerName(playerNumber, name) {
 /* =====================================================
    ÁP DỤNG GAME STATE TỪ CONTROLLER
 ===================================================== */
-
 function applyGameState(state) {
     if (!state) return;
 
@@ -712,7 +911,6 @@ function applyGameState(state) {
 /* =====================================================
    CẬP NHẬT GIAO DIỆN BUZZER TRÊN MÀN HÌNH CHIẾU
 ===================================================== */
-
 function updateBuzzerDisplay(buzzer, players) {
     const banner = document.getElementById("screenBuzzerAlert");
     const icon = document.getElementById("alertIcon");
@@ -731,7 +929,7 @@ function updateBuzzerDisplay(buzzer, players) {
         text.textContent = "SẴN SÀNG BẤM CHUÔNG GIÀNH QUYỀN!";
     } else if (buzzer.status === 'buzzed' && buzzer.winner) {
         const winnerColor = buzzer.winner;
-        const winnerName = players[winnerColor] ? players[winnerColor].name : winnerColor.toUpperCase();
+        const winnerName = players && players[winnerColor] ? players[winnerColor].name : winnerColor.toUpperCase();
         const cap = winnerColor.charAt(0).toUpperCase() + winnerColor.slice(1);
 
         // Turn on spotlight
@@ -748,63 +946,18 @@ function updateBuzzerDisplay(buzzer, players) {
 
 
 /* =====================================================
-   KẾT NỐI BROADCAST CHANNEL & STORAGE & WINDOW MESSAGES
+   KẾT NỐI ĐỒNG BỘ THỜI GIAN THỰC (UNIVERSAL & CLOUD)
 ===================================================== */
-
-let gameChannel = null;
-
-try {
-    gameChannel = new BroadcastChannel("panel_quiz_attack_25");
-    gameChannel.onmessage = (event) => {
-        if (event.data) {
-            if (event.data.state) {
-                applyGameState(event.data.state);
-            }
-            if (event.data.sound) {
-                playSound(event.data.sound);
-            }
-        }
-    };
-} catch (error) {
-    console.warn("BroadcastChannel error:", error);
+function promptServerConfig() {
+    const current = localStorage.getItem('attack25_ws_server_host') || window.location.host || 'localhost:3000';
+    const server = prompt("Nhập địa chỉ máy chủ WebSocket từ xa (Ví dụ: 192.168.1.10:3000 hoặc your-app.run.app):", current);
+    if (server !== null) {
+        Attack25Sync.setServerHost(server.trim());
+    }
 }
 
-// Storage listener for cross-tab sync
-window.addEventListener('storage', (e) => {
-    if (e.key === 'attack25_gamestate' && e.newValue) {
-        try {
-            const parsed = JSON.parse(e.newValue);
-            if (parsed) applyGameState(parsed);
-        } catch (err) {}
-    }
-});
+document.getElementById('hudConnStatus').addEventListener('click', promptServerConfig);
 
-// Window postMessage for Split View iframe sync
-window.addEventListener("message", (event) => {
-    if (event.data) {
-        if (event.data.state) {
-            applyGameState(event.data.state);
-        }
-        if (event.data.sound) {
-            playSound(event.data.sound);
-        }
-    }
-});
-
-// Load state from localStorage on startup
-try {
-    const saved = localStorage.getItem("attack25_gamestate");
-    if (saved) {
-        applyGameState(JSON.parse(saved));
-    }
-} catch (e) {}
-
-// Notify controller that display is ready
-if (gameChannel) {
-    gameChannel.postMessage({ type: "display_ready" });
-}
-
-// Connect Universal Synchronizer (WebSocket + BroadcastChannel + localStorage)
 if (window.Attack25Sync) {
     Attack25Sync.onStateChange((state) => {
         applyGameState(state);
@@ -812,7 +965,26 @@ if (window.Attack25Sync) {
     Attack25Sync.onSound((sound) => {
         playSound(sound);
     });
+    Attack25Sync.onConnectionChange((conn) => {
+        const dot = document.getElementById('hudDot');
+        const text = document.getElementById('hudText');
+        const isOnline = typeof conn === 'object' ? conn.connected : !!conn;
+        const mode = typeof conn === 'object' ? conn.mode : 'websocket';
+
+        if (dot) {
+            dot.style.background = isOnline ? '#22c55e' : '#ef4444';
+            dot.style.boxShadow = isOnline ? '0 0 8px #22c55e' : '0 0 8px #ef4444';
+        }
+        if (text) {
+            if (isOnline) {
+                text.textContent = mode === 'websocket' ? 'REAL-TIME ONLINE' : 'LOCAL SYNC';
+            } else {
+                text.textContent = 'CONNECTING...';
+            }
+        }
+    });
 }
+
 </script>
 
 </body>
