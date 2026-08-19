@@ -550,17 +550,87 @@ html, body {
 ===================================================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+const colorWavMap = {
+    'red': 'red.wav',
+    'green': 'green.wav',
+    'white': 'white.wav',
+    'blue': 'blue.wav',
+    'buzzer_red': 'red.wav',
+    'buzzer_green': 'green.wav',
+    'buzzer_white': 'white.wav',
+    'buzzer_blue': 'blue.wav',
+    'buzz_red': 'red.wav',
+    'buzz_green': 'green.wav',
+    'buzz_white': 'white.wav',
+    'buzz_blue': 'blue.wav'
+};
+
 function playSound(type) {
+    const wavFile = colorWavMap[type];
+    if (wavFile) {
+        try {
+            const audio = new Audio(wavFile);
+            audio.volume = 1.0;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => playSynthTone(type));
+            }
+            return;
+        } catch (e) {
+            playSynthTone(type);
+            return;
+        }
+    }
+    playSynthTone(type);
+}
+
+function playSynthTone(type) {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     const now = audioCtx.currentTime;
 
-    if (type === 'buzzer') {
+    if (type === 'buzzer' || type === 'buzzer_red' || type === 'red') {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
-        gain.gain.setValueAtTime(0.3, now);
+        osc.frequency.setValueAtTime(660, now);
+        osc.frequency.exponentialRampToValueAtTime(330, now + 0.35);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+    } else if (type === 'buzzer_green' || type === 'green') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(880, now + 0.1);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+    } else if (type === 'buzzer_white' || type === 'white') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1046.50, now);
+        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.35);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+    } else if (type === 'buzzer_blue' || type === 'blue') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(1046.50, now + 0.1);
+        gain.gain.setValueAtTime(0.35, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
         osc.connect(gain);
         gain.connect(audioCtx.destination);

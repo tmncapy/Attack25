@@ -187,12 +187,12 @@ wss.on('connection', (ws) => {
             gameState.buzzer.buzzTime = elapsed;
             gameState.buzzer.pressOrder = [{ player: player, time: elapsed }];
 
-            // Broadcast winner buzz immediately to EVERYONE including sender
+            // Broadcast winner buzz immediately to EVERYONE including sender with color sound
             broadcast({
               type: 'SYNC_STATE',
               action: 'buzzer_hit',
               state: gameState,
-              sound: 'buzzer'
+              sound: `buzzer_${player}`
             });
           } else {
             // Already someone buzzed, add to press order if not there

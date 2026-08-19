@@ -262,19 +262,32 @@ function getAudioContext() {
 
 function playBuzzChime() {
     try {
+        const audio = new Audio('red.wav');
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(() => playSynthTone());
+        }
+        return;
+    } catch (e) {
+        playSynthTone();
+    }
+}
+
+function playSynthTone() {
+    try {
         const ctx = getAudioContext();
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(440, now + 0.3);
+        osc.frequency.setValueAtTime(660, now);
+        osc.frequency.exponentialRampToValueAtTime(330, now + 0.35);
         gain.gain.setValueAtTime(0.4, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.35);
+        osc.stop(now + 0.4);
     } catch (e) {}
 }
 
@@ -286,6 +299,11 @@ let gameState = {
 if (window.Attack25Sync) {
     Attack25Sync.onStateChange((state) => {
         applyState(state);
+    });
+    Attack25Sync.onSound((snd) => {
+        if (snd === 'buzzer_red' || snd === 'red') {
+            playBuzzChime();
+        }
     });
 }
 

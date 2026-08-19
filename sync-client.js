@@ -238,7 +238,7 @@
                         type: 'SYNC_STATE',
                         action: 'buzzer_hit',
                         state: state,
-                        sound: 'buzzer'
+                        sound: `buzzer_${playerColor}`
                     };
 
                     if (broadcastChannel) {
@@ -246,7 +246,7 @@
                     }
 
                     notifyListeners('state', state);
-                    notifyListeners('sound', 'buzzer');
+                    notifyListeners('sound', `buzzer_${playerColor}`);
                 }
             }
         } catch (e) {}

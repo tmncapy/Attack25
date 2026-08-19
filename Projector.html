@@ -229,14 +229,15 @@ img {
 }
 
 /* =====================================================
-   SCOREBOARD
+   SCOREBOARD & HIGHLIGHT
 ===================================================== */
 .score-item {
     position: absolute;
     width: 83.52px;
     height: 63.36px;
     z-index: 5;
-    transition: transform 0.2s ease, filter 0.2s ease;
+    border-radius: 6px;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease, box-shadow 0.25s ease;
 }
 
 .score-item img {
@@ -247,6 +248,43 @@ img {
     height: 100%;
     z-index: 1;
     pointer-events: none;
+}
+
+/* HIGHLIGHT SCOREBOARD WHEN BUZZED */
+.score-item.buzzed-highlight {
+    z-index: 25 !important;
+    animation: scoreBuzzedPulse 0.7s infinite alternate ease-in-out;
+}
+
+.score-item.buzzed-red {
+    box-shadow: 0 0 35px #e03131, inset 0 0 15px #ff8787;
+    filter: brightness(1.25);
+}
+
+.score-item.buzzed-green {
+    box-shadow: 0 0 35px #2fb344, inset 0 0 15px #69db7c;
+    filter: brightness(1.25);
+}
+
+.score-item.buzzed-white {
+    box-shadow: 0 0 40px #ffffff, inset 0 0 20px #f8f9fa;
+    filter: brightness(1.35);
+}
+
+.score-item.buzzed-blue {
+    box-shadow: 0 0 35px #2f80ed, inset 0 0 15px #74c0fc;
+    filter: brightness(1.25);
+}
+
+@keyframes scoreBuzzedPulse {
+    0% {
+        transform: scale(1.12);
+        filter: brightness(1.15);
+    }
+    100% {
+        transform: scale(1.25);
+        filter: brightness(1.4);
+    }
 }
 
 /* =====================================================
@@ -301,7 +339,13 @@ img {
     user-select: none;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    transition: transform 0.2s ease;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.25s ease, text-shadow 0.25s ease;
+}
+
+.player-name.buzzed-highlight {
+    transform: scale(1.12) translateX(8px);
+    color: #fffb00 !important;
+    text-shadow: 0 0 14px rgba(255, 235, 59, 1), 2px 2px 4px #000, 0 0 25px rgba(255, 193, 7, 0.8) !important;
 }
 
 .player-1 { top: 79.68px; }
@@ -315,10 +359,10 @@ img {
 .player-buzzer-spotlight {
     position: absolute;
     left: 970px;
-    width: 300px;
+    width: 305px;
     height: 80px;
     z-index: 4;
-    border-radius: 8px;
+    border-radius: 12px;
     opacity: 0;
     pointer-events: none;
     transition: all 0.25s ease;
@@ -326,36 +370,36 @@ img {
 
 .player-buzzer-spotlight.active {
     opacity: 1;
-    animation: spotlightPulse 0.8s infinite alternate ease-in-out;
+    animation: spotlightPulse 0.75s infinite alternate ease-in-out;
 }
 
 .player-buzzer-spotlight.spotlight-red {
     top: 71px;
-    background: radial-gradient(ellipse at center, rgba(224, 49, 49, 0.8) 0%, rgba(224, 49, 49, 0) 75%);
-    box-shadow: 0 0 35px #e03131;
+    background: radial-gradient(ellipse at center, rgba(224, 49, 49, 0.85) 0%, rgba(224, 49, 49, 0) 75%);
+    box-shadow: 0 0 45px #e03131;
 }
 
 .player-buzzer-spotlight.spotlight-green {
     top: 218px;
-    background: radial-gradient(ellipse at center, rgba(47, 179, 68, 0.8) 0%, rgba(47, 179, 68, 0) 75%);
-    box-shadow: 0 0 35px #2fb344;
+    background: radial-gradient(ellipse at center, rgba(47, 179, 68, 0.85) 0%, rgba(47, 179, 68, 0) 75%);
+    box-shadow: 0 0 45px #2fb344;
 }
 
 .player-buzzer-spotlight.spotlight-white {
     top: 361px;
-    background: radial-gradient(ellipse at center, rgba(248, 249, 250, 0.85) 0%, rgba(248, 249, 250, 0) 75%);
-    box-shadow: 0 0 35px #ffffff;
+    background: radial-gradient(ellipse at center, rgba(248, 249, 250, 0.9) 0%, rgba(248, 249, 250, 0) 75%);
+    box-shadow: 0 0 45px #ffffff;
 }
 
 .player-buzzer-spotlight.spotlight-blue {
     top: 508px;
-    background: radial-gradient(ellipse at center, rgba(47, 128, 237, 0.8) 0%, rgba(47, 128, 237, 0) 75%);
-    box-shadow: 0 0 35px #2f80ed;
+    background: radial-gradient(ellipse at center, rgba(47, 128, 237, 0.85) 0%, rgba(47, 128, 237, 0) 75%);
+    box-shadow: 0 0 45px #2f80ed;
 }
 
 @keyframes spotlightPulse {
-    from { transform: scale(0.98); opacity: 0.8; }
-    to { transform: scale(1.03); opacity: 1; filter: brightness(1.3); }
+    from { transform: scale(0.98); opacity: 0.85; }
+    to { transform: scale(1.04); opacity: 1; filter: brightness(1.35); }
 }
 
 /* Big Top Screen Buzzer Banner */
@@ -397,6 +441,31 @@ img {
     border-color: #ffd43b;
     background: linear-gradient(135deg, #7c2d12, #451a03);
     animation: alertFlash 0.7s infinite alternate;
+}
+
+.screen-buzzer-alert.state-buzzed-red {
+    border-color: #ff6b6b;
+    background: linear-gradient(135deg, #841010, #380707);
+    box-shadow: 0 0 45px #e03131;
+}
+
+.screen-buzzer-alert.state-buzzed-green {
+    border-color: #69db7c;
+    background: linear-gradient(135deg, #135222, #07260e);
+    box-shadow: 0 0 45px #2fb344;
+}
+
+.screen-buzzer-alert.state-buzzed-white {
+    border-color: #ffffff;
+    background: linear-gradient(135deg, #475569, #1e293b);
+    box-shadow: 0 0 45px #ffffff;
+    color: #fff;
+}
+
+.screen-buzzer-alert.state-buzzed-blue {
+    border-color: #74c0fc;
+    background: linear-gradient(135deg, #113d78, #071933);
+    box-shadow: 0 0 45px #2f80ed;
 }
 
 @keyframes alertFlash {
@@ -563,22 +632,22 @@ img {
         <div class="player-buzzer-spotlight spotlight-blue" id="spotlightBlue"></div>
 
         <!-- SCOREBOARDS (4 ĐỘI) -->
-        <div class="score-item score-red">
+        <div class="score-item score-red" id="scoreBoxRed">
             <img src="RedScoreboard.png" alt="">
             <div class="score-text" id="scoreRed">0</div>
         </div>
 
-        <div class="score-item score-green">
+        <div class="score-item score-green" id="scoreBoxGreen">
             <img src="GreenScoreboard.png" alt="">
             <div class="score-text" id="scoreGreen">0</div>
         </div>
 
-        <div class="score-item score-white">
+        <div class="score-item score-white" id="scoreBoxWhite">
             <img src="WhiteScoreboard.png" alt="">
             <div class="score-text" id="scoreWhite">0</div>
         </div>
 
-        <div class="score-item score-blue">
+        <div class="score-item score-blue" id="scoreBoxBlue">
             <img src="BlueScoreboard.png" alt="">
             <div class="score-text" id="scoreBlue">0</div>
         </div>
@@ -680,15 +749,32 @@ window.addEventListener('keydown', (e) => {
         toggleFullScreen();
     } else if (e.key === 's' || e.key === 'S') {
         promptServerConfig();
+    } else if (e.key === 'm' || e.key === 'M') {
+        toggleAudio();
     }
 });
 
 
 /* =====================================================
-   SYNTHESIZER SOUND ENGINE (WEB AUDIO API)
+   AUDIO ENGINE (WAV AUDIO FILES + SYNTHESIZER FALLBACK)
 ===================================================== */
 let audioCtx = null;
 let isMuted = false;
+
+const colorWavMap = {
+    'red': 'red.wav',
+    'green': 'green.wav',
+    'white': 'white.wav',
+    'blue': 'blue.wav',
+    'buzzer_red': 'red.wav',
+    'buzzer_green': 'green.wav',
+    'buzzer_white': 'white.wav',
+    'buzzer_blue': 'blue.wav',
+    'buzz_red': 'red.wav',
+    'buzz_green': 'green.wav',
+    'buzz_white': 'white.wav',
+    'buzz_blue': 'blue.wav'
+};
 
 function getAudioContext() {
     if (!audioCtx) {
@@ -719,28 +805,94 @@ document.getElementById('audioBanner').addEventListener('click', () => {
     getAudioContext();
 });
 
-document.getElementById('btnAudioToggle').addEventListener('click', () => {
+function toggleAudio() {
     isMuted = !isMuted;
     document.getElementById('btnAudioToggle').textContent = isMuted ? '🔇 Đã tắt âm' : '🔊 Âm thanh';
     if (!isMuted) getAudioContext();
-});
+}
+
+document.getElementById('btnAudioToggle').addEventListener('click', toggleAudio);
 
 function playSound(type) {
     if (isMuted) return;
+
+    // 1. If it's a player buzzer sound with color, try playing the WAV audio file first
+    const wavFile = colorWavMap[type];
+    if (wavFile) {
+        try {
+            const audio = new Audio(wavFile);
+            audio.volume = 1.0;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    // Fallback to synthesizer tone if file is missing
+                    playSynthTone(type);
+                });
+            }
+            return;
+        } catch (e) {
+            playSynthTone(type);
+            return;
+        }
+    }
+
+    // 2. Play standard game sound effect via synthesizer
+    playSynthTone(type);
+}
+
+function playSynthTone(type) {
     try {
         const ctx = getAudioContext();
         const now = ctx.currentTime;
 
-        if (type === 'buzzer') {
+        if (type === 'buzzer' || type === 'buzzer_red' || type === 'red') {
+            // RED: Deep, powerful punch tone
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(880, now);
-            osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
-
-            gain.gain.setValueAtTime(0.35, now);
+            osc.frequency.setValueAtTime(660, now);
+            osc.frequency.exponentialRampToValueAtTime(330, now + 0.35);
+            gain.gain.setValueAtTime(0.4, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'buzzer_green' || type === 'green') {
+            // GREEN: Bright energetic ring
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(587.33, now);
+            osc.frequency.setValueAtTime(880, now + 0.1);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'buzzer_white' || type === 'white') {
+            // WHITE: High crystal chime
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1046.50, now);
+            osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.35);
+            gain.gain.setValueAtTime(0.45, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'buzzer_blue' || type === 'blue') {
+            // BLUE: Resonant power chime
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(1046.50, now + 0.1);
+            gain.gain.setValueAtTime(0.38, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
             osc.connect(gain);
             gain.connect(ctx.destination);
             osc.start(now);
@@ -901,7 +1053,7 @@ function applyGameState(state) {
         if (state.players.blue) setPlayerName(4, state.players.blue.name);
     }
 
-    // 3. Cập nhật Buzzer Spotlight & Banner
+    // 3. Cập nhật Buzzer Spotlight, Scoreboard Highlight & Banner
     if (state.buzzer) {
         updateBuzzerDisplay(state.buzzer, state.players);
     }
@@ -909,18 +1061,30 @@ function applyGameState(state) {
 
 
 /* =====================================================
-   CẬP NHẬT GIAO DIỆN BUZZER TRÊN MÀN HÌNH CHIẾU
+   CẬP NHẬT GIAO DIỆN BUZZER VÀ HIGHLIGHT SCOREBOARD TRÊN PROJECTOR
 ===================================================== */
 function updateBuzzerDisplay(buzzer, players) {
     const banner = document.getElementById("screenBuzzerAlert");
     const icon = document.getElementById("alertIcon");
     const text = document.getElementById("alertText");
 
-    // Reset spotlights
-    ['red', 'green', 'white', 'blue'].forEach(color => {
+    const playerIndexMap = { red: 1, green: 2, white: 3, blue: 4 };
+
+    // Reset all spotlights, scoreboard highlights, and name glows
+    ['red', 'green', 'white', 'blue'].forEach((color, idx) => {
         const cap = color.charAt(0).toUpperCase() + color.slice(1);
         const spot = document.getElementById("spotlight" + cap);
         if (spot) spot.classList.remove("active");
+
+        const scoreBox = document.getElementById("scoreBox" + cap);
+        if (scoreBox) {
+            scoreBox.className = "score-item score-" + color;
+        }
+
+        const nameEl = document.getElementById("player" + (idx + 1));
+        if (nameEl) {
+            nameEl.classList.remove("buzzed-highlight");
+        }
     });
 
     if (buzzer.status === 'armed') {
@@ -932,11 +1096,24 @@ function updateBuzzerDisplay(buzzer, players) {
         const winnerName = players && players[winnerColor] ? players[winnerColor].name : winnerColor.toUpperCase();
         const cap = winnerColor.charAt(0).toUpperCase() + winnerColor.slice(1);
 
-        // Turn on spotlight
+        // 1. Bật Spotlight ánh sáng màu tương ứng
         const spot = document.getElementById("spotlight" + cap);
         if (spot) spot.classList.add("active");
 
-        banner.className = "screen-buzzer-alert show state-buzzed";
+        // 2. HIGHLIGHT SCOREBOARD người bấm tương ứng
+        const scoreBox = document.getElementById("scoreBox" + cap);
+        if (scoreBox) {
+            scoreBox.classList.add("buzzed-highlight", "buzzed-" + winnerColor);
+        }
+
+        // 3. HIGHLIGHT TÊN người chơi bấm chuông
+        const nameEl = document.getElementById("player" + playerIndexMap[winnerColor]);
+        if (nameEl) {
+            nameEl.classList.add("buzzed-highlight");
+        }
+
+        // 4. Banner thông báo với màu đội bấm
+        banner.className = `screen-buzzer-alert show state-buzzed state-buzzed-${winnerColor}`;
         icon.textContent = "⚡";
         text.textContent = `${winnerName.toUpperCase()} GIÀNH QUYỀN TRẢ LỜI!`;
     } else {
