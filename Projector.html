@@ -814,7 +814,7 @@ function toggleAudio() {
 document.getElementById('btnAudioToggle').addEventListener('click', toggleAudio);
 
 function playSound(type) {
-    if (isMuted) return;
+    if (isMuted || (window.self !== window.top) || window.location.search.includes('preview=1')) return;
 
     // 1. If it's a player buzzer sound with color, try playing the WAV audio file first
     const wavFile = colorWavMap[type];

@@ -457,57 +457,63 @@ html, body {
 .panel-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 4px;
+    gap: 6px;
+    margin-bottom: 10px;
 }
 
 .panel-button {
-    aspect-ratio: 1.25 / 1;
-    border: 1.5px solid #374254;
-    border-radius: 5px;
-    background: #202735;
-    color: #fff;
+    aspect-ratio: 1.2 / 1;
+    min-height: 40px;
+    border: 2px solid #374254;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #f8fafc;
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: clamp(14px, 1.8vw, 24px);
+    font-size: clamp(16px, 2vw, 24px);
+    font-weight: 900;
     cursor: pointer;
-    transition: all .1s ease;
+    transition: all .15s ease;
     user-select: none;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
 .panel-button:hover {
-    transform: translateY(-1px);
-    border-color: #63738e;
+    transform: translateY(-2px);
+    border-color: #f59f00;
+    box-shadow: 0 4px 12px rgba(245, 159, 0, 0.35);
 }
 
 .panel-button.active {
-    background: var(--active);
-    color: #111;
-    border-color: #ffd43b;
-    box-shadow: 0 0 10px rgba(245, 159, 0, 0.45);
-    z-index: 2;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 16px #38bdf8, inset 0 0 6px #fff !important;
+    transform: scale(1.08);
+    z-index: 5;
 }
 
 .panel-button.used {
-    background: var(--used);
-    color: #798292;
-    border-color: #434c5b;
-    opacity: .55;
+    background: #334155 !important;
+    color: #64748b !important;
+    border-color: #1e293b !important;
+    opacity: .5;
     text-decoration: line-through;
 }
 
 .panel-button.active.used {
-    background: var(--active);
-    color: #111;
+    background: #ffffff !important;
+    color: #000 !important;
     opacity: 1;
     text-decoration: none;
 }
 
-.panel-button.panel-red { background: #961d1d; border-color: #e03131; }
-.panel-button.panel-green { background: #1c6d2f; border-color: #2fb344; }
-.panel-button.panel-white { background: #a2aab5; color: #111; border-color: #f1f3f5; }
-.panel-button.panel-blue { background: #175497; border-color: #2f80ed; }
+.panel-button.panel-red { background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #fff !important; border-color: #f87171 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.panel-button.panel-green { background: linear-gradient(135deg, #22c55e, #16a34a) !important; color: #fff !important; border-color: #4ade80 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.panel-button.panel-white { background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important; color: #0f172a !important; border-color: #ffffff !important; text-shadow: none; }
+.panel-button.panel-blue { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; color: #fff !important; border-color: #60a5fa !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
 
 .color-actions {
     margin-top: 8px;
@@ -687,48 +693,52 @@ html, body {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     grid-template-rows: repeat(5, 1fr);
-    gap: 2px;
-    padding: 3px;
-    background: #5d4822;
-    border: 2px solid #b8934b;
-    border-radius: 4px;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+    gap: 3px;
+    padding: 4px;
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 6px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
 .preview-cell {
-    background: #e2e8f0;
+    background: linear-gradient(135deg, #f59f00, #d97706);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #0f172a;
+    color: #000;
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: clamp(8px, 1vw, 13px);
+    font-size: clamp(9px, 1.1vw, 14px);
     font-weight: 900;
-    border-radius: 2px;
-    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 3px;
+    border: 1px solid #fbbf24;
     user-select: none;
     transition: all 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .preview-cell.active {
-    background: #f59f00 !important;
+    background: #ffffff !important;
     color: #000 !important;
-    box-shadow: 0 0 8px #f59f00, inset 0 0 5px #fff;
-    transform: scale(1.08);
-    z-index: 5;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 12px #38bdf8, inset 0 0 6px #fff;
+    transform: scale(1.1);
+    z-index: 10;
 }
 
 .preview-cell.used {
     background: #334155 !important;
     color: #64748b !important;
+    border-color: #1e293b !important;
     text-decoration: line-through;
-    opacity: 0.6;
+    opacity: 0.45;
+    box-shadow: none;
 }
 
-.preview-cell.panel-red { background: #e03131 !important; color: #fff !important; text-shadow: 1px 1px 2px #000; }
-.preview-cell.panel-green { background: #2fb344 !important; color: #fff !important; text-shadow: 1px 1px 2px #000; }
-.preview-cell.panel-white { background: #f8f9fa !important; color: #111 !important; text-shadow: none; }
-.preview-cell.panel-blue { background: #2f80ed !important; color: #fff !important; text-shadow: 1px 1px 2px #000; }
+.preview-cell.panel-red { background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #fff !important; border-color: #f87171 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.preview-cell.panel-green { background: linear-gradient(135deg, #22c55e, #16a34a) !important; color: #fff !important; border-color: #4ade80 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.preview-cell.panel-white { background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important; color: #0f172a !important; border-color: #ffffff !important; text-shadow: none; }
+.preview-cell.panel-blue { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; color: #fff !important; border-color: #60a5fa !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
 
 .preview-scores {
     position: absolute;
@@ -1024,22 +1034,16 @@ html, body {
                 </div>
             </section>
 
-            <!-- PREVIEW DISPLAY -->
+            <!-- PREVIEW DISPLAY (LIVE PROJECTOR STREAM) -->
             <section class="card">
                 <div class="card-header">
-                    <div class="card-title">🖥️ PREVIEW PROJECTOR</div>
+                    <div class="card-title">🖥️ PREVIEW PROJECTOR (MÀN HÌNH MÁY CHIẾU REAL-TIME)</div>
+                    <a href="Projector.html" target="_blank" class="button button-gray" style="height:22px; padding:0 8px; font-size:11px; text-decoration:none;" title="Mở Màn hình Máy chiếu trong cửa sổ mới">Mở cửa sổ riêng ↗</a>
                 </div>
 
-                <div class="card-body">
-                    <div class="preview-screen">
-                        <div class="preview-board" id="previewBoard"></div>
-
-                        <div class="preview-scores">
-                            <div class="preview-player red"><span id="previewScoreRed">0</span></div>
-                            <div class="preview-player green"><span id="previewScoreGreen">0</span></div>
-                            <div class="preview-player white"><span id="previewScoreWhite">0</span></div>
-                            <div class="preview-player blue"><span id="previewScoreBlue">0</span></div>
-                        </div>
+                <div class="card-body" style="padding:6px;">
+                    <div style="position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; background: #000; border: 1.5px solid #334155; box-shadow: 0 4px 16px rgba(0,0,0,0.6);">
+                        <iframe src="Projector.html?preview=1" style="width: 100%; height: 100%; border: none; pointer-events: none; display: block;" id="projectorPreviewIframe"></iframe>
                     </div>
                 </div>
             </section>
@@ -1143,65 +1147,74 @@ html, body {
 /* =====================================================
    SYNTHESIZER SOUND ENGINE (WEB AUDIO API)
 ===================================================== */
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function getAudioCtx() {
+    if (!window.globalAudioCtx) {
+        window.globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (window.globalAudioCtx.state === 'suspended') {
+        window.globalAudioCtx.resume().catch(() => {});
+    }
+    return window.globalAudioCtx;
+}
 
 function playSound(type) {
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-    const now = audioCtx.currentTime;
+    try {
+        const actx = getAudioCtx();
+        if (!actx) return;
+        const now = actx.currentTime;
 
-    if (type === 'buzzer') {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
-        gain.gain.setValueAtTime(0.35, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + 0.4);
-    } else if (type === 'correct') {
-        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.2, now + i * 0.08);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(now + i * 0.08);
-            osc.stop(now + i * 0.08 + 0.35);
-        });
-    } else if (type === 'wrong') {
-        [180, 140].forEach(freq => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+        if (type === 'buzzer') {
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
             osc.type = 'sawtooth';
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.25, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
             osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            gain.connect(actx.destination);
             osc.start(now);
-            osc.stop(now + 0.45);
-        });
-    } else if (type === 'arm') {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, now);
-        osc.frequency.setValueAtTime(880, now + 0.08);
-        gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + 0.25);
-    }
+            osc.stop(now + 0.4);
+        } else if (type === 'correct') {
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                const osc = actx.createOscillator();
+                const gain = actx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.2, now + i * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+                osc.connect(gain);
+                gain.connect(actx.destination);
+                osc.start(now + i * 0.08);
+                osc.stop(now + i * 0.08 + 0.35);
+            });
+        } else if (type === 'wrong') {
+            [180, 140].forEach(freq => {
+                const osc = actx.createOscillator();
+                const gain = actx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+                osc.connect(gain);
+                gain.connect(actx.destination);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            });
+        } else if (type === 'arm') {
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, now);
+            osc.frequency.setValueAtTime(880, now + 0.08);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.connect(gain);
+            gain.connect(actx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        }
+    } catch (err) {}
 }
 
 
@@ -1278,6 +1291,25 @@ const defaultState = {
     }
 };
 
+function ensureValidPanels(state) {
+    if (!state) return;
+    if (!state.panels || !Array.isArray(state.panels) || state.panels.length !== 25) {
+        state.panels = Array.from({ length: 25 }, (_, index) => ({
+            number: index + 1,
+            used: false,
+            color: null
+        }));
+    } else {
+        state.panels.forEach((p, idx) => {
+            if (!p || typeof p !== 'object') {
+                state.panels[idx] = { number: idx + 1, used: false, color: null };
+            } else {
+                p.number = parseInt(p.number, 10) || (idx + 1);
+            }
+        });
+    }
+}
+
 let gameState = JSON.parse(JSON.stringify(defaultState));
 
 // Restore state from localStorage
@@ -1291,11 +1323,14 @@ try {
     }
 } catch (e) {}
 
+ensureValidPanels(gameState);
+
 
 /* =====================================================
    BROADCAST & REAL-TIME SYNC
 ===================================================== */
 function broadcastState(action = "update", soundEvent = null) {
+    ensureValidPanels(gameState);
     if (window.Attack25Sync) {
         Attack25Sync.broadcastState(gameState, action, soundEvent);
     }
@@ -1310,6 +1345,7 @@ function broadcastQuestions() {
 if (window.Attack25Sync) {
     Attack25Sync.onStateChange((state) => {
         if (state) {
+            ensureValidPanels(state);
             gameState = state;
             renderAll();
         }
@@ -1931,8 +1967,7 @@ window.addEventListener('keydown', (e) => {
 ===================================================== */
 function createPanelButtons() {
     const panelGrid = document.getElementById("panelGrid");
-    const previewBoard = document.getElementById("previewBoard");
-    if (!panelGrid || !previewBoard) return;
+    if (!panelGrid) return;
 
     if (!gameState.panels || !Array.isArray(gameState.panels) || gameState.panels.length === 0) {
         gameState.panels = Array.from({ length: 25 }, (_, index) => ({
@@ -1943,7 +1978,6 @@ function createPanelButtons() {
     }
 
     panelGrid.innerHTML = "";
-    previewBoard.innerHTML = "";
 
     gameState.panels.forEach(panel => {
         const button = document.createElement("button");
@@ -1953,13 +1987,6 @@ function createPanelButtons() {
         button.id = "btn-panel-" + panel.number;
         button.onclick = () => selectPanel(panel.number);
         panelGrid.appendChild(button);
-
-        const previewCell = document.createElement("div");
-        previewCell.className = "preview-cell";
-        previewCell.textContent = panel.number;
-        previewCell.dataset.number = panel.number;
-        previewCell.id = "prev-cell-" + panel.number;
-        previewBoard.appendChild(previewCell);
     });
 }
 
@@ -1991,13 +2018,15 @@ function setPanelColor(color) {
         return;
     }
 
-    const panel = gameState.panels.find(item => item.number === gameState.selectedPanel);
+    const selectedNum = parseInt(gameState.selectedPanel, 10);
+    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
     if (panel) {
         panel.color = color;
         recalculateScoresFromBoard();
         renderPanels();
         broadcastState("setColor");
-        showToast(`Đã gán ô ${panel.number}: ${color ? color.toUpperCase() : 'MẶC ĐỊNH'} (Điểm: ${gameState.players[color || 'red'] ? gameState.players[color].score : 0})`);
+        const cText = color ? color.toUpperCase() : 'MẶC ĐỊNH';
+        showToast(`Đã gán ô ${panel.number} -> ${cText}`);
     }
 }
 
@@ -2006,7 +2035,8 @@ function sendSelectedPanel() {
         showToast("Hãy chọn một ô trên bảng trước.");
         return;
     }
-    const panel = gameState.panels.find(item => item.number === gameState.selectedPanel);
+    const selectedNum = parseInt(gameState.selectedPanel, 10);
+    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
     if (panel) {
         panel.used = false;
         renderPanels();
@@ -2020,7 +2050,8 @@ function markSelectedUsed() {
         showToast("Hãy chọn một ô trên bảng trước.");
         return;
     }
-    const panel = gameState.panels.find(item => item.number === gameState.selectedPanel);
+    const selectedNum = parseInt(gameState.selectedPanel, 10);
+    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
     if (panel) {
         panel.used = true;
         renderPanels();
@@ -2034,7 +2065,8 @@ function resetSelectedPanel() {
         showToast("Hãy chọn một ô trước.");
         return;
     }
-    const panel = gameState.panels.find(item => item.number === gameState.selectedPanel);
+    const selectedNum = parseInt(gameState.selectedPanel, 10);
+    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
     if (panel) {
         panel.used = false;
         panel.color = null;
@@ -2058,18 +2090,18 @@ function clearSelection() {
 }
 
 function renderPanels() {
+    ensureValidPanels(gameState);
     const pGrid = document.getElementById("panelGrid");
-    const pBoard = document.getElementById("previewBoard");
-    if ((pGrid && pGrid.children.length === 0) || (pBoard && pBoard.children.length === 0)) {
+    if (pGrid && pGrid.children.length !== 25) {
         createPanelButtons();
     }
 
     recalculateScoresFromBoard();
-    const selected = gameState.selectedPanel;
+    const selected = gameState.selectedPanel ? parseInt(gameState.selectedPanel, 10) : null;
 
     document.querySelectorAll(".panel-button").forEach(button => {
-        const number = Number(button.dataset.number);
-        const panel = gameState.panels.find(item => item.number === number);
+        const number = parseInt(button.dataset.number, 10);
+        const panel = gameState.panels.find(item => parseInt(item.number, 10) === number);
         if (!panel) return;
 
         button.classList.toggle("active", number === selected);
@@ -2078,20 +2110,6 @@ function renderPanels() {
         button.classList.remove("panel-red", "panel-green", "panel-white", "panel-blue");
         if (panel.color) {
             button.classList.add("panel-" + panel.color);
-        }
-    });
-
-    document.querySelectorAll(".preview-cell").forEach(cell => {
-        const number = Number(cell.dataset.number);
-        const panel = gameState.panels.find(item => item.number === number);
-        if (!panel) return;
-
-        cell.classList.toggle("active", number === selected);
-        cell.classList.toggle("used", !!panel.used);
-
-        cell.classList.remove("panel-red", "panel-green", "panel-white", "panel-blue");
-        if (panel.color) {
-            cell.classList.add("panel-" + panel.color);
         }
     });
 
@@ -2149,10 +2167,14 @@ function updateScore(color) {
 }
 
 function updatePreviewScores() {
-    document.getElementById("previewScoreRed").textContent = gameState.players.red.score;
-    document.getElementById("previewScoreGreen").textContent = gameState.players.green.score;
-    document.getElementById("previewScoreWhite").textContent = gameState.players.white.score;
-    document.getElementById("previewScoreBlue").textContent = gameState.players.blue.score;
+    const r = document.getElementById("previewScoreRed");
+    const g = document.getElementById("previewScoreGreen");
+    const w = document.getElementById("previewScoreWhite");
+    const b = document.getElementById("previewScoreBlue");
+    if (r) r.textContent = gameState.players.red.score;
+    if (g) g.textContent = gameState.players.green.score;
+    if (w) w.textContent = gameState.players.white.score;
+    if (b) b.textContent = gameState.players.blue.score;
 }
 
 function resetAllScores() {
@@ -2208,9 +2230,7 @@ function renderAll() {
 /* =====================================================
    INITIALIZE
 ===================================================== */
-createPanelButtons();
-renderQuestion();
-renderBuzzerUI();
+renderAll();
 broadcastState("sync");
 
 </script>
