@@ -1,0 +1,8 @@
+{
+  "name": "Panel Quiz Attack 25",
+  "description": "Panel Quiz Attack 25 game controller and projector display interface",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

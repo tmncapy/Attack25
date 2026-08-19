@@ -4,11 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Attack 25 - Player 2 (Xanh Lá)</title>
+<script src="sync-client.js"></script>
 
 <style>
 @font-face {
     font-family: "UTM Impact";
-    src: url("UTM Impact.ttf") format("truetype");
+    src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
+    font-display: swap;
 }
 
 :root {
@@ -307,7 +309,10 @@ function applyState(state) {
     const me = state.players ? state.players[MY_ROLE] : null;
     if (me) {
         document.getElementById('playerNameDisplay').textContent = `${me.name} (XANH LÁ)`;
-        document.getElementById('playerScoreDisplay').textContent = me.score;
+        const panelCount = (state.panels && Array.isArray(state.panels))
+            ? state.panels.filter(p => p.color === MY_ROLE).length
+            : (me.score || 0);
+        document.getElementById('playerScoreDisplay').textContent = panelCount;
     }
 
     const b = state.buzzer || {};

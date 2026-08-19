@@ -8,8 +8,8 @@
 
 <!-- SheetJS for Excel (.xlsx, .xls, .csv) import -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<!-- Universal Real-time Synchronizer -->
-<script src="/sync-client.js"></script>
+<!-- Universal Real-time Synchronizer (Relative path for file:/// and web) -->
+<script src="sync-client.js"></script>
 
 <style>
 
@@ -18,7 +18,8 @@
 ===================================================== */
 @font-face {
     font-family: "UTM Impact";
-    src: url("UTM Impact.ttf") format("truetype");
+    src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
+    font-display: swap;
 }
 
 /* =====================================================
@@ -1301,12 +1302,36 @@ if (window.Attack25Sync) {
         }
     });
 
-    Attack25Sync.onConnectionChange((connected) => {
+    Attack25Sync.onConnectionChange((conn) => {
         const dot = document.getElementById("connectionDot");
         const text = document.getElementById("connectionText");
-        if (dot) dot.style.background = connected ? '#2fb344' : '#e03131';
-        if (text) text.textContent = connected ? 'ONLINE (WS)' : 'OFFLINE';
+        const isOnline = typeof conn === 'object' ? conn.connected : !!conn;
+        const mode = typeof conn === 'object' ? conn.mode : 'websocket';
+
+        if (dot) dot.style.background = isOnline ? '#2fb344' : '#e03131';
+        if (text) {
+            if (isOnline) {
+                text.textContent = 'WS REAL-TIME';
+                text.title = `WebSocket kết nối tại: ${conn.url || 'localhost:3000'}`;
+            } else {
+                text.textContent = 'ĐANG KẾT NỐI WS...';
+                text.title = 'Nhấp để cấu hình địa chỉ máy chủ WebSocket';
+            }
+        }
     });
+
+    const connBox = document.getElementById("connectionBox");
+    if (connBox) {
+        connBox.style.cursor = 'pointer';
+        connBox.onclick = () => {
+            const current = localStorage.getItem('attack25_ws_server_host') || window.location.host || 'localhost:3000';
+            const server = prompt("Nhập địa chỉ máy chủ WebSocket (IP:PORT ví dụ: 192.168.1.10:3000 hoặc localhost:3000):", current);
+            if (server !== null) {
+                Attack25Sync.setServerHost(server.trim());
+                showToast(`Đang kết nối lại tới máy chủ: ${server.trim() || 'Mặc định'}`);
+            }
+        };
+    }
 }
 
 
@@ -1778,6 +1803,18 @@ function selectPanel(number) {
     broadcastState("selectPanel");
 }
 
+function recalculateScoresFromBoard() {
+    ['red', 'green', 'white', 'blue'].forEach(color => {
+        const count = gameState.panels.filter(p => p.color === color).length;
+        gameState.players[color].score = count;
+        const scoreEl = document.getElementById("score" + capitalize(color));
+        if (scoreEl && document.activeElement !== scoreEl) {
+            scoreEl.value = count;
+        }
+    });
+    updatePreviewScores();
+}
+
 function setPanelColor(color) {
     if (gameState.selectedPanel === null) {
         showToast("Hãy chọn một ô trên bảng trước.");
@@ -1787,9 +1824,10 @@ function setPanelColor(color) {
     const panel = gameState.panels.find(item => item.number === gameState.selectedPanel);
     if (panel) {
         panel.color = color;
+        recalculateScoresFromBoard();
         renderPanels();
         broadcastState("setColor");
-        showToast(`Đã gán ô ${panel.number}: ${color ? color.toUpperCase() : 'MẶC ĐỊNH'}`);
+        showToast(`Đã gán ô ${panel.number}: ${color ? color.toUpperCase() : 'MẶC ĐỊNH'} (Điểm: ${gameState.players[color || 'red'] ? gameState.players[color].score : 0})`);
     }
 }
 
@@ -1830,6 +1868,7 @@ function resetSelectedPanel() {
     if (panel) {
         panel.used = false;
         panel.color = null;
+        recalculateScoresFromBoard();
         renderPanels();
         broadcastState("resetPanel");
         showToast(`Đã reset ô ${panel.number}`);
@@ -1849,6 +1888,7 @@ function clearSelection() {
 }
 
 function renderPanels() {
+    recalculateScoresFromBoard();
     const selected = gameState.selectedPanel;
 
     document.querySelectorAll(".panel-button").forEach(button => {

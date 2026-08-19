@@ -8,12 +8,15 @@
 
 <!-- SheetJS for Excel (.xlsx, .xls, .csv) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Universal Real-time Synchronizer (Relative path) -->
+<script src="sync-client.js"></script>
 
 <style>
 
 @font-face {
     font-family: "UTM Impact";
-    src: url("UTM Impact.ttf") format("truetype");
+    src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
+    font-display: swap;
 }
 
 :root {
@@ -540,7 +543,6 @@ html, body {
 
 <div class="toast-container" id="toastContainer"></div>
 
-<script src="/sync-client.js"></script>
 <script>
 
 /* =====================================================
@@ -689,11 +691,17 @@ if (window.Attack25Sync) {
     Attack25Sync.onSound((sound) => {
         playSound(sound);
     });
-    Attack25Sync.onConnectionChange((connected) => {
+    Attack25Sync.onConnectionChange((conn) => {
         const dot = document.querySelector('.sync-dot');
         const text = document.querySelector('.sync-status span');
-        if (dot) dot.style.background = connected ? '#22c55e' : '#ef4444';
-        if (text) text.textContent = connected ? 'KẾT NỐI REAL-TIME' : 'MẤT KẾT NỐI';
+        const isOnline = typeof conn === 'object' ? conn.connected : !!conn;
+        const mode = typeof conn === 'object' ? conn.mode : 'websocket';
+
+        if (dot) dot.style.background = isOnline ? '#22c55e' : '#ef4444';
+        if (text) {
+            if (isOnline) text.textContent = 'WS REAL-TIME';
+            else text.textContent = 'ĐANG KẾT NỐI WS...';
+        }
     });
 }
 
@@ -704,6 +712,16 @@ if (window.Attack25Sync) {
 function applyState(state) {
     if (!state) return;
     gameState = state;
+
+    // Recalculate scores from board panels
+    if (state.panels && Array.isArray(state.panels)) {
+        ['red', 'green', 'white', 'blue'].forEach(color => {
+            const count = state.panels.filter(p => p.color === color).length;
+            if (state.players && state.players[color]) {
+                state.players[color].score = count;
+            }
+        });
+    }
 
     // Render Players
     if (state.players) {

@@ -6,6 +6,9 @@
 
 <title>Panel Quiz Attack 25 - Projector Display</title>
 
+<!-- Universal Real-time Synchronizer (Relative path) -->
+<script src="sync-client.js"></script>
+
 <style>
 
 /* =====================================================
@@ -14,7 +17,8 @@
 
 @font-face {
     font-family: "UTM Impact";
-    src: url("UTM Impact.ttf") format("truetype");
+    src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
+    font-display: swap;
 }
 
 * {
@@ -648,27 +652,7 @@ function setPlayerName(playerNumber, name) {
 function applyGameState(state) {
     if (!state) return;
 
-    // 1. Cập nhật tên và điểm người chơi
-    if (state.players) {
-        if (state.players.red) {
-            setScore("red", state.players.red.score);
-            setPlayerName(1, state.players.red.name);
-        }
-        if (state.players.green) {
-            setScore("green", state.players.green.score);
-            setPlayerName(2, state.players.green.name);
-        }
-        if (state.players.white) {
-            setScore("white", state.players.white.score);
-            setPlayerName(3, state.players.white.name);
-        }
-        if (state.players.blue) {
-            setScore("blue", state.players.blue.score);
-            setPlayerName(4, state.players.blue.name);
-        }
-    }
-
-    // 2. Cập nhật các ô trên bảng
+    // 1. Cập nhật các ô trên bảng
     if (state.panels && Array.isArray(state.panels)) {
         state.panels.forEach(panelData => {
             const elObj = panelElements[panelData.number];
@@ -692,6 +676,30 @@ function applyGameState(state) {
                 elObj.image.src = "DefaultPanel.png";
             }
         });
+
+        // Điểm của người chơi luôn đúng bằng số ô người đó chiếm được trên bảng
+        const redScore = state.panels.filter(p => p.color === 'red').length;
+        const greenScore = state.panels.filter(p => p.color === 'green').length;
+        const whiteScore = state.panels.filter(p => p.color === 'white').length;
+        const blueScore = state.panels.filter(p => p.color === 'blue').length;
+
+        setScore("red", redScore);
+        setScore("green", greenScore);
+        setScore("white", whiteScore);
+        setScore("blue", blueScore);
+    } else if (state.players) {
+        if (state.players.red) setScore("red", state.players.red.score);
+        if (state.players.green) setScore("green", state.players.green.score);
+        if (state.players.white) setScore("white", state.players.white.score);
+        if (state.players.blue) setScore("blue", state.players.blue.score);
+    }
+
+    // 2. Cập nhật tên người chơi
+    if (state.players) {
+        if (state.players.red) setPlayerName(1, state.players.red.name);
+        if (state.players.green) setPlayerName(2, state.players.green.name);
+        if (state.players.white) setPlayerName(3, state.players.white.name);
+        if (state.players.blue) setPlayerName(4, state.players.blue.name);
     }
 
     // 3. Cập nhật Buzzer Spotlight & Banner
@@ -795,10 +803,7 @@ try {
 if (gameChannel) {
     gameChannel.postMessage({ type: "display_ready" });
 }
-</script>
 
-<script src="/sync-client.js"></script>
-<script>
 // Connect Universal Synchronizer (WebSocket + BroadcastChannel + localStorage)
 if (window.Attack25Sync) {
     Attack25Sync.onStateChange((state) => {
