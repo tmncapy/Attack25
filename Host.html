@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Panel Quiz Attack 25 - Máy Host / MC</title>
+
+<!-- SheetJS for Excel (.xlsx, .xls, .csv) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+
+@font-face {
+    font-family: "UTM Impact";
+    src: url("UTM Impact.ttf") format("truetype");
+}
+
+:root {
+    --bg: #090c12;
+    --panel: #131822;
+    --panel-2: #1b2230;
+    --border: #283244;
+
+    --text: #f8fafc;
+    --muted: #94a3b8;
+
+    --gold: #f59f00;
+    --gold-light: #ffd43b;
+
+    --red: #ef4444;
+    --green: #22c55e;
+    --blue: #3b82f6;
+    --white: #f1f5f9;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    overflow-x: hidden;
+}
+
+.host-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 100vh;
+}
+
+/* HEADER */
+.host-header {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand-badge {
+    background: linear-gradient(135deg, #f59f00, #d97706);
+    color: #111;
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 16px;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.brand-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+}
+
+.brand-tag {
+    font-size: 11px;
+    color: var(--muted);
+    background: #1e293b;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.sync-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.sync-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 6px #22c55e;
+}
+
+/* GRID LAYOUT */
+.host-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 10px;
+    flex: 1;
+}
+
+/* CARDS */
+.host-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* BIG TELEPROMPTER */
+.teleprompter {
+    background: linear-gradient(180deg, #182232 0%, #101622 100%);
+    border: 2px solid #334155;
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.q-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.q-number {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 20px;
+    color: var(--gold-light);
+    background: rgba(245, 159, 0, 0.15);
+    border: 1px solid rgba(245, 159, 0, 0.3);
+    padding: 2px 10px;
+    border-radius: 6px;
+}
+
+.q-total {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.q-text {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: #ffffff;
+    min-height: 90px;
+    user-select: text;
+}
+
+.q-answer {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1.5px solid rgba(34, 197, 94, 0.5);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.q-answer-label {
+    font-size: 12px;
+    font-weight: 900;
+    color: #22c55e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.q-answer-text {
+    font-size: 20px;
+    font-weight: 800;
+    color: #4ade80;
+    user-select: text;
+}
+
+/* TELEPROMPTER BUTTONS */
+.nav-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 8px;
+}
+
+.btn {
+    height: 42px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: #fff;
+    transition: all 0.15s ease;
+}
+
+.btn:hover { filter: brightness(1.15); }
+.btn:active { transform: scale(0.98); }
+
+.btn-gray { background: #334155; }
+.btn-green { background: #16a34a; }
+.btn-red { background: #dc2626; }
+.btn-orange { background: #d97706; }
+.btn-gold { background: #f59f00; color: #111; font-weight: 800; }
+
+.jump-row {
+    display: flex;
+    gap: 8px;
+}
+
+.select-question {
+    flex: 1;
+    height: 38px;
+    background: #1e293b;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    padding: 0 10px;
+    outline: none;
+}
+
+/* BUZZER STATUS BOX */
+.buzzer-box {
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1e293b;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.buzzer-box.armed {
+    background: linear-gradient(90deg, #14532d, #166534);
+    border-color: #22c55e;
+    box-shadow: 0 0 14px rgba(34, 197, 94, 0.3);
+}
+
+.buzzer-box.buzzed {
+    background: linear-gradient(90deg, #78350f, #92400e);
+    border-color: #f59f00;
+    box-shadow: 0 0 16px rgba(245, 159, 0, 0.4);
+}
+
+.buzzer-box.locked {
+    background: linear-gradient(90deg, #450a0a, #7f1d1d);
+    border-color: #ef4444;
+}
+
+.buzzer-status-text {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 22px;
+}
+
+.buzzer-actions {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 8px;
+}
+
+.judge-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+/* PLAYERS LEADERBOARD */
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.player-item {
+    background: #182232;
+    border: 1px solid var(--border);
+    border-left: 6px solid #64748b;
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.player-item.red { border-left-color: var(--red); }
+.player-item.green { border-left-color: var(--green); }
+.player-item.white { border-left-color: var(--white); }
+.player-item.blue { border-left-color: var(--blue); }
+
+.player-item.buzzed {
+    background: #2e2612;
+    border-color: #f59f00;
+    box-shadow: 0 0 12px rgba(245, 159, 0, 0.3);
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.player-num {
+    width: 26px;
+    height: 26px;
+    background: #0f172a;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+}
+
+.player-name {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.player-score {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 24px;
+    color: var(--gold-light);
+}
+
+/* TOAST */
+.toast-container {
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.toast {
+    background: #1e293b;
+    border: 1px solid #475569;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    font-size: 13px;
+    margin-top: 6px;
+    animation: toastIn 0.2s ease-out;
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 800px) {
+    .host-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="host-container">
+
+    <!-- HEADER -->
+    <header class="host-header">
+        <div class="brand">
+            <span class="brand-badge">HOST</span>
+            <span class="brand-title">PANEL QUIZ ATTACK 25</span>
+            <span class="brand-tag">MÀN HÌNH MC</span>
+        </div>
+
+        <div class="sync-status">
+            <div class="sync-dot"></div>
+            <span>KẾT NỐI HỆ THỐNG</span>
+        </div>
+    </header>
+
+    <!-- GRID -->
+    <main class="host-grid">
+
+        <!-- LEFT: QUESTION TELEPROMPTER -->
+        <div class="host-card">
+
+            <div class="teleprompter">
+                <div class="q-meta">
+                    <span class="q-number" id="hostQNumber">CÂU HỎI 1</span>
+                    <span class="q-total" id="hostQTotal">1 / 27 câu</span>
+                </div>
+
+                <!-- QUESTION TEXT -->
+                <div class="q-text" id="hostQText">
+                    Đang tải câu hỏi...
+                </div>
+
+                <!-- ANSWER BOX -->
+                <div class="q-answer">
+                    <span class="q-answer-label">ĐÁP ÁN:</span>
+                    <span class="q-answer-text" id="hostQAnswer">-</span>
+                </div>
+            </div>
+
+            <!-- CONTROLS -->
+            <div class="nav-buttons">
+                <button class="btn btn-gray" onclick="prevQuestion()">
+                    <span>⏮</span> Câu trước
+                </button>
+                <button class="btn btn-green" onclick="armBuzzer()">
+                    <span>🔔</span> MỞ CHUÔNG [Space]
+                </button>
+                <button class="btn btn-orange" onclick="nextQuestion()">
+                    Câu sau <span>⏭</span>
+                </button>
+            </div>
+
+            <div class="jump-row">
+                <select class="select-question" id="hostQSelect" onchange="jumpToQuestion(this.value)">
+                    <!-- Populated dynamically -->
+                </select>
+                <button class="btn btn-gray" style="width: auto; padding: 0 12px;" onclick="randomQuestion()">
+                    🎲 Ngẫu nhiên
+                </button>
+            </div>
+
+        </div>
+
+        <!-- RIGHT: BUZZER & PLAYERS -->
+        <div class="host-card">
+
+            <!-- BUZZER MONITOR -->
+            <div class="buzzer-box locked" id="hostBuzzerBox">
+                <div>
+                    <div style="font-size:11px; text-transform:uppercase; color:var(--muted);">Chuông giành quyền</div>
+                    <div class="buzzer-status-text" id="hostBuzzerStatus">ĐÃ KHÓA CHUÔNG</div>
+                </div>
+                <div id="hostWinnerInfo" style="text-align:right; font-size:13px; font-weight:bold;">
+                    Chưa có ai bấm
+                </div>
+            </div>
+
+            <!-- BUZZER ACTIONS -->
+            <div class="buzzer-actions">
+                <button class="btn btn-green" onclick="armBuzzer()">
+                    🔔 Mở Chuông
+                </button>
+                <button class="btn btn-red" onclick="lockBuzzer()">
+                    🔒 Khóa
+                </button>
+                <button class="btn btn-gray" onclick="resetBuzzer()">
+                    🔄 Reset [Del]
+                </button>
+            </div>
+
+            <!-- JUDGE ACTIONS -->
+            <div class="judge-actions">
+                <button class="btn btn-green" onclick="judgeCorrect()">
+                    ✅ ĐÚNG (+1 Điểm) [Enter]
+                </button>
+                <button class="btn btn-red" onclick="judgeWrong()">
+                    ❌ SAI (Khóa chuông) [Esc]
+                </button>
+            </div>
+
+            <!-- PLAYERS SCORE LIST -->
+            <div style="font-size:13px; font-weight:bold; margin-top:6px; color:var(--muted); text-transform:uppercase;">
+                Điểm số người chơi
+            </div>
+
+            <div class="players-list">
+                <div class="player-item red" id="playerItemRed">
+                    <div class="player-info">
+                        <div class="player-num">1</div>
+                        <div class="player-name" id="hostNameRed">PLAYER 1</div>
+                    </div>
+                    <div class="player-score" id="hostScoreRed">0</div>
+                </div>
+
+                <div class="player-item green" id="playerItemGreen">
+                    <div class="player-info">
+                        <div class="player-num">2</div>
+                        <div class="player-name" id="hostNameGreen">PLAYER 2</div>
+                    </div>
+                    <div class="player-score" id="hostScoreGreen">0</div>
+                </div>
+
+                <div class="player-item white" id="playerItemWhite">
+                    <div class="player-info">
+                        <div class="player-num">3</div>
+                        <div class="player-name" id="hostNameWhite">PLAYER 3</div>
+                    </div>
+                    <div class="player-score" id="hostScoreWhite">0</div>
+                </div>
+
+                <div class="player-item blue" id="playerItemBlue">
+                    <div class="player-info">
+                        <div class="player-num">4</div>
+                        <div class="player-name" id="hostNameBlue">PLAYER 4</div>
+                    </div>
+                    <div class="player-score" id="hostScoreBlue">0</div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="/sync-client.js"></script>
+<script>
+
+/* =====================================================
+   AUDIO ENGINE
+===================================================== */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+
+    if (type === 'buzzer') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+    } else if (type === 'correct') {
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.2, now + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.08);
+            osc.stop(now + i * 0.08 + 0.35);
+        });
+    } else if (type === 'wrong') {
+        [180, 140].forEach(freq => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.45);
+        });
+    } else if (type === 'arm') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(880, now + 0.08);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+    }
+}
+
+
+/* =====================================================
+   QUESTIONS & STATE
+===================================================== */
+let questionsList = [];
+let currentQuestionIndex = 0;
+
+try {
+    const savedQ = localStorage.getItem("attack25_questions");
+    if (savedQ) questionsList = JSON.parse(savedQ);
+} catch (e) {}
+
+let gameState = {
+    selectedPanel: null,
+    panels: Array.from({ length: 25 }, (_, i) => ({ number: i + 1, used: false, color: null })),
+    players: {
+        red: { name: "PLAYER 1", score: 0 },
+        green: { name: "PLAYER 2", score: 0 },
+        white: { name: "PLAYER 3", score: 0 },
+        blue: { name: "PLAYER 4", score: 0 }
+    },
+    buzzer: {
+        status: 'locked',
+        winner: null,
+        buzzTime: null,
+        pressOrder: [],
+        lockedPlayers: []
+    }
+};
+
+try {
+    const saved = localStorage.getItem("attack25_gamestate");
+    if (saved) gameState = JSON.parse(saved);
+} catch (e) {}
+
+
+/* =====================================================
+   BROADCAST & SYNC
+===================================================== */
+let gameChannel = null;
+
+try {
+    gameChannel = new BroadcastChannel("panel_quiz_attack_25");
+    gameChannel.onmessage = (event) => {
+        if (event.data) {
+            if (event.data.state) applyState(event.data.state);
+            if (event.data.sound) playSound(event.data.sound);
+        }
+    };
+} catch (e) {}
+
+window.addEventListener('storage', (e) => {
+    if (e.key === 'attack25_gamestate' && e.newValue) {
+        try { applyState(JSON.parse(e.newValue)); } catch (err) {}
+    }
+    if (e.key === 'attack25_questions' && e.newValue) {
+        try {
+            questionsList = JSON.parse(e.newValue);
+            renderQuestion();
+        } catch (err) {}
+    }
+});
+
+window.addEventListener('message', (e) => {
+    if (e.data && e.data.state) applyState(e.data.state);
+});
+
+function broadcastState(action = "update", soundEvent = null) {
+    if (window.Attack25Sync) {
+        Attack25Sync.broadcastState(gameState, action, soundEvent);
+    }
+}
+
+if (window.Attack25Sync) {
+    Attack25Sync.onStateChange((state) => {
+        applyState(state);
+    });
+    Attack25Sync.onQuestionsChange((questions) => {
+        questionsList = questions;
+        renderQuestion();
+    });
+    Attack25Sync.onSound((sound) => {
+        playSound(sound);
+    });
+    Attack25Sync.onConnectionChange((connected) => {
+        const dot = document.querySelector('.sync-dot');
+        const text = document.querySelector('.sync-status span');
+        if (dot) dot.style.background = connected ? '#22c55e' : '#ef4444';
+        if (text) text.textContent = connected ? 'KẾT NỐI REAL-TIME' : 'MẤT KẾT NỐI';
+    });
+}
+
+
+/* =====================================================
+   RENDER LOGIC
+==================================================== */
+function applyState(state) {
+    if (!state) return;
+    gameState = state;
+
+    // Render Players
+    if (state.players) {
+        ['red', 'green', 'white', 'blue'].forEach(color => {
+            const cap = color.charAt(0).toUpperCase() + color.slice(1);
+            const p = state.players[color];
+            if (p) {
+                const nameEl = document.getElementById("hostName" + cap);
+                const scoreEl = document.getElementById("hostScore" + cap);
+                if (nameEl) nameEl.textContent = p.name;
+                if (scoreEl) scoreEl.textContent = p.score;
+            }
+        });
+    }
+
+    // Render Buzzer
+    if (state.buzzer) {
+        const b = state.buzzer;
+        const box = document.getElementById("hostBuzzerBox");
+        const statusEl = document.getElementById("hostBuzzerStatus");
+        const winnerEl = document.getElementById("hostWinnerInfo");
+
+        box.className = "buzzer-box " + b.status;
+
+        // Reset player items highlight
+        ['red', 'green', 'white', 'blue'].forEach(color => {
+            const cap = color.charAt(0).toUpperCase() + color.slice(1);
+            const el = document.getElementById("playerItem" + cap);
+            if (el) el.classList.remove("buzzed");
+        });
+
+        if (b.status === 'armed') {
+            statusEl.textContent = "SẴN SÀNG BẤM CHUÔNG";
+            winnerEl.innerHTML = '<span style="color:#4ade80;">Chờ thí sinh bấm...</span>';
+        } else if (b.status === 'buzzed' && b.winner) {
+            const pName = state.players[b.winner] ? state.players[b.winner].name : b.winner.toUpperCase();
+            statusEl.textContent = pName.toUpperCase();
+            winnerEl.innerHTML = `<span style="color:#ffd43b; font-size:15px;">#1: ${pName} (+${b.buzzTime}s)</span>`;
+
+            const cap = b.winner.charAt(0).toUpperCase() + b.winner.slice(1);
+            const el = document.getElementById("playerItem" + cap);
+            if (el) el.classList.add("buzzed");
+        } else {
+            statusEl.textContent = "ĐÃ KHÓA CHUÔNG";
+            winnerEl.textContent = "Nhấn Mở Chuông";
+        }
+    }
+}
+
+function renderQuestion() {
+    if (!questionsList || questionsList.length === 0) {
+        document.getElementById('hostQNumber').textContent = 'CHƯA CÓ CÂU HỎI';
+        document.getElementById('hostQTotal').textContent = '0 / 0 câu';
+        document.getElementById('hostQText').textContent = 'Vui lòng nhập câu hỏi từ trang Controller hoặc tải file Excel.';
+        document.getElementById('hostQAnswer').textContent = '-';
+        return;
+    }
+
+    if (currentQuestionIndex < 0) currentQuestionIndex = 0;
+    if (currentQuestionIndex >= questionsList.length) currentQuestionIndex = questionsList.length - 1;
+
+    const q = questionsList[currentQuestionIndex];
+    const stt = q.stt || (currentQuestionIndex + 1);
+
+    document.getElementById('hostQNumber').textContent = `CÂU HỎI ${stt}`;
+    document.getElementById('hostQTotal').textContent = `${currentQuestionIndex + 1} / ${questionsList.length} câu`;
+    document.getElementById('hostQText').textContent = q.question || '';
+    document.getElementById('hostQAnswer').textContent = q.answer || 'Chưa có đáp án';
+
+    // Dropdown
+    const select = document.getElementById('hostQSelect');
+    select.innerHTML = '';
+    questionsList.forEach((item, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        const itemStt = item.stt || (idx + 1);
+        const shortQ = item.question ? item.question.substring(0, 45) + (item.question.length > 45 ? '...' : '') : '';
+        opt.textContent = `Câu ${itemStt}: ${shortQ}`;
+        opt.selected = idx === currentQuestionIndex;
+        select.appendChild(opt);
+    });
+}
+
+function prevQuestion() {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        renderQuestion();
+        resetBuzzer();
+    }
+}
+
+function nextQuestion() {
+    if (currentQuestionIndex < questionsList.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+        resetBuzzer();
+    }
+}
+
+function jumpToQuestion(idx) {
+    currentQuestionIndex = parseInt(idx, 10);
+    renderQuestion();
+    resetBuzzer();
+}
+
+function randomQuestion() {
+    if (questionsList.length <= 1) return;
+    let nextIdx = Math.floor(Math.random() * questionsList.length);
+    if (nextIdx === currentQuestionIndex) nextIdx = (nextIdx + 1) % questionsList.length;
+    currentQuestionIndex = nextIdx;
+    renderQuestion();
+    resetBuzzer();
+    showToast(`Đã chọn ngẫu nhiên câu số ${questionsList[currentQuestionIndex].stt || (currentQuestionIndex + 1)}`);
+}
+
+
+/* =====================================================
+   BUZZER ACTIONS
+===================================================== */
+let buzzerArmTime = null;
+
+function armBuzzer() {
+    gameState.buzzer.status = 'armed';
+    gameState.buzzer.winner = null;
+    gameState.buzzer.buzzTime = null;
+    gameState.buzzer.pressOrder = [];
+    buzzerArmTime = performance.now();
+
+    playSound('arm');
+    applyState(gameState);
+    broadcastState('buzzer_armed', 'arm');
+    showToast('🔔 ĐÃ MỞ CHUÔNG CHO THÍ SINH');
+}
+
+function lockBuzzer() {
+    gameState.buzzer.status = 'locked';
+    applyState(gameState);
+    broadcastState('buzzer_locked');
+    showToast('🔒 ĐÃ KHÓA CHUÔNG');
+}
+
+function resetBuzzer() {
+    gameState.buzzer.status = 'locked';
+    gameState.buzzer.winner = null;
+    gameState.buzzer.buzzTime = null;
+    gameState.buzzer.pressOrder = [];
+    gameState.buzzer.lockedPlayers = [];
+    applyState(gameState);
+    broadcastState('buzzer_reset');
+    showToast('🔄 ĐÃ RESET CHUÔNG');
+}
+
+function judgeCorrect() {
+    if (!gameState.buzzer.winner) {
+        showToast('Chưa có ai bấm chuông để chấm đúng!');
+        return;
+    }
+    const winner = gameState.buzzer.winner;
+    gameState.players[winner].score += 1;
+    playSound('correct');
+    showToast(`✅ CHÍNH XÁC! +1 Điểm cho ${gameState.players[winner].name}`);
+    gameState.buzzer.status = 'locked';
+    applyState(gameState);
+    broadcastState('judge_correct', 'correct');
+}
+
+function judgeWrong() {
+    if (!gameState.buzzer.winner) {
+        showToast('Chưa có ai bấm chuông để chấm sai!');
+        return;
+    }
+    const wrongPlayer = gameState.buzzer.winner;
+    playSound('wrong');
+    showToast(`❌ SAI RỒI! Khóa chuông ${gameState.players[wrongPlayer].name}`);
+
+    if (!gameState.buzzer.lockedPlayers.includes(wrongPlayer)) {
+        gameState.buzzer.lockedPlayers.push(wrongPlayer);
+    }
+
+    gameState.buzzer.winner = null;
+    gameState.buzzer.buzzTime = null;
+
+    if (gameState.buzzer.lockedPlayers.length >= 4) {
+        gameState.buzzer.status = 'locked';
+    } else {
+        gameState.buzzer.status = 'armed';
+        buzzerArmTime = performance.now();
+    }
+
+    applyState(gameState);
+    broadcastState('judge_wrong', 'wrong');
+}
+
+/* KEYBOARD SHORTCUTS */
+window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    const key = e.key.toLowerCase();
+    if (key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        if (gameState.buzzer.status === 'armed') lockBuzzer();
+        else armBuzzer();
+    } else if (key === 'delete' || key === 'backspace') {
+        e.preventDefault();
+        resetBuzzer();
+    } else if (key === 'enter') {
+        judgeCorrect();
+    } else if (key === 'escape') {
+        judgeWrong();
+    } else if (key === 'arrowleft') {
+        prevQuestion();
+    } else if (key === 'arrowright') {
+        nextQuestion();
+    }
+});
+
+function showToast(msg) {
+    const container = document.getElementById("toastContainer");
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+// Init
+renderQuestion();
+applyState(gameState);
+broadcastState('sync');
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Attack 25 - Player 2 (Xanh Lá)</title>
+
+<style>
+@font-face {
+    font-family: "UTM Impact";
+    src: url("UTM Impact.ttf") format("truetype");
+}
+
+:root {
+    --team-color: #22c55e;
+    --team-glow: rgba(34, 197, 94, 0.6);
+    --team-dark: #052e16;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #080a0f;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.full-buzzer-screen {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: clamp(16px, 4vw, 32px);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.top-bar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.team-badge {
+    background: rgba(0, 0, 0, 0.45);
+    border: 2px solid var(--team-color);
+    padding: 8px 16px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(8px);
+}
+
+.team-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--team-color);
+    box-shadow: 0 0 10px var(--team-color);
+}
+
+.team-title {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: clamp(16px, 2.5vw, 22px);
+    color: #fff;
+    letter-spacing: 0.5px;
+}
+
+.score-badge {
+    background: rgba(0, 0, 0, 0.45);
+    border: 2px solid #f59f00;
+    padding: 6px 16px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(8px);
+}
+
+.score-label {
+    font-size: 11px;
+    color: #cbd5e1;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.score-val {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: clamp(18px, 3vw, 26px);
+    color: #ffd43b;
+}
+
+.center-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 16px;
+    z-index: 10;
+    pointer-events: none;
+    max-width: 90%;
+}
+
+.buzzer-icon {
+    font-size: clamp(64px, 15vw, 130px);
+    line-height: 1;
+    transition: transform 0.2s ease;
+    filter: drop-shadow(0 0 20px rgba(0,0,0,0.5));
+}
+
+.buzzer-main-text {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: clamp(28px, 6.5vw, 64px);
+    letter-spacing: 1px;
+    line-height: 1.1;
+    color: #ffffff;
+    text-shadow: 0 4px 16px rgba(0,0,0,0.7);
+}
+
+.buzzer-sub-text {
+    font-size: clamp(14px, 2.2vw, 22px);
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(0, 0, 0, 0.35);
+    padding: 8px 20px;
+    border-radius: 20px;
+}
+
+.bottom-bar {
+    z-index: 10;
+    pointer-events: none;
+    font-size: clamp(11px, 1.8vw, 14px);
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+}
+
+/* STATES */
+.full-buzzer-screen.locked {
+    background: radial-gradient(circle at center, #171b26 0%, #090c13 100%);
+    border: 6px solid #232d3f;
+}
+.full-buzzer-screen.locked .buzzer-main-text { color: #64748b; }
+
+.full-buzzer-screen.armed {
+    background: radial-gradient(circle at center, var(--team-color) 0%, var(--team-dark) 100%);
+    border: 8px solid #ffffff;
+    box-shadow: inset 0 0 80px rgba(255, 255, 255, 0.4), 0 0 60px var(--team-glow);
+    animation: armedPulse 0.8s infinite alternate ease-in-out;
+}
+@keyframes armedPulse {
+    0% { filter: brightness(1); }
+    100% { filter: brightness(1.25); box-shadow: inset 0 0 100px rgba(255,255,255,0.6), 0 0 100px var(--team-glow); }
+}
+
+.full-buzzer-screen.armed:active {
+    transform: scale(0.98);
+    filter: brightness(1.5) !important;
+}
+
+.full-buzzer-screen.winner-me {
+    background: radial-gradient(circle at center, #f59f00 0%, #78350f 100%);
+    border: 8px solid #ffd43b;
+    box-shadow: inset 0 0 100px #ffd43b, 0 0 80px #f59f00;
+    animation: winnerPulse 0.6s infinite alternate;
+}
+@keyframes winnerPulse {
+    0% { transform: scale(1); filter: brightness(1.1); }
+    100% { transform: scale(1.02); filter: brightness(1.35); }
+}
+
+.full-buzzer-screen.winner-other {
+    background: radial-gradient(circle at center, #1e2430 0%, #0d1117 100%);
+    border: 6px solid #334155;
+}
+.full-buzzer-screen.winner-other .buzzer-main-text { color: #94a3b8; }
+
+.full-buzzer-screen.penalized {
+    background: radial-gradient(circle at center, #2e0d0d 0%, #0f0404 100%);
+    border: 6px solid #ef4444;
+}
+.full-buzzer-screen.penalized .buzzer-main-text { color: #f87171; }
+</style>
+</head>
+
+<body>
+
+<div class="full-buzzer-screen locked" id="screen" onclick="triggerBuzz()" ontouchstart="triggerBuzzTouch(event)">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <div class="team-badge">
+            <div class="team-dot"></div>
+            <div class="team-title" id="playerNameDisplay">PLAYER 2 (XANH LÁ)</div>
+        </div>
+        <div class="score-badge">
+            <span class="score-label">ĐIỂM:</span>
+            <span class="score-val" id="playerScoreDisplay">0</span>
+        </div>
+    </div>
+
+    <!-- CENTER GIANT BUZZER -->
+    <div class="center-content">
+        <div class="buzzer-icon" id="buzzerIcon">🔒</div>
+        <div class="buzzer-main-text" id="buzzerMainText">ĐÃ KHÓA CHUÔNG</div>
+        <div class="buzzer-sub-text" id="buzzerSubText">Chờ lệnh mở từ MC...</div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="bottom-bar">
+        <span>CHẠM BẤT KỲ ĐÂU TRÊN MÀN HÌNH ĐỂ BẤM CHUÔNG</span>
+    </div>
+
+</div>
+
+<script src="/sync-client.js"></script>
+<script>
+const MY_ROLE = 'green';
+
+let audioCtx = null;
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+}
+
+function playBuzzChime() {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.3);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+    } catch (e) {}
+}
+
+let gameState = {
+    players: { green: { name: "PLAYER 2", score: 0 } },
+    buzzer: { status: 'locked', winner: null, buzzTime: null, pressOrder: [], lockedPlayers: [] }
+};
+
+if (window.Attack25Sync) {
+    Attack25Sync.onStateChange((state) => {
+        applyState(state);
+    });
+}
+
+function triggerBuzzTouch(event) {
+    event.preventDefault();
+    triggerBuzz();
+}
+
+function triggerBuzz() {
+    getAudioContext();
+
+    if (gameState.buzzer.status !== 'armed') return;
+    if (gameState.buzzer.lockedPlayers && gameState.buzzer.lockedPlayers.includes(MY_ROLE)) return;
+
+    if (navigator.vibrate) {
+        navigator.vibrate(120);
+    }
+    playBuzzChime();
+
+    if (window.Attack25Sync) {
+        Attack25Sync.sendPlayerBuzz(MY_ROLE);
+    }
+}
+
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.key === 'Enter' || e.key === '2' || e.key === 'w') {
+        e.preventDefault();
+        triggerBuzz();
+    }
+});
+
+function applyState(state) {
+    if (!state) return;
+    gameState = state;
+
+    const me = state.players ? state.players[MY_ROLE] : null;
+    if (me) {
+        document.getElementById('playerNameDisplay').textContent = `${me.name} (XANH LÁ)`;
+        document.getElementById('playerScoreDisplay').textContent = me.score;
+    }
+
+    const b = state.buzzer || {};
+    const screen = document.getElementById('screen');
+    const icon = document.getElementById('buzzerIcon');
+    const mainText = document.getElementById('buzzerMainText');
+    const subText = document.getElementById('buzzerSubText');
+
+    screen.className = 'full-buzzer-screen';
+
+    const isLocked = b.lockedPlayers && b.lockedPlayers.includes(MY_ROLE);
+
+    if (isLocked) {
+        screen.classList.add('penalized');
+        icon.textContent = '❌';
+        mainText.textContent = 'BỊ KHÓA CHUÔNG';
+        subText.textContent = 'Bạn đã trả lời sai câu này';
+    } else if (b.status === 'armed') {
+        screen.classList.add('armed');
+        icon.textContent = '⚡';
+        mainText.textContent = 'BẤM CHUÔNG NGAY!';
+        subText.textContent = 'Chạm bất kỳ đâu trên màn hình!';
+    } else if (b.status === 'buzzed') {
+        if (b.winner === MY_ROLE) {
+            screen.classList.add('winner-me');
+            icon.textContent = '🏆';
+            mainText.textContent = 'BẠN ĐÃ GIÀNH QUYỀN!';
+            subText.textContent = `Phản xạ: +${b.buzzTime}s - Hãy trả lời!`;
+        } else {
+            const winnerName = state.players && state.players[b.winner] ? state.players[b.winner].name : b.winner.toUpperCase();
+            screen.classList.add('winner-other');
+            icon.textContent = '⏳';
+            mainText.textContent = `${winnerName} ĐÃ BẤM TRƯỚC`;
+            subText.textContent = 'Đang chờ kết quả...';
+        }
+    } else {
+        screen.classList.add('locked');
+        icon.textContent = '🔒';
+        mainText.textContent = 'ĐÃ KHÓA CHUÔNG';
+        subText.textContent = 'Lắng nghe MC đọc câu hỏi...';
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Panel Quiz Attack 25 - Máy Thí Sinh (Player Buzzer)</title>
+
+<style>
+
+@font-face {
+    font-family: "UTM Impact";
+    src: url("UTM Impact.ttf") format("truetype");
+}
+
+:root {
+    --bg: #07090e;
+    --panel: #111622;
+    --panel-2: #192030;
+    --border: #263147;
+
+    --text: #f8fafc;
+    --muted: #94a3b8;
+
+    --gold: #f59f00;
+    --gold-light: #ffd43b;
+
+    --player-color: #ef4444;
+    --player-glow: rgba(239, 68, 68, 0.4);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    overflow-x: hidden;
+    user-select: none;
+}
+
+.player-container {
+    max-width: 600px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+/* TOP ROLE SELECTOR */
+.role-picker {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    background: var(--panel);
+    padding: 6px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+.role-btn {
+    border: 2px solid transparent;
+    border-radius: 6px;
+    padding: 8px 4px;
+    background: #1a2232;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+}
+
+.role-btn.btn-red.active { background: #7f1d1d; border-color: #ef4444; color: #fff; }
+.role-btn.btn-green.active { background: #14532d; border-color: #22c55e; color: #fff; }
+.role-btn.btn-white.active { background: #475569; border-color: #f1f5f9; color: #fff; }
+.role-btn.btn-blue.active { background: #1e3a8a; border-color: #3b82f6; color: #fff; }
+
+/* PLAYER HEADER INFO */
+.player-profile-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 6px solid var(--player-color);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.profile-name {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 24px;
+    color: #fff;
+}
+
+.profile-role-tag {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+.profile-score-box {
+    text-align: right;
+}
+
+.profile-score-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+.profile-score-val {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 32px;
+    color: var(--gold-light);
+    line-height: 1;
+}
+
+/* GIANT BUZZER BUTTON */
+.buzzer-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 0;
+}
+
+.giant-buzzer {
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    border: 8px solid rgba(255, 255, 255, 0.1);
+    background: #1f293d;
+    color: #64748b;
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    outline: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    user-select: none;
+}
+
+/* LOCKED STATE */
+.giant-buzzer.locked {
+    background: #161e2e;
+    color: #475569;
+    cursor: not-allowed;
+}
+
+/* ARMED STATE (ACTIVE FOR BUZZING) */
+.giant-buzzer.armed {
+    background: var(--player-color);
+    color: #ffffff;
+    border-color: #ffffff;
+    box-shadow: 0 0 45px var(--player-glow), 0 12px 30px rgba(0, 0, 0, 0.8);
+    transform: scale(1.05);
+    animation: buzzerPulse 0.9s infinite alternate ease-in-out;
+    cursor: pointer;
+}
+
+@keyframes buzzerPulse {
+    0% { transform: scale(1.02); filter: brightness(1); }
+    100% { transform: scale(1.08); filter: brightness(1.2); box-shadow: 0 0 60px var(--player-glow); }
+}
+
+.giant-buzzer.armed:active {
+    transform: scale(0.96) !important;
+    filter: brightness(1.4);
+}
+
+/* WINNER STATE (THIS PLAYER WON) */
+.giant-buzzer.winner-me {
+    background: linear-gradient(135deg, #f59f00, #d97706);
+    color: #111;
+    border-color: #ffd43b;
+    box-shadow: 0 0 60px rgba(245, 159, 0, 0.8);
+    animation: winnerFlash 0.7s infinite alternate;
+}
+
+@keyframes winnerFlash {
+    from { transform: scale(1.04); filter: brightness(1.1); }
+    to { transform: scale(1.1); filter: brightness(1.4); }
+}
+
+/* OTHER PLAYER WON */
+.giant-buzzer.winner-other {
+    background: #1f2430;
+    color: #64748b;
+    border-color: #334155;
+    cursor: not-allowed;
+}
+
+/* PENALIZED / LOCKED INDIVIDUALLY */
+.giant-buzzer.penalized {
+    background: #2a1515;
+    color: #7f1d1d;
+    border-color: #7f1d1d;
+    cursor: not-allowed;
+}
+
+.buzzer-icon {
+    font-size: 42px;
+}
+
+.buzzer-subtext {
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* STATUS MESSAGE CARD */
+.status-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
+}
+
+.status-headline {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 18px;
+    margin-bottom: 2px;
+}
+
+.status-sub {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* MINI BOARD PREVIEW */
+.mini-board-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.mini-board-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-align: center;
+}
+
+.mini-board-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+    aspect-ratio: 1.25 / 1;
+    max-width: 220px;
+    margin: 0 auto;
+}
+
+.mini-cell {
+    background: #242e42;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 11px;
+    color: #ced4da;
+}
+
+.mini-cell.active { background: #f59f00; color: #111; font-weight: 900; }
+.mini-cell.used { background: #374151; color: #6b7280; text-decoration: line-through; }
+.mini-cell.panel-red { background: #ef4444; color: #fff; }
+.mini-cell.panel-green { background: #22c55e; color: #fff; }
+.mini-cell.panel-white { background: #f1f5f9; color: #111; }
+.mini-cell.panel-blue { background: #3b82f6; color: #fff; }
+
+</style>
+</head>
+
+<body>
+
+<div class="player-container">
+
+    <!-- TOP ROLE PICKER -->
+    <div class="role-picker">
+        <button class="role-btn btn-red active" id="btnRoleRed" onclick="selectRole('red')">
+            🔴 ĐỎ (P1)
+        </button>
+        <button class="role-btn btn-green" id="btnRoleGreen" onclick="selectRole('green')">
+            🟢 XANH LÁ (P2)
+        </button>
+        <button class="role-btn btn-white" id="btnRoleWhite" onclick="selectRole('white')">
+            ⚪ TRẮNG (P3)
+        </button>
+        <button class="role-btn btn-blue" id="btnRoleBlue" onclick="selectRole('blue')">
+            🔵 XANH DƯƠNG (P4)
+        </button>
+    </div>
+
+    <!-- PROFILE CARD -->
+    <div class="player-profile-card" id="profileCard">
+        <div>
+            <div class="profile-role-tag" id="profileRoleTag">THÍ SINH ĐỘI ĐỎ</div>
+            <div class="profile-name" id="profileName">PLAYER 1</div>
+        </div>
+        <div class="profile-score-box">
+            <div class="profile-score-label">ĐIỂM SỐ</div>
+            <div class="profile-score-val" id="profileScore">0</div>
+        </div>
+    </div>
+
+    <!-- GIANT BUZZER BUTTON -->
+    <div class="buzzer-area">
+        <button class="giant-buzzer locked" id="giantBuzzer" onclick="handleBuzzerClick()">
+            <span class="buzzer-icon" id="buzzerIcon">🔒</span>
+            <span id="buzzerText">ĐÃ KHÓA</span>
+            <span class="buzzer-subtext" id="buzzerSubtext">Chờ lệnh mở từ MC</span>
+        </button>
+    </div>
+
+    <!-- STATUS CARD -->
+    <div class="status-card">
+        <div class="status-headline" id="statusHeadline">CHUÔNG ĐANG KHÓA</div>
+        <div class="status-sub" id="statusSub">Khi MC đọc xong và mở chuông, hãy bấm nút tròn phía trên thật nhanh!</div>
+    </div>
+
+    <!-- MINI BOARD PREVIEW -->
+    <div class="mini-board-card">
+        <div class="mini-board-title">BẢNG 25 Ô HIỆN TẠI</div>
+        <div class="mini-board-grid" id="miniBoardGrid"></div>
+    </div>
+
+</div>
+
+<script>
+
+/* =====================================================
+   AUDIO ENGINE
+===================================================== */
+let audioCtx = null;
+
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+}
+
+function playBuzzerChime() {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.3);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+    } catch (e) {}
+}
+
+
+/* =====================================================
+   STATE & ROLE
+===================================================== */
+let myRole = 'red'; // 'red' | 'green' | 'white' | 'blue'
+
+const colorConfig = {
+    red: { name: 'ĐỘI ĐỎ', color: '#ef4444', glow: 'rgba(239, 68, 68, 0.5)' },
+    green: { name: 'ĐỘI XANH LÁ', color: '#22c55e', glow: 'rgba(34, 197, 94, 0.5)' },
+    white: { name: 'ĐỘI TRẮNG', color: '#f1f5f9', glow: 'rgba(241, 245, 249, 0.5)' },
+    blue: { name: 'ĐỘI XANH DƯƠNG', color: '#3b82f6', glow: 'rgba(59, 130, 246, 0.5)' }
+};
+
+let gameState = {
+    selectedPanel: null,
+    panels: Array.from({ length: 25 }, (_, i) => ({ number: i + 1, used: false, color: null })),
+    players: {
+        red: { name: "PLAYER 1", score: 0 },
+        green: { name: "PLAYER 2", score: 0 },
+        white: { name: "PLAYER 3", score: 0 },
+        blue: { name: "PLAYER 4", score: 0 }
+    },
+    buzzer: {
+        status: 'locked',
+        winner: null,
+        buzzTime: null,
+        pressOrder: [],
+        lockedPlayers: []
+    }
+};
+
+// Check url query param for role e.g. /Player.html?role=green
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('role') && colorConfig[urlParams.get('role')]) {
+    myRole = urlParams.get('role');
+}
+
+
+/* =====================================================
+   BROADCAST & SYNC
+===================================================== */
+let gameChannel = null;
+
+try {
+    gameChannel = new BroadcastChannel("panel_quiz_attack_25");
+    gameChannel.onmessage = (event) => {
+        if (event.data && event.data.state) {
+            applyState(event.data.state);
+        }
+    };
+} catch (e) {}
+
+window.addEventListener('storage', (e) => {
+    if (e.key === 'attack25_gamestate' && e.newValue) {
+        try { applyState(JSON.parse(e.newValue)); } catch (err) {}
+    }
+});
+
+window.addEventListener('message', (e) => {
+    if (e.data && e.data.state) applyState(e.data.state);
+});
+
+// Load state from localStorage on startup
+try {
+    const saved = localStorage.getItem("attack25_gamestate");
+    if (saved) applyState(JSON.parse(saved));
+} catch (e) {}
+
+
+/* =====================================================
+   ROLE SELECTION
+===================================================== */
+function selectRole(role) {
+    myRole = role;
+    const cfg = colorConfig[role];
+    document.documentElement.style.setProperty('--player-color', cfg.color);
+    document.documentElement.style.setProperty('--player-glow', cfg.glow);
+
+    ['red', 'green', 'white', 'blue'].forEach(c => {
+        const btn = document.getElementById('btnRole' + capitalize(c));
+        btn.classList.toggle('active', c === role);
+    });
+
+    applyState(gameState);
+}
+
+function capitalize(text) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+
+/* =====================================================
+   BUZZER TAP ACTION
+===================================================== */
+function handleBuzzerClick() {
+    getAudioContext();
+
+    if (gameState.buzzer.status !== 'armed') return;
+    if (gameState.buzzer.lockedPlayers.includes(myRole)) return;
+
+    // Haptic feedback for mobile
+    if (navigator.vibrate) {
+        navigator.vibrate(100);
+    }
+    playBuzzerChime();
+
+    // Dispatch buzz action
+    const buzzPayload = {
+        type: "PLAYER_BUZZ",
+        player: myRole
+    };
+
+    if (gameChannel) gameChannel.postMessage(buzzPayload);
+
+    try {
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage(buzzPayload, "*");
+        }
+    } catch (e) {}
+}
+
+// Support Space / Enter keyboard tap for player
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.key === 'Enter') {
+        e.preventDefault();
+        handleBuzzerClick();
+    }
+});
+
+
+/* =====================================================
+   RENDER UI
+===================================================== */
+function applyState(state) {
+    if (!state) return;
+    gameState = state;
+
+    // Profile info
+    const me = state.players ? state.players[myRole] : null;
+    if (me) {
+        document.getElementById('profileName').textContent = me.name;
+        document.getElementById('profileScore').textContent = me.score;
+        document.getElementById('profileRoleTag').textContent = colorConfig[myRole].name;
+    }
+
+    // Buzzer state
+    const b = state.buzzer || {};
+    const btn = document.getElementById('giantBuzzer');
+    const icon = document.getElementById('buzzerIcon');
+    const text = document.getElementById('buzzerText');
+    const subtext = document.getElementById('buzzerSubtext');
+    const headline = document.getElementById('statusHeadline');
+    const statusSub = document.getElementById('statusSub');
+
+    btn.className = 'giant-buzzer';
+
+    const isLockedPlayer = b.lockedPlayers && b.lockedPlayers.includes(myRole);
+
+    if (isLockedPlayer) {
+        btn.classList.add('penalized');
+        icon.textContent = '❌';
+        text.textContent = 'BỊ PHẠT';
+        subtext.textContent = 'Bạn đã trả lời sai câu này';
+        headline.textContent = 'ĐANG BỊ KHÓA CHUÔNG';
+        statusSub.textContent = 'Bạn bị mất quyền trả lời ở câu hỏi hiện tại.';
+    } else if (b.status === 'armed') {
+        btn.classList.add('armed');
+        icon.textContent = '⚡';
+        text.textContent = 'BẤM NGAY!';
+        subtext.textContent = 'Chạm thật nhanh để giành quyền';
+        headline.textContent = '🔔 CHUÔNG ĐÃ MỞ!';
+        statusSub.textContent = 'Hãy chạm vào nút bấm tròn để giành quyền trả lời!';
+    } else if (b.status === 'buzzed') {
+        if (b.winner === myRole) {
+            btn.classList.add('winner-me');
+            icon.textContent = '🏆';
+            text.textContent = 'BẠN ĐÃ GIÀNH QUYỀN!';
+            subtext.textContent = `Phản xạ: +${b.buzzTime}s`;
+            headline.textContent = '🎉 BẠN ĐÃ BẤM CHUÔNG ĐẦU TIÊN!';
+            statusSub.textContent = 'Hãy trả lời câu hỏi cho MC!';
+        } else {
+            const winnerName = state.players[b.winner] ? state.players[b.winner].name : b.winner.toUpperCase();
+            btn.classList.add('winner-other');
+            icon.textContent = '⏳';
+            text.textContent = `${winnerName} ĐÃ BẤM TRƯỚC`;
+            subtext.textContent = `Đang chờ kết quả...`;
+            headline.textContent = `⚡ ${winnerName} ĐÃ GIÀNH QUYỀN`;
+            statusSub.textContent = 'Nếu người chơi trả lời sai, chuông có thể được mở lại.';
+        }
+    } else {
+        btn.classList.add('locked');
+        icon.textContent = '🔒';
+        text.textContent = 'ĐÃ KHÓA';
+        subtext.textContent = 'Chờ lệnh từ MC';
+        headline.textContent = 'CHUÔNG ĐANG KHÓA';
+        statusSub.textContent = 'Lắng nghe MC đọc câu hỏi.';
+    }
+
+    renderMiniBoard(state.panels, state.selectedPanel);
+}
+
+function renderMiniBoard(panels, selectedNumber) {
+    const grid = document.getElementById('miniBoardGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    (panels || []).forEach(p => {
+        const cell = document.createElement('div');
+        cell.className = 'mini-cell';
+        cell.textContent = p.number;
+
+        if (p.number === selectedNumber) cell.classList.add('active');
+        if (p.used) cell.classList.add('used');
+        if (p.color) cell.classList.add('panel-' + p.color);
+
+        grid.appendChild(cell);
+    });
+}
+
+// Initial render
+selectRole(myRole);
+
+</script>
+
+</body>
+</html>

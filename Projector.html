@@ -4,13 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Game Interface</title>
+<title>Panel Quiz Attack 25 - Projector Display</title>
 
 <style>
 
 /* =====================================================
    FONT UTM IMPACT
-   Đặt file UTM Impact.ttf cùng thư mục với index.html
 ===================================================== */
 
 @font-face {
@@ -29,7 +28,7 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #000;
+    background: #05070c;
 }
 
 body {
@@ -47,16 +46,15 @@ body {
     position: relative;
     width: 1280px;
     height: 720px;
-
     overflow: hidden;
-
     transform-origin: center center;
+    background: radial-gradient(circle at center, #173c71 0%, #0b1730 60%, #05070c 100%);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
 }
 
 
 /* =====================================================
-   SCALE TỰ ĐỘNG
-   GIỮ ĐÚNG TỶ LỆ 16:9
+   SCALE TỰ ĐỘNG GIỮ ĐÚNG TỶ LỆ 16:9
 ===================================================== */
 
 @media (min-aspect-ratio: 16/9) {
@@ -74,7 +72,6 @@ body {
 
 /* =====================================================
    STYLE CHUNG CHO HÌNH ẢNH
-   KHÔNG WIDE - KHÔNG CROP
 ===================================================== */
 
 img {
@@ -89,38 +86,32 @@ img {
 
 .background {
     position: absolute;
-
     left: 0;
     top: 0;
-
     width: 1280px;
     height: 720px;
-
     z-index: 1;
+    pointer-events: none;
 }
 
 .background img {
     width: 100%;
     height: 100%;
+    object-fit: cover;
 }
 
 
 /* =====================================================
-   BOARD.PNG
-   Cùng vị trí với khu vực bảng
+   BOARD BACKGROUND
 ===================================================== */
 
 .board-background {
     position: absolute;
-
-    left: 0 px;
-    top: 0 px;
-
-    width: 1280 px;
-    height: 720 px;
-
+    left: 0;
+    top: 0;
+    width: 1280px;
+    height: 720px;
     z-index: 2;
-
     pointer-events: none;
 }
 
@@ -131,32 +122,22 @@ img {
 
 
 /* =====================================================
-   BẢNG 5 x 5 - CĂN KHOẢNG CÁCH ĐỀU
+   BẢNG 5 x 5
 ===================================================== */
 
 .panel-board {
     position: absolute;
-
     left: 122.42px;
     top: 65.78px;
-
     width: 778.56px;
     height: 586.56px;
-
     display: grid;
-
-    /* 5 cột */
     grid-template-columns: repeat(5, 154.712px);
-
-    /* 5 hàng có chiều cao bằng nhau */
-    grid-template-rows: repeat(4, 116.312px);
-
+    grid-template-rows: repeat(5, 116.312px);
     column-gap: 0px;
     row-gap: 0px;
-
     padding: 0;
-
-    z-index: 2;
+    z-index: 3;
 }
 
 /* =====================================================
@@ -165,38 +146,57 @@ img {
 
 .default-panel {
     position: relative;
-
     width: 155.712px;
     height: 117.312px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     overflow: hidden;
+    transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .default-panel img {
     position: absolute;
-
     left: 0;
     top: 0;
-
     width: 100%;
     height: 100%;
-
     display: block;
-
-    /*
-       Không dùng contain vì có thể tạo khoảng
-       trống khác nhau theo chiều dọc.
-    */
     object-fit: fill;
-
     transform: none;
-
     pointer-events: none;
+    transition: all 0.25s ease;
 }
+
+.default-panel.active {
+    z-index: 10;
+    transform: scale(1.04);
+    box-shadow: 0 0 25px rgba(232, 163, 38, 0.9), inset 0 0 15px rgba(255, 211, 111, 0.8);
+    border-radius: 4px;
+    animation: activeGlow 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes activeGlow {
+    0% {
+        box-shadow: 0 0 15px rgba(232, 163, 38, 0.7), inset 0 0 10px rgba(255, 211, 111, 0.6);
+        filter: brightness(1.05);
+    }
+    100% {
+        box-shadow: 0 0 30px rgba(255, 193, 7, 1), inset 0 0 20px rgba(255, 235, 59, 0.9);
+        filter: brightness(1.25);
+    }
+}
+
+.default-panel.used {
+    opacity: 0.45;
+    filter: grayscale(0.7) brightness(0.65);
+}
+
+.default-panel.used .panel-number {
+    text-decoration: line-through;
+    opacity: 0.5;
+}
+
 
 /* =====================================================
    SỐ TRÊN BẢNG 5 x 5
@@ -204,22 +204,22 @@ img {
 
 .panel-number {
     position: relative;
-
-    z-index: 2;
-
-    color: black;
-
-    font-family: "UTM Impact", Impact, sans-serif;
+    z-index: 5;
+    color: #111111;
+    font-family: "UTM Impact", Impact, "Arial Black", sans-serif;
     font-size: 60px;
-    font-weight: normal;
-
+    font-weight: 900;
     line-height: 1;
-
     text-align: center;
-
     pointer-events: none;
-
     user-select: none;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.default-panel.active .panel-number {
+    color: #000;
+    font-size: 64px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
 }
 
 
@@ -229,15 +229,11 @@ img {
 
 .score-background {
     position: absolute;
-
     left: 1012.8px;
     top: 65.28px;
-
     width: 267.84px;
     height: 582.72px;
-
     z-index: 4;
-
     pointer-events: none;
 }
 
@@ -253,24 +249,19 @@ img {
 
 .score-item {
     position: absolute;
-
     width: 83.52px;
     height: 63.36px;
-
     z-index: 5;
+    transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .score-item img {
     position: absolute;
-
     left: 0;
     top: 0;
-
     width: 100%;
     height: 100%;
-
     z-index: 1;
-
     pointer-events: none;
 }
 
@@ -281,132 +272,161 @@ img {
 
 .score-text {
     position: absolute;
-
     left: 0;
     top: 0;
-
     width: 100%;
     height: 100%;
-
     z-index: 2;
-
     display: flex;
-
     align-items: center;
     justify-content: center;
-
     color: black;
-
-    font-family: "UTM Impact", Impact, sans-serif;
+    font-family: "UTM Impact", Impact, "Arial Black", sans-serif;
     font-size: 32px;
-    font-weight: normal;
-
+    font-weight: bold;
     line-height: 1;
-
     text-align: center;
-
     pointer-events: none;
     user-select: none;
 }
 
 
 /* =====================================================
-   RED SCOREBOARD
+   SCOREBOARD POSITIONS
 ===================================================== */
 
-.score-red {
-    left: 981.12px;
-    top: 79.68px;
-}
-
-
-/* =====================================================
-   GREEN SCOREBOARD
-===================================================== */
-
-.score-green {
-    left: 981.12px;
-    top: 226.56px;
-}
-
-
-/* =====================================================
-   WHITE SCOREBOARD
-===================================================== */
-
-.score-white {
-    left: 981.12px;
-    top: 369.6px;
-}
-
-
-/* =====================================================
-   BLUE SCOREBOARD
-===================================================== */
-
-.score-blue {
-    left: 981.12px;
-    top: 516.48px;
-}
+.score-red { left: 981.12px; top: 79.68px; }
+.score-green { left: 981.12px; top: 226.56px; }
+.score-white { left: 981.12px; top: 369.6px; }
+.score-blue { left: 981.12px; top: 516.48px; }
 
 
 /* =====================================================
    TÊN NGƯỜI CHƠI
-   Tất cả chữ màu đen
 ===================================================== */
 
 .player-name {
     position: absolute;
-
     left: 1064.64px;
-
     width: 216px;
     height: 63.36px;
-
     z-index: 6;
-
     display: flex;
-
     align-items: center;
     justify-content: left;
-
     overflow: hidden;
-
     color: black;
-
-    font-family: "UTM Avo", Impact, sans-serif;
-    font-size: 25px;
-    font-weight: normal;
-
+    font-family: "UTM Impact", Impact, "Segoe UI", Arial, sans-serif;
+    font-size: 24px;
+    font-weight: bold;
     line-height: 1;
-
-    text-align: center;
-
     user-select: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: transform 0.2s ease;
 }
 
+.player-1 { top: 79.68px; }
+.player-2 { top: 226.56px; }
+.player-3 { top: 369.6px; }
+.player-4 { top: 516.48px; }
 
-/* PLAYER 1 */
-.player-1 {
-    top: 79.68px;
+
+/* =====================================================
+   BUZZER SPOTLIGHT & OVERLAY (HIỆU ỨNG CHUÔNG)
+===================================================== */
+
+/* Spotlights behind buzzed player */
+.player-buzzer-spotlight {
+    position: absolute;
+    left: 970px;
+    width: 300px;
+    height: 80px;
+    z-index: 4;
+    border-radius: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
 }
 
-
-/* PLAYER 2 */
-.player-2 {
-    top: 226.56px;
+.player-buzzer-spotlight.active {
+    opacity: 1;
+    animation: spotlightPulse 0.8s infinite alternate ease-in-out;
 }
 
-
-/* PLAYER 3 */
-.player-3 {
-    top: 369.6px;
+.player-buzzer-spotlight.spotlight-red {
+    top: 71px;
+    background: radial-gradient(ellipse at center, rgba(224, 49, 49, 0.75) 0%, rgba(224, 49, 49, 0) 75%);
+    box-shadow: 0 0 30px #e03131;
 }
 
+.player-buzzer-spotlight.spotlight-green {
+    top: 218px;
+    background: radial-gradient(ellipse at center, rgba(47, 179, 68, 0.75) 0%, rgba(47, 179, 68, 0) 75%);
+    box-shadow: 0 0 30px #2fb344;
+}
 
-/* PLAYER 4 */
-.player-4 {
-    top: 516.48px;
+.player-buzzer-spotlight.spotlight-white {
+    top: 361px;
+    background: radial-gradient(ellipse at center, rgba(248, 249, 250, 0.8) 0%, rgba(248, 249, 250, 0) 75%);
+    box-shadow: 0 0 30px #ffffff;
+}
+
+.player-buzzer-spotlight.spotlight-blue {
+    top: 508px;
+    background: radial-gradient(ellipse at center, rgba(47, 128, 237, 0.75) 0%, rgba(47, 128, 237, 0) 75%);
+    box-shadow: 0 0 30px #2f80ed;
+}
+
+@keyframes spotlightPulse {
+    from { transform: scale(0.98); opacity: 0.8; }
+    to { transform: scale(1.03); opacity: 1; filter: brightness(1.3); }
+}
+
+/* Big Top Screen Buzzer Banner */
+.screen-buzzer-alert {
+    position: absolute;
+    left: 50%;
+    top: 12px;
+    transform: translateX(-50%) translateY(-60px);
+    z-index: 100;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 2px solid #f59f00;
+    color: #fff;
+    padding: 8px 30px;
+    border-radius: 30px;
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 0 35px rgba(245, 159, 0, 0.85);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+}
+
+.screen-buzzer-alert.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.screen-buzzer-alert.state-armed {
+    border-color: #2fb344;
+    box-shadow: 0 0 25px rgba(47, 179, 68, 0.7);
+    font-size: 18px;
+}
+
+.screen-buzzer-alert.state-buzzed {
+    border-color: #ffd43b;
+    background: linear-gradient(135deg, #7c2d12, #451a03);
+    animation: alertFlash 0.7s infinite alternate;
+}
+
+@keyframes alertFlash {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.3); box-shadow: 0 0 45px #ffd43b; }
 }
 
 </style>
@@ -416,305 +436,378 @@ img {
 
 <div id="game">
 
-
-    <!-- =================================================
-         LAYER 1: BACKGROUND
-    ================================================= -->
-
+    <!-- LAYER 1: BACKGROUND -->
     <div class="background">
-        <img src="background.png" alt="">
+        <img src="background.png" alt="" onerror="this.style.display='none'">
     </div>
 
-
-    <!-- =================================================
-         LAYER 2: BOARD.PNG
-    ================================================= -->
-
+    <!-- LAYER 2: BOARD BACKGROUND -->
     <div class="board-background">
         <img src="board.png" alt="">
     </div>
 
+    <!-- LAYER 3: BẢNG 5 x 5 -->
+    <div class="panel-board" id="panelBoard"></div>
 
-    <!-- =================================================
-         LAYER 3: BẢNG 5 x 5
-         Tự động tạo 25 DefaultPanel.png
-    ================================================= -->
-
-    <div
-        class="panel-board"
-        id="panelBoard">
-    </div>
-
-
-    <!-- =================================================
-         LAYER 4: SCORE BACKGROUND
-    ================================================= -->
-
+    <!-- LAYER 4: SCORE BACKGROUND -->
     <div class="score-background">
         <img src="ScoreBackground.png" alt="">
     </div>
 
+    <!-- LAYER 4.5: BUZZER SPOTLIGHTS -->
+    <div class="player-buzzer-spotlight spotlight-red" id="spotlightRed"></div>
+    <div class="player-buzzer-spotlight spotlight-green" id="spotlightGreen"></div>
+    <div class="player-buzzer-spotlight spotlight-white" id="spotlightWhite"></div>
+    <div class="player-buzzer-spotlight spotlight-blue" id="spotlightBlue"></div>
 
-    <!-- =================================================
-         LAYER 5: 4 SCOREBOARD
-    ================================================= -->
-
-
-    <!-- RED -->
-    <div class="score-item score-red">
-
+    <!-- LAYER 5: 4 SCOREBOARDS -->
+    <div class="score-item score-red" id="cardRed">
         <img src="RedScoreboard.png" alt="">
-
-        <div
-            class="score-text"
-            id="scoreRed">
-            0
-        </div>
-
+        <div class="score-text" id="scoreRed">0</div>
     </div>
 
-
-    <!-- GREEN -->
-    <div class="score-item score-green">
-
+    <div class="score-item score-green" id="cardGreen">
         <img src="GreenScoreboard.png" alt="">
-
-        <div
-            class="score-text"
-            id="scoreGreen">
-            0
-        </div>
-
+        <div class="score-text" id="scoreGreen">0</div>
     </div>
 
-
-    <!-- WHITE -->
-    <div class="score-item score-white">
-
+    <div class="score-item score-white" id="cardWhite">
         <img src="WhiteScoreboard.png" alt="">
-
-        <div
-            class="score-text"
-            id="scoreWhite">
-            0
-        </div>
-
+        <div class="score-text" id="scoreWhite">0</div>
     </div>
 
-
-    <!-- BLUE -->
-    <div class="score-item score-blue">
-
+    <div class="score-item score-blue" id="cardBlue">
         <img src="BlueScoreboard.png" alt="">
-
-        <div
-            class="score-text"
-            id="scoreBlue">
-            0
-        </div>
-
+        <div class="score-text" id="scoreBlue">0</div>
     </div>
 
+    <!-- LAYER 6: TÊN NGƯỜI CHƠI -->
+    <div class="player-name player-1" id="player1">PLAYER 1</div>
+    <div class="player-name player-2" id="player2">PLAYER 2</div>
+    <div class="player-name player-3" id="player3">PLAYER 3</div>
+    <div class="player-name player-4" id="player4">PLAYER 4</div>
 
-    <!-- =================================================
-         LAYER 6: TÊN NGƯỜI CHƠI
-    ================================================= -->
-
-    <div
-        class="player-name player-1"
-        id="player1">
-        PLAYER 1
+    <!-- LAYER 7: ON-SCREEN BUZZER ALERT BANNER -->
+    <div class="screen-buzzer-alert" id="screenBuzzerAlert">
+        <span id="alertIcon">🔔</span>
+        <span id="alertText">ĐÃ MỞ CHUÔNG TRẢ LỜI</span>
     </div>
-
-
-    <div
-        class="player-name player-2"
-        id="player2">
-        PLAYER 2
-    </div>
-
-
-    <div
-        class="player-name player-3"
-        id="player3">
-        PLAYER 3
-    </div>
-
-
-    <div
-        class="player-name player-4"
-        id="player4">
-        PLAYER 4
-    </div>
-
 
 </div>
 
-
 <script>
+
+/* =====================================================
+   SYNTHESIZER SOUND ENGINE (WEB AUDIO API)
+===================================================== */
+
+let audioCtx = null;
+
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    return audioCtx;
+}
+
+function playSound(type) {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        if (type === 'buzzer') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
+
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'correct') {
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.2, now + i * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now + i * 0.08);
+                osc.stop(now + i * 0.08 + 0.35);
+            });
+        } else if (type === 'wrong') {
+            [180, 140].forEach(freq => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            });
+        } else if (type === 'arm') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, now);
+            osc.frequency.setValueAtTime(880, now + 0.08);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        }
+    } catch (e) {
+        console.warn("Audio playback error:", e);
+    }
+}
+
+// Unlock audio on first user click anywhere
+window.addEventListener('click', () => {
+    getAudioContext();
+}, { once: true });
+
 
 /* =====================================================
    TẠO BẢNG 5 x 5
 ===================================================== */
 
 const panelBoard = document.getElementById("panelBoard");
-
+const panelElements = {};
 
 for (let row = 0; row < 5; row++) {
-
     for (let col = 0; col < 5; col++) {
-
-
-        /* Số thứ tự từ 1 đến 25 */
         const number = row * 5 + col + 1;
 
-
-        /* Tạo ô */
         const panel = document.createElement("div");
-
         panel.className = "default-panel";
-
+        panel.id = "panel-" + number;
         panel.dataset.number = number;
-
         panel.dataset.row = row + 1;
-
         panel.dataset.col = col + 1;
 
-
-        /* DefaultPanel.png */
         const image = document.createElement("img");
-
         image.src = "DefaultPanel.png";
-
         image.alt = "";
+        image.id = "panel-img-" + number;
 
-
-        /* Số trên ô */
         const numberText = document.createElement("div");
-
         numberText.className = "panel-number";
-
         numberText.textContent = number;
 
-
-        /* Thêm vào ô */
         panel.appendChild(image);
-
         panel.appendChild(numberText);
 
-
-        /* Sự kiện click */
-        panel.addEventListener("click", function () {
-
-            console.log({
-                number: this.dataset.number,
-                row: this.dataset.row,
-                column: this.dataset.col
-            });
-
-        });
-
-
-        /* Thêm ô vào bảng */
         panelBoard.appendChild(panel);
-
+        panelElements[number] = { container: panel, image: image, text: numberText };
     }
-
 }
 
 
 /* =====================================================
-   DỮ LIỆU ĐIỂM
+   DỮ LIỆU ĐIỂM & TRẠNG THÁI
 ===================================================== */
 
-const scores = {
-
-    red: 0,
-
-    green: 0,
-
-    white: 0,
-
-    blue: 0
-
-};
-
-
-/* =====================================================
-   ĐỔI ĐIỂM
-===================================================== */
+const scores = { red: 0, green: 0, white: 0, blue: 0 };
 
 function setScore(player, score) {
-
     if (scores.hasOwnProperty(player)) {
-
         scores[player] = score;
-
-        const elementId =
-            "score" +
-            player.charAt(0).toUpperCase() +
-            player.slice(1);
-
-        document.getElementById(elementId).textContent = score;
-
+        const elementId = "score" + player.charAt(0).toUpperCase() + player.slice(1);
+        const el = document.getElementById(elementId);
+        if (el) el.textContent = score;
     }
-
 }
-
-
-/* =====================================================
-   CỘNG ĐIỂM
-===================================================== */
-
-function addScore(player, points) {
-
-    if (scores.hasOwnProperty(player)) {
-
-        scores[player] += points;
-
-        setScore(
-            player,
-            scores[player]
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   ĐỔI TÊN NGƯỜI CHƠI
-===================================================== */
 
 function setPlayerName(playerNumber, name) {
-
-    const element =
-        document.getElementById(
-            "player" + playerNumber
-        );
-
+    const element = document.getElementById("player" + playerNumber);
     if (element) {
-
         element.textContent = name;
-
     }
-
 }
 
 
 /* =====================================================
-   VÍ DỤ SỬ DỤNG
-
-   setScore("red", 100);
-   setScore("green", 250);
-   setScore("white", 500);
-   setScore("blue", 1000);
-
-   addScore("red", 50);
-
-   setPlayerName(1, "NGUYỄN VĂN A");
+   ÁP DỤNG GAME STATE TỪ CONTROLLER
 ===================================================== */
 
+function applyGameState(state) {
+    if (!state) return;
+
+    // 1. Cập nhật tên và điểm người chơi
+    if (state.players) {
+        if (state.players.red) {
+            setScore("red", state.players.red.score);
+            setPlayerName(1, state.players.red.name);
+        }
+        if (state.players.green) {
+            setScore("green", state.players.green.score);
+            setPlayerName(2, state.players.green.name);
+        }
+        if (state.players.white) {
+            setScore("white", state.players.white.score);
+            setPlayerName(3, state.players.white.name);
+        }
+        if (state.players.blue) {
+            setScore("blue", state.players.blue.score);
+            setPlayerName(4, state.players.blue.name);
+        }
+    }
+
+    // 2. Cập nhật các ô trên bảng
+    if (state.panels && Array.isArray(state.panels)) {
+        state.panels.forEach(panelData => {
+            const elObj = panelElements[panelData.number];
+            if (!elObj) return;
+
+            const isSelected = state.selectedPanel === panelData.number;
+            const isUsed = !!panelData.used;
+
+            elObj.container.classList.toggle("active", isSelected);
+            elObj.container.classList.toggle("used", isUsed);
+
+            if (panelData.color) {
+                const colorMap = {
+                    red: "RedPanel.png",
+                    green: "GreenPanel.png",
+                    white: "WhitePanel.png",
+                    blue: "BluePanel.png"
+                };
+                elObj.image.src = colorMap[panelData.color] || "DefaultPanel.png";
+            } else {
+                elObj.image.src = "DefaultPanel.png";
+            }
+        });
+    }
+
+    // 3. Cập nhật Buzzer Spotlight & Banner
+    if (state.buzzer) {
+        updateBuzzerDisplay(state.buzzer, state.players);
+    }
+}
+
+
+/* =====================================================
+   CẬP NHẬT GIAO DIỆN BUZZER TRÊN MÀN HÌNH CHIẾU
+===================================================== */
+
+function updateBuzzerDisplay(buzzer, players) {
+    const banner = document.getElementById("screenBuzzerAlert");
+    const icon = document.getElementById("alertIcon");
+    const text = document.getElementById("alertText");
+
+    // Reset spotlights
+    ['red', 'green', 'white', 'blue'].forEach(color => {
+        const cap = color.charAt(0).toUpperCase() + color.slice(1);
+        const spot = document.getElementById("spotlight" + cap);
+        if (spot) spot.classList.remove("active");
+    });
+
+    if (buzzer.status === 'armed') {
+        banner.className = "screen-buzzer-alert show state-armed";
+        icon.textContent = "🔔";
+        text.textContent = "SẴN SÀNG BẤM CHUÔNG GIÀNH QUYỀN!";
+    } else if (buzzer.status === 'buzzed' && buzzer.winner) {
+        const winnerColor = buzzer.winner;
+        const winnerName = players[winnerColor] ? players[winnerColor].name : winnerColor.toUpperCase();
+        const cap = winnerColor.charAt(0).toUpperCase() + winnerColor.slice(1);
+
+        // Turn on spotlight
+        const spot = document.getElementById("spotlight" + cap);
+        if (spot) spot.classList.add("active");
+
+        banner.className = "screen-buzzer-alert show state-buzzed";
+        icon.textContent = "⚡";
+        text.textContent = `${winnerName.toUpperCase()} GIÀNH QUYỀN TRẢ LỜI!`;
+    } else {
+        banner.className = "screen-buzzer-alert";
+    }
+}
+
+
+/* =====================================================
+   KẾT NỐI BROADCAST CHANNEL & STORAGE & WINDOW MESSAGES
+===================================================== */
+
+let gameChannel = null;
+
+try {
+    gameChannel = new BroadcastChannel("panel_quiz_attack_25");
+    gameChannel.onmessage = (event) => {
+        if (event.data) {
+            if (event.data.state) {
+                applyGameState(event.data.state);
+            }
+            if (event.data.sound) {
+                playSound(event.data.sound);
+            }
+        }
+    };
+} catch (error) {
+    console.warn("BroadcastChannel error:", error);
+}
+
+// Storage listener for cross-tab sync
+window.addEventListener('storage', (e) => {
+    if (e.key === 'attack25_gamestate' && e.newValue) {
+        try {
+            const parsed = JSON.parse(e.newValue);
+            if (parsed) applyGameState(parsed);
+        } catch (err) {}
+    }
+});
+
+// Window postMessage for Split View iframe sync
+window.addEventListener("message", (event) => {
+    if (event.data) {
+        if (event.data.state) {
+            applyGameState(event.data.state);
+        }
+        if (event.data.sound) {
+            playSound(event.data.sound);
+        }
+    }
+});
+
+// Load state from localStorage on startup
+try {
+    const saved = localStorage.getItem("attack25_gamestate");
+    if (saved) {
+        applyGameState(JSON.parse(saved));
+    }
+} catch (e) {}
+
+// Notify controller that display is ready
+if (gameChannel) {
+    gameChannel.postMessage({ type: "display_ready" });
+}
+</script>
+
+<script src="/sync-client.js"></script>
+<script>
+// Connect Universal Synchronizer (WebSocket + BroadcastChannel + localStorage)
+if (window.Attack25Sync) {
+    Attack25Sync.onStateChange((state) => {
+        applyGameState(state);
+    });
+    Attack25Sync.onSound((sound) => {
+        playSound(sound);
+    });
+}
 </script>
 
 </body>
