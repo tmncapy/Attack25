@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Game Interface</title>
+
+<style>
+
+/* =====================================================
+   FONT UTM IMPACT
+   Đặt file UTM Impact.ttf cùng thư mục với index.html
+===================================================== */
+
+@font-face {
+    font-family: "UTM Impact";
+    src: url("UTM Impact.ttf") format("truetype");
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* =====================================================
+   KHUNG THIẾT KẾ GỐC: 1280 x 720
+===================================================== */
+
+#game {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+
+    overflow: hidden;
+
+    transform-origin: center center;
+}
+
+
+/* =====================================================
+   SCALE TỰ ĐỘNG
+   GIỮ ĐÚNG TỶ LỆ 16:9
+===================================================== */
+
+@media (min-aspect-ratio: 16/9) {
+    #game {
+        transform: scale(calc(100vh / 720));
+    }
+}
+
+@media (max-aspect-ratio: 16/9) {
+    #game {
+        transform: scale(calc(100vw / 1280));
+    }
+}
+
+
+/* =====================================================
+   STYLE CHUNG CHO HÌNH ẢNH
+   KHÔNG WIDE - KHÔNG CROP
+===================================================== */
+
+img {
+    display: block;
+    object-fit: contain;
+}
+
+
+/* =====================================================
+   BACKGROUND
+===================================================== */
+
+.background {
+    position: absolute;
+
+    left: 0;
+    top: 0;
+
+    width: 1280px;
+    height: 720px;
+
+    z-index: 1;
+}
+
+.background img {
+    width: 100%;
+    height: 100%;
+}
+
+
+/* =====================================================
+   BOARD.PNG
+   Cùng vị trí với khu vực bảng
+===================================================== */
+
+.board-background {
+    position: absolute;
+
+    left: 0 px;
+    top: 0 px;
+
+    width: 1280 px;
+    height: 720 px;
+
+    z-index: 2;
+
+    pointer-events: none;
+}
+
+.board-background img {
+    width: 100%;
+    height: 100%;
+}
+
+
+/* =====================================================
+   BẢNG 5 x 5 - CĂN KHOẢNG CÁCH ĐỀU
+===================================================== */
+
+.panel-board {
+    position: absolute;
+
+    left: 122.42px;
+    top: 65.78px;
+
+    width: 778.56px;
+    height: 586.56px;
+
+    display: grid;
+
+    /* 5 cột */
+    grid-template-columns: repeat(5, 154.712px);
+
+    /* 5 hàng có chiều cao bằng nhau */
+    grid-template-rows: repeat(4, 116.312px);
+
+    column-gap: 0px;
+    row-gap: 0px;
+
+    padding: 0;
+
+    z-index: 2;
+}
+
+/* =====================================================
+   DEFAULT PANEL
+===================================================== */
+
+.default-panel {
+    position: relative;
+
+    width: 155.712px;
+    height: 117.312px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+}
+
+.default-panel img {
+    position: absolute;
+
+    left: 0;
+    top: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    /*
+       Không dùng contain vì có thể tạo khoảng
+       trống khác nhau theo chiều dọc.
+    */
+    object-fit: fill;
+
+    transform: none;
+
+    pointer-events: none;
+}
+
+/* =====================================================
+   SỐ TRÊN BẢNG 5 x 5
+===================================================== */
+
+.panel-number {
+    position: relative;
+
+    z-index: 2;
+
+    color: black;
+
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 60px;
+    font-weight: normal;
+
+    line-height: 1;
+
+    text-align: center;
+
+    pointer-events: none;
+
+    user-select: none;
+}
+
+
+/* =====================================================
+   SCORE BACKGROUND
+===================================================== */
+
+.score-background {
+    position: absolute;
+
+    left: 1012.8px;
+    top: 65.28px;
+
+    width: 267.84px;
+    height: 582.72px;
+
+    z-index: 4;
+
+    pointer-events: none;
+}
+
+.score-background img {
+    width: 100%;
+    height: 100%;
+}
+
+
+/* =====================================================
+   SCOREBOARD
+===================================================== */
+
+.score-item {
+    position: absolute;
+
+    width: 83.52px;
+    height: 63.36px;
+
+    z-index: 5;
+}
+
+.score-item img {
+    position: absolute;
+
+    left: 0;
+    top: 0;
+
+    width: 100%;
+    height: 100%;
+
+    z-index: 1;
+
+    pointer-events: none;
+}
+
+
+/* =====================================================
+   TEXT ĐIỂM
+===================================================== */
+
+.score-text {
+    position: absolute;
+
+    left: 0;
+    top: 0;
+
+    width: 100%;
+    height: 100%;
+
+    z-index: 2;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    color: black;
+
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 32px;
+    font-weight: normal;
+
+    line-height: 1;
+
+    text-align: center;
+
+    pointer-events: none;
+    user-select: none;
+}
+
+
+/* =====================================================
+   RED SCOREBOARD
+===================================================== */
+
+.score-red {
+    left: 981.12px;
+    top: 79.68px;
+}
+
+
+/* =====================================================
+   GREEN SCOREBOARD
+===================================================== */
+
+.score-green {
+    left: 981.12px;
+    top: 226.56px;
+}
+
+
+/* =====================================================
+   WHITE SCOREBOARD
+===================================================== */
+
+.score-white {
+    left: 981.12px;
+    top: 369.6px;
+}
+
+
+/* =====================================================
+   BLUE SCOREBOARD
+===================================================== */
+
+.score-blue {
+    left: 981.12px;
+    top: 516.48px;
+}
+
+
+/* =====================================================
+   TÊN NGƯỜI CHƠI
+   Tất cả chữ màu đen
+===================================================== */
+
+.player-name {
+    position: absolute;
+
+    left: 1064.64px;
+
+    width: 216px;
+    height: 63.36px;
+
+    z-index: 6;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: left;
+
+    overflow: hidden;
+
+    color: black;
+
+    font-family: "UTM Avo", Impact, sans-serif;
+    font-size: 25px;
+    font-weight: normal;
+
+    line-height: 1;
+
+    text-align: center;
+
+    user-select: none;
+}
+
+
+/* PLAYER 1 */
+.player-1 {
+    top: 79.68px;
+}
+
+
+/* PLAYER 2 */
+.player-2 {
+    top: 226.56px;
+}
+
+
+/* PLAYER 3 */
+.player-3 {
+    top: 369.6px;
+}
+
+
+/* PLAYER 4 */
+.player-4 {
+    top: 516.48px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+
+    <!-- =================================================
+         LAYER 1: BACKGROUND
+    ================================================= -->
+
+    <div class="background">
+        <img src="background.png" alt="">
+    </div>
+
+
+    <!-- =================================================
+         LAYER 2: BOARD.PNG
+    ================================================= -->
+
+    <div class="board-background">
+        <img src="board.png" alt="">
+    </div>
+
+
+    <!-- =================================================
+         LAYER 3: BẢNG 5 x 5
+         Tự động tạo 25 DefaultPanel.png
+    ================================================= -->
+
+    <div
+        class="panel-board"
+        id="panelBoard">
+    </div>
+
+
+    <!-- =================================================
+         LAYER 4: SCORE BACKGROUND
+    ================================================= -->
+
+    <div class="score-background">
+        <img src="ScoreBackground.png" alt="">
+    </div>
+
+
+    <!-- =================================================
+         LAYER 5: 4 SCOREBOARD
+    ================================================= -->
+
+
+    <!-- RED -->
+    <div class="score-item score-red">
+
+        <img src="RedScoreboard.png" alt="">
+
+        <div
+            class="score-text"
+            id="scoreRed">
+            0
+        </div>
+
+    </div>
+
+
+    <!-- GREEN -->
+    <div class="score-item score-green">
+
+        <img src="GreenScoreboard.png" alt="">
+
+        <div
+            class="score-text"
+            id="scoreGreen">
+            0
+        </div>
+
+    </div>
+
+
+    <!-- WHITE -->
+    <div class="score-item score-white">
+
+        <img src="WhiteScoreboard.png" alt="">
+
+        <div
+            class="score-text"
+            id="scoreWhite">
+            0
+        </div>
+
+    </div>
+
+
+    <!-- BLUE -->
+    <div class="score-item score-blue">
+
+        <img src="BlueScoreboard.png" alt="">
+
+        <div
+            class="score-text"
+            id="scoreBlue">
+            0
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         LAYER 6: TÊN NGƯỜI CHƠI
+    ================================================= -->
+
+    <div
+        class="player-name player-1"
+        id="player1">
+        PLAYER 1
+    </div>
+
+
+    <div
+        class="player-name player-2"
+        id="player2">
+        PLAYER 2
+    </div>
+
+
+    <div
+        class="player-name player-3"
+        id="player3">
+        PLAYER 3
+    </div>
+
+
+    <div
+        class="player-name player-4"
+        id="player4">
+        PLAYER 4
+    </div>
+
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   TẠO BẢNG 5 x 5
+===================================================== */
+
+const panelBoard = document.getElementById("panelBoard");
+
+
+for (let row = 0; row < 5; row++) {
+
+    for (let col = 0; col < 5; col++) {
+
+
+        /* Số thứ tự từ 1 đến 25 */
+        const number = row * 5 + col + 1;
+
+
+        /* Tạo ô */
+        const panel = document.createElement("div");
+
+        panel.className = "default-panel";
+
+        panel.dataset.number = number;
+
+        panel.dataset.row = row + 1;
+
+        panel.dataset.col = col + 1;
+
+
+        /* DefaultPanel.png */
+        const image = document.createElement("img");
+
+        image.src = "DefaultPanel.png";
+
+        image.alt = "";
+
+
+        /* Số trên ô */
+        const numberText = document.createElement("div");
+
+        numberText.className = "panel-number";
+
+        numberText.textContent = number;
+
+
+        /* Thêm vào ô */
+        panel.appendChild(image);
+
+        panel.appendChild(numberText);
+
+
+        /* Sự kiện click */
+        panel.addEventListener("click", function () {
+
+            console.log({
+                number: this.dataset.number,
+                row: this.dataset.row,
+                column: this.dataset.col
+            });
+
+        });
+
+
+        /* Thêm ô vào bảng */
+        panelBoard.appendChild(panel);
+
+    }
+
+}
+
+
+/* =====================================================
+   DỮ LIỆU ĐIỂM
+===================================================== */
+
+const scores = {
+
+    red: 0,
+
+    green: 0,
+
+    white: 0,
+
+    blue: 0
+
+};
+
+
+/* =====================================================
+   ĐỔI ĐIỂM
+===================================================== */
+
+function setScore(player, score) {
+
+    if (scores.hasOwnProperty(player)) {
+
+        scores[player] = score;
+
+        const elementId =
+            "score" +
+            player.charAt(0).toUpperCase() +
+            player.slice(1);
+
+        document.getElementById(elementId).textContent = score;
+
+    }
+
+}
+
+
+/* =====================================================
+   CỘNG ĐIỂM
+===================================================== */
+
+function addScore(player, points) {
+
+    if (scores.hasOwnProperty(player)) {
+
+        scores[player] += points;
+
+        setScore(
+            player,
+            scores[player]
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   ĐỔI TÊN NGƯỜI CHƠI
+===================================================== */
+
+function setPlayerName(playerNumber, name) {
+
+    const element =
+        document.getElementById(
+            "player" + playerNumber
+        );
+
+    if (element) {
+
+        element.textContent = name;
+
+    }
+
+}
+
+
+/* =====================================================
+   VÍ DỤ SỬ DỤNG
+
+   setScore("red", 100);
+   setScore("green", 250);
+   setScore("white", 500);
+   setScore("blue", 1000);
+
+   addScore("red", 50);
+
+   setPlayerName(1, "NGUYỄN VĂN A");
+===================================================== */
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Panel Quiz Attack 25 - Controller</title>
+
+<style>
+
+/* =====================================================
+   FONT
+===================================================== */
+
+@font-face {
+    font-family: "UTM Impact";
+    src: url("UTM Impact.ttf") format("truetype");
+}
+
+
+/* =====================================================
+   ROOT
+===================================================== */
+
+:root {
+    --bg: #12151c;
+    --panel: #1d222c;
+    --panel-2: #252b36;
+    --border: #3b4352;
+
+    --text: #ffffff;
+    --muted: #9ca6b8;
+
+    --red: #d93333;
+    --green: #2ca84f;
+    --blue: #318eea;
+    --white: #d8dce2;
+
+    --orange: #e8a326;
+
+    --used: #4b5260;
+    --active: #e8a326;
+}
+
+
+/* =====================================================
+   RESET
+===================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+
+    font-family: Arial, sans-serif;
+}
+
+
+/* =====================================================
+   APP
+===================================================== */
+
+.app {
+    width: 100%;
+    min-height: 100vh;
+
+    padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 20px;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    padding: 16px 20px;
+}
+
+
+.logo-area {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+
+.logo-title {
+    font-family: "UTM Impact", Impact, sans-serif;
+
+    font-size: 30px;
+    letter-spacing: 1px;
+}
+
+
+.logo-subtitle {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+
+.connection {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    font-size: 13px;
+}
+
+
+.connection-dot {
+    width: 10px;
+    height: 10px;
+
+    border-radius: 50%;
+
+    background: #777;
+}
+
+
+.connection-dot.connected {
+    background: #35c759;
+}
+
+
+/* =====================================================
+   MAIN GRID
+===================================================== */
+
+.main-grid {
+    flex: 1;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(500px, 1.4fr)
+        minmax(430px, 1fr);
+
+    gap: 20px;
+}
+
+
+.left-column,
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+
+/* =====================================================
+   CARD
+===================================================== */
+
+.card {
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    overflow: hidden;
+}
+
+
+.card-header {
+    min-height: 54px;
+
+    padding: 14px 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    border-bottom: 1px solid var(--border);
+}
+
+
+.card-title {
+    font-family: "UTM Impact", Impact, sans-serif;
+
+    font-size: 21px;
+
+    letter-spacing: .5px;
+}
+
+
+.card-body {
+    padding: 18px;
+}
+
+
+/* =====================================================
+   PANEL BOARD
+===================================================== */
+
+.panel-grid {
+    display: grid;
+
+    grid-template-columns: repeat(5, 1fr);
+
+    gap: 8px;
+}
+
+
+.panel-button {
+    aspect-ratio: 1.25 / 1;
+
+    border: 2px solid #4a5261;
+    border-radius: 8px;
+
+    background: #303744;
+
+    color: #fff;
+
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: clamp(24px, 3vw, 42px);
+
+    cursor: pointer;
+
+    transition:
+        transform .1s ease,
+        background .15s ease,
+        border-color .15s ease,
+        opacity .15s ease;
+
+    user-select: none;
+}
+
+
+.panel-button:hover {
+    transform: translateY(-2px);
+
+    border-color: #79859a;
+}
+
+
+.panel-button.active {
+    background: var(--active);
+    color: #111;
+
+    border-color: #ffd36f;
+
+    box-shadow: 0 0 16px rgba(232,163,38,.35);
+}
+
+
+.panel-button.used {
+    background: var(--used);
+
+    color: #808897;
+
+    border-color: #5a6270;
+
+    opacity: .65;
+
+    text-decoration: line-through;
+}
+
+
+.panel-button.active.used {
+    background: var(--active);
+
+    color: #111;
+
+    opacity: 1;
+
+    text-decoration: none;
+}
+
+
+/* =====================================================
+   BOARD ACTIONS
+===================================================== */
+
+.board-actions {
+    margin-top: 18px;
+
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 10px;
+}
+
+
+.button {
+    min-height: 42px;
+
+    border: none;
+    border-radius: 7px;
+
+    padding: 8px 14px;
+
+    color: #fff;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition:
+        transform .1s ease,
+        filter .15s ease;
+}
+
+
+.button:hover {
+    filter: brightness(1.12);
+}
+
+
+.button:active {
+    transform: scale(.97);
+}
+
+
+.button-orange {
+    background: #c67d14;
+}
+
+
+.button-gray {
+    background: #4a5260;
+}
+
+
+.button-red {
+    background: #b73535;
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+.status-row {
+    margin-top: 15px;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+
+.status-box {
+    flex: 1;
+    min-width: 120px;
+
+    background: var(--panel-2);
+
+    border-radius: 8px;
+
+    padding: 10px 12px;
+}
+
+
+.status-label {
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 11px;
+
+    margin-bottom: 4px;
+
+    text-transform: uppercase;
+}
+
+
+.status-value {
+    font-family: "UTM Impact", Impact, sans-serif;
+
+    font-size: 24px;
+}
+
+
+/* =====================================================
+   PLAYER CARD
+===================================================== */
+
+.player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+
+.player-card {
+    background: var(--panel-2);
+
+    border: 1px solid var(--border);
+    border-left: 7px solid #777;
+
+    border-radius: 8px;
+
+    padding: 12px;
+}
+
+
+.player-card.red {
+    border-left-color: var(--red);
+}
+
+
+.player-card.green {
+    border-left-color: var(--green);
+}
+
+
+.player-card.white {
+    border-left-color: var(--white);
+}
+
+
+.player-card.blue {
+    border-left-color: var(--blue);
+}
+
+
+.player-top {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+
+.player-number {
+    width: 32px;
+    height: 32px;
+
+    flex-shrink: 0;
+
+    border-radius: 6px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #111722;
+
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 18px;
+}
+
+
+.player-name-input {
+    flex: 1;
+
+    min-width: 0;
+
+    height: 38px;
+
+    padding: 0 10px;
+
+    background: #151a22;
+
+    border: 1px solid #3d4655;
+    border-radius: 6px;
+
+    color: white;
+
+    outline: none;
+
+    font-weight: bold;
+}
+
+
+.player-name-input:focus {
+    border-color: #78869d;
+}
+
+
+.player-controls {
+    margin-top: 10px;
+
+    display: grid;
+
+    grid-template-columns:
+        45px
+        1fr
+        45px;
+
+    gap: 8px;
+}
+
+
+.score-button {
+    height: 44px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: #3d4655;
+
+    color: white;
+
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 22px;
+
+    cursor: pointer;
+}
+
+
+.score-button:hover {
+    background: #566174;
+}
+
+
+.score-input {
+    width: 100%;
+    height: 44px;
+
+    background: #151a22;
+
+    border: 1px solid #3d4655;
+    border-radius: 6px;
+
+    color: white;
+
+    text-align: center;
+
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 24px;
+
+    outline: none;
+}
+
+
+/* =====================================================
+   SCORE QUICK BUTTONS
+===================================================== */
+
+.quick-score {
+    margin-top: 10px;
+
+    display: grid;
+
+    grid-template-columns: repeat(5, 1fr);
+
+    gap: 6px;
+}
+
+
+.quick-button {
+    height: 32px;
+
+    border: 1px solid #485261;
+    border-radius: 5px;
+
+    background: #343c49;
+
+    color: white;
+
+    font-size: 12px;
+
+    cursor: pointer;
+}
+
+
+.quick-button:hover {
+    background: #505b6d;
+}
+
+
+/* =====================================================
+   PREVIEW
+===================================================== */
+
+.preview-box {
+    background: #0d1016;
+
+    border-radius: 8px;
+
+    padding: 15px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+
+.preview-screen {
+    position: relative;
+
+    width: 100%;
+
+    aspect-ratio: 16 / 9;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(circle at center, #173c71 0%, #0b1730 50%, #05070c 100%);
+
+    border: 1px solid #3a4350;
+
+    border-radius: 5px;
+}
+
+
+.preview-board {
+    position: absolute;
+
+    left: 8%;
+    top: 12%;
+
+    width: 62%;
+    height: 76%;
+
+    display: grid;
+
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+
+    gap: 1px;
+
+    padding: 3px;
+
+    background: #9a7b3f;
+
+    border-radius: 4px;
+}
+
+
+.preview-cell {
+    background: #d7dce3;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #111;
+
+    font-family: "UTM Impact", Impact, sans-serif;
+
+    font-size: clamp(8px, 1.4vw, 16px);
+}
+
+
+.preview-cell.active {
+    background: #e6a62d;
+}
+
+
+.preview-cell.used {
+    background: #596170;
+    color: #aeb5c1;
+}
+
+
+.preview-scores {
+    position: absolute;
+
+    right: 5%;
+    top: 15%;
+
+    width: 20%;
+
+    display: flex;
+    flex-direction: column;
+    gap: 7%;
+}
+
+
+.preview-player {
+    height: 18%;
+
+    border-radius: 3px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #111;
+
+    font-family: "UTM Impact", Impact, sans-serif;
+
+    font-size: clamp(7px, 1.1vw, 13px);
+
+    background: #ddd;
+}
+
+
+.preview-player.red {
+    background: #d9534f;
+}
+
+
+.preview-player.green {
+    background: #58ad6a;
+}
+
+
+.preview-player.white {
+    background: #e6e6e6;
+}
+
+
+.preview-player.blue {
+    background: #4798df;
+}
+
+
+.preview-note {
+    color: var(--muted);
+
+    text-align: center;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 15px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+
+.footer-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 1050px) {
+
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .app {
+        padding: 10px;
+    }
+
+    .header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .panel-grid {
+        gap: 4px;
+    }
+
+    .board-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-score {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+
+    <!-- =================================================
+         HEADER
+    ================================================== -->
+
+    <header class="header">
+
+        <div class="logo-area">
+
+            <div class="logo-title">
+                PANEL QUIZ ATTACK 25
+            </div>
+
+            <div class="logo-subtitle">
+                GAME CONTROLLER
+            </div>
+
+        </div>
+
+
+        <div class="connection">
+
+            <div
+                class="connection-dot"
+                id="connectionDot">
+            </div>
+
+            <span id="connectionText">
+                CHƯA KẾT NỐI MÀN HÌNH
+            </span>
+
+        </div>
+
+    </header>
+
+
+    <!-- =================================================
+         MAIN
+    ================================================== -->
+
+    <main class="main-grid">
+
+
+        <!-- =============================================
+             LEFT
+        ============================================== -->
+
+        <div class="left-column">
+
+
+            <!-- BOARD CONTROL -->
+
+            <section class="card">
+
+                <div class="card-header">
+
+                    <div class="card-title">
+                        BẢNG 25 Ô
+                    </div>
+
+                    <span id="selectedPanelText">
+                        Chưa chọn ô
+                    </span>
+
+                </div>
+
+
+                <div class="card-body">
+
+
+                    <!-- 25 BUTTONS -->
+
+                    <div
+                        class="panel-grid"
+                        id="panelGrid">
+                    </div>
+
+
+                    <!-- ACTIONS -->
+
+                    <div class="board-actions">
+
+                        <button
+                            class="button button-orange"
+                            onclick="sendSelectedPanel()">
+
+                            HIỂN THỊ Ô
+
+                        </button>
+
+
+                        <button
+                            class="button button-gray"
+                            onclick="markSelectedUsed()">
+
+                            ĐÁNH DẤU ĐÃ DÙNG
+
+                        </button>
+
+
+                        <button
+                            class="button button-red"
+                            onclick="resetSelectedPanel()">
+
+                            RESET Ô
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- STATUS -->
+
+                    <div class="status-row">
+
+                        <div class="status-box">
+
+                            <span class="status-label">
+                                Ô đang chọn
+                            </span>
+
+                            <span
+                                class="status-value"
+                                id="statusSelected">
+                                -
+                            </span>
+
+                        </div>
+
+
+                        <div class="status-box">
+
+                            <span class="status-label">
+                                Đã dùng
+                            </span>
+
+                            <span
+                                class="status-value"
+                                id="statusUsed">
+                                0 / 25
+                            </span>
+
+                        </div>
+
+
+                        <div class="status-box">
+
+                            <span class="status-label">
+                                Còn lại
+                            </span>
+
+                            <span
+                                class="status-value"
+                                id="statusRemaining">
+                                25
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- PREVIEW -->
+
+            <section class="card">
+
+                <div class="card-header">
+
+                    <div class="card-title">
+                        PREVIEW MÀN HÌNH
+                    </div>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div class="preview-box">
+
+                        <div class="preview-screen">
+
+                            <div
+                                class="preview-board"
+                                id="previewBoard">
+                            </div>
+
+
+                            <div class="preview-scores">
+
+                                <div class="preview-player red">
+                                    <span id="previewScoreRed">0</span>
+                                </div>
+
+                                <div class="preview-player green">
+                                    <span id="previewScoreGreen">0</span>
+                                </div>
+
+                                <div class="preview-player white">
+                                    <span id="previewScoreWhite">0</span>
+                                </div>
+
+                                <div class="preview-player blue">
+                                    <span id="previewScoreBlue">0</span>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="preview-note">
+                            Preview trạng thái hiện tại của gameshow
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+        </div>
+
+
+        <!-- =============================================
+             RIGHT
+        ============================================== -->
+
+        <div class="right-column">
+
+
+            <!-- PLAYER CONTROL -->
+
+            <section class="card">
+
+                <div class="card-header">
+
+                    <div class="card-title">
+                        ĐIỀU KHIỂN NGƯỜI CHƠI
+                    </div>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div class="player-list">
+
+
+                        <!-- PLAYER RED -->
+
+                        <div class="player-card red">
+
+                            <div class="player-top">
+
+                                <div class="player-number">
+                                    1
+                                </div>
+
+                                <input
+                                    class="player-name-input"
+                                    id="nameRed"
+                                    value="PLAYER 1"
+                                    oninput="updatePlayerName('red')"
+                                >
+
+                            </div>
+
+
+                            <div class="player-controls">
+
+                                <button
+                                    class="score-button"
+                                    onclick="changeScore('red', -1)">
+                                    −
+                                </button>
+
+
+                                <input
+                                    type="number"
+                                    class="score-input"
+                                    id="scoreRed"
+                                    value="0"
+                                    onchange="updateScore('red')"
+                                >
+
+
+                                <button
+                                    class="score-button"
+                                    onclick="changeScore('red', 1)">
+                                    +
+                                </button>
+
+                            </div>
+
+
+                            <div class="quick-score">
+
+                                <button class="quick-button" onclick="changeScore('red', 5)">+5</button>
+                                <button class="quick-button" onclick="changeScore('red', 10)">+10</button>
+                                <button class="quick-button" onclick="changeScore('red', 25)">+25</button>
+                                <button class="quick-button" onclick="changeScore('red', 50)">+50</button>
+                                <button class="quick-button" onclick="changeScore('red', 100)">+100</button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- PLAYER GREEN -->
+
+                        <div class="player-card green">
+
+                            <div class="player-top">
+
+                                <div class="player-number">
+                                    2
+                                </div>
+
+                                <input
+                                    class="player-name-input"
+                                    id="nameGreen"
+                                    value="PLAYER 2"
+                                    oninput="updatePlayerName('green')"
+                                >
+
+                            </div>
+
+
+                            <div class="player-controls">
+
+                                <button
+                                    class="score-button"
+                                    onclick="changeScore('green', -1)">
+                                    −
+                                </button>
+
+
+                                <input
+                                    type="number"
+                                    class="score-input"
+                                    id="scoreGreen"
+                                    value="0"
+                                    onchange="updateScore('green')"
+                                >
+
+
+                                <button
+                                    class="score-button"
+                                    onclick="changeScore('green', 1)">
+                                    +
+                                </button>
+
+                            </div>
+
+
+                            <div class="quick-score">
+
+                                <button class="quick-button" onclick="changeScore('green', 5)">+5</button>
+                                <button class="quick-button" onclick="changeScore('green', 10)">+10</button>
+                                <button class="quick-button" onclick="changeScore('green', 25)">+25</button>
+                                <button class="quick-button" onclick="changeScore('green', 50)">+50</button>
+                                <button class="quick-button" onclick="changeScore('green', 100)">+100</button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- PLAYER WHITE -->
+
+                        <div class="player-card white">
+
+                            <div class="player-top">
+
+                                <div class="player-number">
+                                    3
+                                </div>
+
+                                <input
+                                    class="player-name-input"
+                                    id="nameWhite"
+                                    value="PLAYER 3"
+                                    oninput="updatePlayerName('white')"
+                                >
+
+                            </div>
+
+
+                            <div class="player-controls">
+
+                                <button
+                                    class="score-button"
+                                    onclick="changeScore('white', -1)">
+                                    −
+                                </button>
+
+
+                                <input
+                                    type="number"
+                                    class="score-input"
+                                    id="scoreWhite"
+                                    value="0"
+                                    onchange="updateScore('white')"
+                                >
+
+
+                                <button
+                                    class="score-button"
+                                    onclick="changeScore('white', 1)">
+                                    +
+                                </button>
+
+                            </div>
+
+
+                            <div class="quick-score">
+
+                                <button class="quick-button" onclick="changeScore('white', 5)">+5</button>
+                                <button class="quick-button" onclick="changeScore('white', 10)">+10</button>
+                                <button class="quick-button" onclick="changeScore('white', 25)">+25</button>
+                                <button class="quick-button" onclick="changeScore('white', 50)">+50</button>
+                                <button class="quick-button" onclick="changeScore('white', 100)">+100</button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- PLAYER BLUE -->
+
+                        <div class="player-card blue">
+
+                            <div class="player-top">
+
+                                <div class="player-number">
+                                    4
+                                </div>
+
+                                <input
+                                    class="player-name-input"
+                                    id="nameBlue"
+                                    value="PLAYER 4"
+                                    oninput="updatePlayerName('blue')"
+                                >
+
+                            </div>
+
+
+                            <div class="player-controls">
+
+                                <button
+                                    class="score-button"
+                                    onclick="changeScore('blue', -1)">
+                                    −
+                                </button>
+
+
+                                <input
+                                    type="number"
+                                    class="score-input"
+                                    id="scoreBlue"
+                                    value="0"
+                                    onchange="updateScore('blue')"
+                                >
+
+
+                                <button
+                                    class="score-button"
+                                    onclick="changeScore('blue', 1)">
+                                    +
+                                </button>
+
+                            </div>
+
+
+                            <div class="quick-score">
+
+                                <button class="quick-button" onclick="changeScore('blue', 5)">+5</button>
+                                <button class="quick-button" onclick="changeScore('blue', 10)">+10</button>
+                                <button class="quick-button" onclick="changeScore('blue', 25)">+25</button>
+                                <button class="quick-button" onclick="changeScore('blue', 50)">+50</button>
+                                <button class="quick-button" onclick="changeScore('blue', 100)">+100</button>
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- SYSTEM -->
+
+            <section class="card">
+
+                <div class="card-header">
+
+                    <div class="card-title">
+                        HỆ THỐNG
+                    </div>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div class="board-actions">
+
+                        <button
+                            class="button button-gray"
+                            onclick="clearSelection()">
+
+                            BỎ CHỌN Ô
+
+                        </button>
+
+
+                        <button
+                            class="button button-gray"
+                            onclick="resetAllScores()">
+
+                            RESET ĐIỂM
+
+                        </button>
+
+
+                        <button
+                            class="button button-red"
+                            onclick="resetGame()">
+
+                            RESET GAME
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+        </div>
+
+    </main>
+
+
+    <!-- =================================================
+         FOOTER
+    ================================================== -->
+
+    <footer class="footer">
+
+        <div>
+            PANEL QUIZ ATTACK 25 • CONTROLLER
+        </div>
+
+
+        <div class="footer-buttons">
+
+            <button
+                class="button button-gray"
+                onclick="connectDisplay()">
+
+                KẾT NỐI DISPLAY
+
+            </button>
+
+        </div>
+
+    </footer>
+
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   GAME STATE
+===================================================== */
+
+const gameState = {
+
+    selectedPanel: null,
+
+    panels: Array.from(
+        { length: 25 },
+        (_, index) => ({
+            number: index + 1,
+            used: false
+        })
+    ),
+
+    players: {
+
+        red: {
+            name: "PLAYER 1",
+            score: 0
+        },
+
+        green: {
+            name: "PLAYER 2",
+            score: 0
+        },
+
+        white: {
+            name: "PLAYER 3",
+            score: 0
+        },
+
+        blue: {
+            name: "PLAYER 4",
+            score: 0
+        }
+
+    }
+
+};
+
+
+/* =====================================================
+   BROADCAST CHANNEL
+
+   Controller và Display phải dùng cùng tên channel.
+===================================================== */
+
+let gameChannel = null;
+
+
+try {
+
+    gameChannel =
+        new BroadcastChannel(
+            "panel_quiz_attack_25"
+        );
+
+}
+catch (error) {
+
+    console.warn(
+        "BroadcastChannel không khả dụng:",
+        error
+    );
+
+}
+
+
+/* =====================================================
+   GỬI STATE SANG DISPLAY
+===================================================== */
+
+function broadcastState(action = "update") {
+
+    if (!gameChannel) return;
+
+
+    gameChannel.postMessage({
+
+        type: action,
+
+        state: gameState
+
+    });
+
+}
+
+
+/* =====================================================
+   TẠO 25 NÚT
+===================================================== */
+
+function createPanelButtons() {
+
+    const panelGrid =
+        document.getElementById("panelGrid");
+
+
+    const previewBoard =
+        document.getElementById("previewBoard");
+
+
+    panelGrid.innerHTML = "";
+
+    previewBoard.innerHTML = "";
+
+
+    gameState.panels.forEach(panel => {
+
+
+        /* CONTROLLER BUTTON */
+
+        const button =
+            document.createElement("button");
+
+        button.className =
+            "panel-button";
+
+        button.textContent =
+            panel.number;
+
+
+        button.dataset.number =
+            panel.number;
+
+
+        button.onclick = () => {
+
+            selectPanel(panel.number);
+
+        };
+
+
+        panelGrid.appendChild(button);
+
+
+        /* PREVIEW CELL */
+
+        const previewCell =
+            document.createElement("div");
+
+        previewCell.className =
+            "preview-cell";
+
+        previewCell.textContent =
+            panel.number;
+
+        previewCell.dataset.number =
+            panel.number;
+
+
+        previewBoard.appendChild(
+            previewCell
+        );
+
+    });
+
+
+    renderPanels();
+
+}
+
+
+/* =====================================================
+   CHỌN Ô
+===================================================== */
+
+function selectPanel(number) {
+
+    gameState.selectedPanel =
+        number;
+
+
+    renderPanels();
+
+
+    broadcastState(
+        "selectPanel"
+    );
+
+}
+
+
+/* =====================================================
+   HIỂN THỊ Ô
+===================================================== */
+
+function sendSelectedPanel() {
+
+    if (
+        gameState.selectedPanel === null
+    ) {
+
+        alert("Hãy chọn một ô trước.");
+
+        return;
+
+    }
+
+
+    const panel =
+        gameState.panels.find(
+            item =>
+                item.number ===
+                gameState.selectedPanel
+        );
+
+
+    panel.used = false;
+
+
+    renderPanels();
+
+
+    broadcastState(
+        "showPanel"
+    );
+
+}
+
+
+/* =====================================================
+   ĐÁNH DẤU ĐÃ DÙNG
+===================================================== */
+
+function markSelectedUsed() {
+
+    if (
+        gameState.selectedPanel === null
+    ) {
+
+        alert("Hãy chọn một ô trước.");
+
+        return;
+
+    }
+
+
+    const panel =
+        gameState.panels.find(
+            item =>
+                item.number ===
+                gameState.selectedPanel
+        );
+
+
+    panel.used = true;
+
+
+    renderPanels();
+
+
+    broadcastState(
+        "markUsed"
+    );
+
+}
+
+
+/* =====================================================
+   RESET Ô
+===================================================== */
+
+function resetSelectedPanel() {
+
+    if (
+        gameState.selectedPanel === null
+    ) {
+
+        return;
+
+    }
+
+
+    const panel =
+        gameState.panels.find(
+            item =>
+                item.number ===
+                gameState.selectedPanel
+        );
+
+
+    panel.used = false;
+
+
+    renderPanels();
+
+
+    broadcastState(
+        "resetPanel"
+    );
+
+}
+
+
+/* =====================================================
+   BỎ CHỌN
+===================================================== */
+
+function clearSelection() {
+
+    gameState.selectedPanel =
+        null;
+
+
+    renderPanels();
+
+
+    broadcastState(
+        "clearSelection"
+    );
+
+}
+
+
+/* =====================================================
+   RENDER BẢNG
+===================================================== */
+
+function renderPanels() {
+
+    const selected =
+        gameState.selectedPanel;
+
+
+    /* CONTROLLER */
+
+    document
+        .querySelectorAll(".panel-button")
+        .forEach(button => {
+
+            const number =
+                Number(
+                    button.dataset.number
+                );
+
+
+            const panel =
+                gameState.panels.find(
+                    item =>
+                        item.number === number
+                );
+
+
+            button.classList.toggle(
+                "active",
+                number === selected
+            );
+
+
+            button.classList.toggle(
+                "used",
+                panel.used
+            );
+
+        });
+
+
+    /* PREVIEW */
+
+    document
+        .querySelectorAll(".preview-cell")
+        .forEach(cell => {
+
+            const number =
+                Number(
+                    cell.dataset.number
+                );
+
+
+            const panel =
+                gameState.panels.find(
+                    item =>
+                        item.number === number
+                );
+
+
+            cell.classList.toggle(
+                "active",
+                number === selected
+            );
+
+
+            cell.classList.toggle(
+                "used",
+                panel.used
+            );
+
+        });
+
+
+    /* SELECTED TEXT */
+
+    document.getElementById(
+        "selectedPanelText"
+    ).textContent =
+        selected === null
+            ? "Chưa chọn ô"
+            : "Đang chọn ô " + selected;
+
+
+    document.getElementById(
+        "statusSelected"
+    ).textContent =
+        selected === null
+            ? "-"
+            : selected;
+
+
+    /* USED */
+
+    const usedCount =
+        gameState.panels.filter(
+            panel => panel.used
+        ).length;
+
+
+    document.getElementById(
+        "statusUsed"
+    ).textContent =
+        usedCount + " / 25";
+
+
+    document.getElementById(
+        "statusRemaining"
+    ).textContent =
+        25 - usedCount;
+
+}
+
+
+/* =====================================================
+   ĐỔI TÊN PLAYER
+===================================================== */
+
+function updatePlayerName(color) {
+
+    const input =
+        document.getElementById(
+            "name" +
+            capitalize(color)
+        );
+
+
+    gameState.players[color].name =
+        input.value;
+
+
+    broadcastState(
+        "updatePlayer"
+    );
+
+}
+
+
+/* =====================================================
+   CỘNG / TRỪ ĐIỂM
+===================================================== */
+
+function changeScore(
+    color,
+    amount
+) {
+
+    const player =
+        gameState.players[color];
+
+
+    player.score += amount;
+
+
+    document.getElementById(
+        "score" +
+        capitalize(color)
+    ).value =
+        player.score;
+
+
+    updatePreviewScores();
+
+
+    broadcastState(
+        "updateScore"
+    );
+
+}
+
+
+/* =====================================================
+   NHẬP ĐIỂM TRỰC TIẾP
+===================================================== */
+
+function updateScore(color) {
+
+    const input =
+        document.getElementById(
+            "score" +
+            capitalize(color)
+        );
+
+
+    let score =
+        Number(input.value);
+
+
+    if (isNaN(score)) {
+
+        score = 0;
+
+    }
+
+
+    gameState.players[color].score =
+        score;
+
+
+    input.value =
+        score;
+
+
+    updatePreviewScores();
+
+
+    broadcastState(
+        "updateScore"
+    );
+
+}
+
+
+/* =====================================================
+   UPDATE PREVIEW SCORE
+===================================================== */
+
+function updatePreviewScores() {
+
+    document.getElementById(
+        "previewScoreRed"
+    ).textContent =
+        gameState.players.red.score;
+
+
+    document.getElementById(
+        "previewScoreGreen"
+    ).textContent =
+        gameState.players.green.score;
+
+
+    document.getElementById(
+        "previewScoreWhite"
+    ).textContent =
+        gameState.players.white.score;
+
+
+    document.getElementById(
+        "previewScoreBlue"
+    ).textContent =
+        gameState.players.blue.score;
+
+}
+
+
+/* =====================================================
+   RESET SCORE
+===================================================== */
+
+function resetAllScores() {
+
+    const colors = [
+        "red",
+        "green",
+        "white",
+        "blue"
+    ];
+
+
+    colors.forEach(color => {
+
+        gameState.players[color].score =
+            0;
+
+
+        document.getElementById(
+            "score" +
+            capitalize(color)
+        ).value =
+            0;
+
+    });
+
+
+    updatePreviewScores();
+
+
+    broadcastState(
+        "resetScores"
+    );
+
+}
+
+
+/* =====================================================
+   RESET GAME
+===================================================== */
+
+function resetGame() {
+
+    const confirmReset =
+        confirm(
+            "Bạn có chắc muốn reset toàn bộ gameshow?"
+        );
+
+
+    if (!confirmReset) {
+
+        return;
+
+    }
+
+
+    /* RESET PANEL */
+
+    gameState.selectedPanel =
+        null;
+
+
+    gameState.panels.forEach(panel => {
+
+        panel.used = false;
+
+    });
+
+
+    /* RESET SCORE */
+
+    resetAllScores();
+
+
+    renderPanels();
+
+
+    broadcastState(
+        "resetGame"
+    );
+
+}
+
+
+/* =====================================================
+   KẾT NỐI DISPLAY
+===================================================== */
+
+function connectDisplay() {
+
+    if (!gameChannel) {
+
+        alert(
+            "Trình duyệt không hỗ trợ BroadcastChannel."
+        );
+
+        return;
+
+    }
+
+
+    document.getElementById(
+        "connectionDot"
+    ).classList.add(
+        "connected"
+    );
+
+
+    document.getElementById(
+        "connectionText"
+    ).textContent =
+        "ĐÃ KẾT NỐI CONTROLLER";
+
+
+    broadcastState(
+        "sync"
+    );
+
+}
+
+
+/* =====================================================
+   HELPER
+===================================================== */
+
+function capitalize(text) {
+
+    return (
+        text.charAt(0).toUpperCase() +
+        text.slice(1)
+    );
+
+}
+
+
+/* =====================================================
+   INITIALIZE
+===================================================== */
+
+createPanelButtons();
+
+updatePreviewScores();
+
+</script>
+
+</body>
+</html>
