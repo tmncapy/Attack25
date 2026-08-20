@@ -1,571 +1,243 @@
-/* =========================================================
-   ATTACK 25 - UNIVERSAL REAL-TIME SYNC CLIENT
-   Hoạt động:
-   - localhost
-   - LAN
-   - Render
-   - HTTP / HTTPS
-   ========================================================= */
-
-(function () {
-    "use strict";
-
-    const CHANNEL = "attack25-sync-v3";
-
-    const KEY_STATE = "attack25_gamestate";
-    const KEY_QUESTIONS = "attack25_questions";
-    const KEY_HOST = "attack25_ws_server_host";
-
-    const instanceId =
-        (window.crypto && crypto.randomUUID)
-            ? crypto.randomUUID()
-            : "attack25_" +
-              Date.now() +
-              "_" +
-              Math.random().toString(36).slice(2);
-
-    let ws = null;
-    let reconnectTimer = null;
-    let reconnecting = false;
-
-    let manualHost = "";
-
-    try {
-        manualHost = localStorage.getItem(KEY_HOST) || "";
-    } catch (e) {
-        manualHost = "";
-    }
-
-    const stateHandlers = [];
-    const questionHandlers = [];
-    const soundHandlers = [];
-    const connectionHandlers = [];
-
-    let broadcastChannel = null;
-
-    if ("BroadcastChannel" in window) {
-        try {
-            broadcastChannel = new BroadcastChannel(CHANNEL);
-        } catch (e) {
-            console.warn("BroadcastChannel unavailable:", e);
-        }
-    }
-
-
-    /* =========================================================
-       HELPER
-       ========================================================= */
-
-    function emit(handlers, data) {
-        handlers.slice().forEach(function (handler) {
-            try {
-                handler(data);
-            } catch (error) {
-                console.error("Attack25Sync handler error:", error);
-            }
-        });
-    }
-
-    function emitConnection(connected, url) {
-        emit(connectionHandlers, {
-            connected: connected,
-            mode: "websocket",
-            url: url || ""
-        });
-    }
-
-
-    /* =========================================================
-       WEBSOCKET URL
-       QUAN TRỌNG:
-       Không dùng location.pathname
-       Vì pathname có thể là /controller.html
-       hoặc /Projector.html
-       ========================================================= */
-
-    function normalizeHost(host) {
-        return String(host || "")
-            .trim()
-            .replace(/^https?:\/\//i, "")
-            .replace(/^wss?:\/\//i, "")
-            .replace(/\/+$/, "")
-            .replace(/\/ws$/i, "");
-    }
-
-    function getWebSocketUrl() {
-        let host = normalizeHost(manualHost);
-
-        // Nếu người dùng chưa nhập server riêng:
-        // tự dùng domain/IP hiện tại
-        if (!host && window.location.protocol !== "file:") {
-            host = window.location.host;
-        }
-
-        // Chạy trực tiếp file HTML
-        if (!host) {
-            host = "localhost:3000";
-        }
-
-        // HTTPS -> WSS
-        // HTTP -> WS
-        const protocol =
-            window.location.protocol === "https:"
-                ? "wss:"
-                : "ws:";
-
-        /*
-           Endpoint cố định là /ws
-
-           Render:
-           wss://attack25.onrender.com/ws
-
-           LAN:
-           ws://192.168.x.x:3000/ws
-
-           Local:
-           ws://localhost:3000/ws
-        */
-        return protocol + "//" + host + "/ws";
-    }
-
-
-    /* =========================================================
-       LOCAL STORAGE
-       ========================================================= */
-
-    function saveStateLocal(state) {
-        try {
-            localStorage.setItem(KEY_STATE, JSON.stringify(state));
-        } catch (e) {}
-    }
-
-    function saveQuestionsLocal(questions) {
-        try {
-            localStorage.setItem(
-                KEY_QUESTIONS,
-                JSON.stringify(questions)
-            );
-        } catch (e) {}
-    }
-
-
-    /* =========================================================
-       XỬ LÝ MESSAGE
-       ========================================================= */
-
-    function handleMessage(message) {
-        if (!message || typeof message !== "object") {
-            return;
-        }
-
-        // Bỏ qua message từ phiên bản/protocol khác
-        if (message.channel !== CHANNEL) {
-            return;
-        }
-
-        // Không cần xử lý lại message của chính mình
-        // BroadcastChannel không gửi lại cho chính tab,
-        // nhưng WebSocket server có thể broadcast lại.
-        if (message.source === instanceId) {
-            return;
-        }
-
-        switch (message.type) {
-            case "state":
-                if (message.state !== undefined) {
-                    saveStateLocal(message.state);
-                    emit(stateHandlers, message.state);
-                }
-                break;
-
-            case "questions":
-                if (message.questions !== undefined) {
-                    saveQuestionsLocal(message.questions);
-                    emit(questionHandlers, message.questions);
-                }
-                break;
-
-            case "sound":
-                if (message.sound !== undefined) {
-                    emit(soundHandlers, message.sound);
-                }
-                break;
-
-            default:
-                console.log(
-                    "Attack25Sync unknown message:",
-                    message
-                );
-                break;
-        }
-    }
-
-
-    /* =========================================================
-       GỬI MESSAGE
-       ========================================================= */
-
-    function send(message) {
-        if (!message || typeof message !== "object") {
-            return false;
-        }
-
-        const payload = Object.assign(
-            {
-                channel: CHANNEL,
-                source: instanceId,
-                ts: Date.now()
-            },
-            message
-        );
-
-        // Đồng bộ giữa các tab cùng trình duyệt
-        if (broadcastChannel) {
-            try {
-                broadcastChannel.postMessage(payload);
-            } catch (e) {
-                console.warn(
-                    "BroadcastChannel send failed:",
-                    e
-                );
-            }
-        }
-
-        // Đồng bộ qua Internet/LAN
-        if (
-            ws &&
-            ws.readyState === WebSocket.OPEN
-        ) {
-            try {
-                ws.send(JSON.stringify(payload));
-                return true;
-            } catch (e) {
-                console.error(
-                    "WebSocket send failed:",
-                    e
-                );
-            }
-        }
-
-        return false;
-    }
-
-
-    /* =========================================================
-       KẾT NỐI WEBSOCKET
-       ========================================================= */
-
-    function connect() {
-        // Không tạo nhiều WebSocket cùng lúc
-        if (
-            ws &&
-            (
-                ws.readyState === WebSocket.OPEN ||
-                ws.readyState === WebSocket.CONNECTING
-            )
-        ) {
-            return;
-        }
-
-        if (reconnectTimer) {
-            clearTimeout(reconnectTimer);
-            reconnectTimer = null;
-        }
-
-        const url = getWebSocketUrl();
-
-        console.log(
-            "[Attack25Sync] Connecting to:",
-            url
-        );
-
-        reconnecting = true;
-
-        try {
-            ws = new WebSocket(url);
-        } catch (error) {
-            console.error(
-                "[Attack25Sync] Cannot create WebSocket:",
-                error
-            );
-
-            ws = null;
-            emitConnection(false, url);
-            scheduleReconnect();
-
-            return;
-        }
-
-
-        ws.onopen = function () {
-            console.log(
-                "[Attack25Sync] WebSocket connected:",
-                url
-            );
-
-            reconnecting = false;
-
-            emitConnection(true, url);
-        };
-
-
-        ws.onmessage = function (event) {
-            try {
-                const message = JSON.parse(event.data);
-                handleMessage(message);
-            } catch (error) {
-                console.error(
-                    "[Attack25Sync] Invalid WebSocket message:",
-                    error
-                );
-            }
-        };
-
-
-        ws.onerror = function () {
-            // onclose sẽ xử lý reconnect
-        };
-
-
-        ws.onclose = function () {
-            console.warn(
-                "[Attack25Sync] WebSocket disconnected:",
-                url
-            );
-
-            ws = null;
-            reconnecting = false;
-
-            emitConnection(false, url);
-
-            scheduleReconnect();
-        };
-    }
-
-
-    /* =========================================================
-       TỰ ĐỘNG KẾT NỐI LẠI
-       ========================================================= */
-
-    function scheduleReconnect() {
-        if (reconnectTimer) {
-            return;
-        }
-
-        reconnectTimer = setTimeout(function () {
-            reconnectTimer = null;
-            connect();
-        }, 2500);
-    }
-
-
-    /* =========================================================
-       BROADCAST CHANNEL
-       ========================================================= */
-
-    if (broadcastChannel) {
-        broadcastChannel.onmessage = function (event) {
-            if (!event.data) {
-                return;
-            }
-
-            handleMessage(event.data);
-        };
-    }
-
-
-    /* =========================================================
-       PUBLIC API
-       Không thay đổi tên hàm để Controller/Projector
-       hiện tại vẫn hoạt động
-       ========================================================= */
-
-    window.Attack25Sync = {
-
-        broadcastState: function (
-            state,
-            action,
-            soundEvent
-        ) {
-            action = action || "update";
-
-            saveStateLocal(state);
-
-            send({
-                type: "state",
-                state: state,
-                action: action
-            });
-
-            if (soundEvent) {
-                send({
-                    type: "sound",
-                    sound: soundEvent
-                });
-            }
+/**
+ * Universal Real-time Synchronizer for Panel Quiz Attack 25
+ * Hỗ trợ Socket.io, Supabase Realtime, BroadcastChannel & LocalStorage Fallback.
+ */
+
+(function (window) {
+    'use strict';
+
+    // Cấu hình kết nối mặc định
+    const CONFIG = {
+        supabaseUrl: 'YOUR_SUPABASE_URL', // Thay bằng Supabase URL của bạn nếu dùng Supabase
+        supabaseKey: 'YOUR_SUPABASE_ANON_KEY', // Thay bằng Anon Key của bạn
+        serverHost: localStorage.getItem('attack25_ws_server_host') || window.location.host,
+        channelName: 'panel_quiz_attack_25'
+    };
+
+    // State mặc định khởi tạo
+    let gameState = {
+        selectedPanel: null,
+        panels: Array.from({ length: 25 }, (_, i) => ({ number: i + 1, used: false, color: null })),
+        players: {
+            red: { name: "PLAYER 1", score: 0 },
+            green: { name: "PLAYER 2", score: 0 },
+            white: { name: "PLAYER 3", score: 0 },
+            blue: { name: "PLAYER 4", score: 0 }
         },
-
-
-        broadcastQuestions: function (questions) {
-            saveQuestionsLocal(questions);
-
-            send({
-                type: "questions",
-                questions: questions
-            });
-        },
-
-
-        onStateChange: function (callback) {
-            if (typeof callback !== "function") {
-                return;
-            }
-
-            stateHandlers.push(callback);
-
-            // Khôi phục dữ liệu local nếu có
-            try {
-                const saved =
-                    localStorage.getItem(KEY_STATE);
-
-                if (saved) {
-                    const state = JSON.parse(saved);
-
-                    setTimeout(function () {
-                        callback(state);
-                    }, 0);
-                }
-            } catch (e) {}
-        },
-
-
-        onQuestionsChange: function (callback) {
-            if (typeof callback !== "function") {
-                return;
-            }
-
-            questionHandlers.push(callback);
-
-            try {
-                const saved =
-                    localStorage.getItem(KEY_QUESTIONS);
-
-                if (saved) {
-                    const questions = JSON.parse(saved);
-
-                    setTimeout(function () {
-                        callback(questions);
-                    }, 0);
-                }
-            } catch (e) {}
-        },
-
-
-        onSound: function (callback) {
-            if (typeof callback !== "function") {
-                return;
-            }
-
-            soundHandlers.push(callback);
-        },
-
-
-        onConnectionChange: function (callback) {
-            if (typeof callback !== "function") {
-                return;
-            }
-
-            connectionHandlers.push(callback);
-
-            const url = getWebSocketUrl();
-
-            setTimeout(function () {
-                callback({
-                    connected: !!(
-                        ws &&
-                        ws.readyState === WebSocket.OPEN
-                    ),
-                    mode: "websocket",
-                    url: url
-                });
-            }, 0);
-        },
-
-
-        setServerHost: function (host) {
-            manualHost = normalizeHost(host);
-
-            try {
-                if (manualHost) {
-                    localStorage.setItem(
-                        KEY_HOST,
-                        manualHost
-                    );
-                } else {
-                    localStorage.removeItem(KEY_HOST);
-                }
-            } catch (e) {}
-
-            // Đóng kết nối cũ
-            if (ws) {
-                try {
-                    ws.onclose = null;
-                    ws.close();
-                } catch (e) {}
-
-                ws = null;
-            }
-
-            if (reconnectTimer) {
-                clearTimeout(reconnectTimer);
-                reconnectTimer = null;
-            }
-
-            connect();
-        },
-
-
-        getServerHost: function () {
-            return manualHost ||
-                (
-                    window.location.protocol !== "file:"
-                        ? window.location.host
-                        : "localhost:3000"
-                );
-        },
-
-
-        getWebSocketUrl: function () {
-            return getWebSocketUrl();
-        },
-
-
-        reconnect: function () {
-            if (ws) {
-                try {
-                    ws.onclose = null;
-                    ws.close();
-                } catch (e) {}
-
-                ws = null;
-            }
-
-            if (reconnectTimer) {
-                clearTimeout(reconnectTimer);
-                reconnectTimer = null;
-            }
-
-            connect();
+        buzzer: {
+            status: 'locked', // 'locked' | 'armed' | 'buzzed'
+            winner: null,
+            buzzTime: null,
+            pressOrder: [],
+            lockedPlayers: []
         }
     };
 
+    const listeners = {
+        stateChange: [],
+        sound: [],
+        connection: []
+    };
 
-    /* =========================================================
-       KHỞI ĐỘNG
-       ========================================================= */
+    let socket = null;
+    let localChannel = null;
+    let isConnected = false;
 
-    setTimeout(function () {
-        connect();
-    }, 0);
+    // 1. Tải trạng thái đã lưu trước đó (nếu có)
+    try {
+        const saved = localStorage.getItem('attack25_gamestate');
+        if (saved) gameState = JSON.parse(saved);
+    } catch (e) {
+        console.warn('Lỗi đọc LocalStorage:', e);
+    }
 
-})();
+    // 2. Thiết lập BroadcastChannel cho cùng trình duyệt/thiết bị
+    if ('BroadcastChannel' in window) {
+        localChannel = new BroadcastChannel(CONFIG.channelName);
+        localChannel.onmessage = (event) => {
+            if (event.data) handleIncomingMessage(event.data);
+        };
+    }
+
+    // 3. Theo dõi biến đổi LocalStorage
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'attack25_gamestate' && e.newValue) {
+            try {
+                handleIncomingMessage({ type: 'STATE_UPDATE', state: JSON.parse(e.newValue) });
+            } catch (err) {}
+        }
+    });
+
+    // 4. Khởi tạo kết nối Socket.io (khi deploy lên server Node.js / Render / Glitch)
+    function initSocketIO() {
+        if (typeof io !== 'undefined') {
+            try {
+                const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+                const socketUrl = CONFIG.serverHost.startsWith('http') ? CONFIG.serverHost : `${window.location.protocol}//${CONFIG.serverHost}`;
+                
+                socket = io(socketUrl, {
+                    transports: ['websocket', 'polling'],
+                    reconnectionAttempts: 5,
+                    timeout: 5000
+                });
+
+                socket.on('connect', () => {
+                    isConnected = true;
+                    notifyConnection(true, 'websocket');
+                });
+
+                socket.on('disconnect', () => {
+                    isConnected = false;
+                    notifyConnection(false, 'websocket');
+                });
+
+                socket.on('sync_state', (state) => {
+                    handleIncomingMessage({ type: 'STATE_UPDATE', state: state });
+                });
+
+                socket.on('play_sound', (sound) => {
+                    notifySound(sound);
+                });
+
+                socket.on('player_buzzed', (data) => {
+                    if (data && data.player) processBuzz(data.player);
+                });
+            } catch (err) {
+                console.warn('Socket.io không thể khởi tạo:', err);
+                notifyConnection(false, 'local');
+            }
+        } else {
+            notifyConnection(true, 'local');
+        }
+    }
+
+    // 5. Khởi tạo kết nối Supabase Realtime (Nếu file html có import thư viện Supabase)
+    function initSupabase() {
+        if (window.supabase && CONFIG.supabaseUrl !== 'YOUR_SUPABASE_URL') {
+            const client = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+            const channel = client.channel(CONFIG.channelName);
+
+            channel.on('broadcast', { event: 'sync' }, (payload) => {
+                if (payload.payload) handleIncomingMessage(payload.payload);
+            }).subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    isConnected = true;
+                    notifyConnection(true, 'supabase');
+                }
+            });
+        }
+    }
+
+    // Xử lý thông điệp nhận được
+    function handleIncomingMessage(msg) {
+        if (!msg) return;
+
+        if (msg.type === 'STATE_UPDATE' && msg.state) {
+            gameState = msg.state;
+            saveStateToStorage(gameState);
+            notifyStateChange(gameState);
+        } else if (msg.type === 'PLAY_SOUND' && msg.sound) {
+            notifySound(msg.sound);
+        } else if (msg.type === 'PLAYER_BUZZ' && msg.player) {
+            processBuzz(msg.player);
+        }
+    }
+
+    // Xử lý logic bấm chuông
+    function processBuzz(player) {
+        if (gameState.buzzer.status !== 'armed') return;
+        if (gameState.buzzer.lockedPlayers && gameState.buzzer.lockedPlayers.includes(player)) return;
+
+        gameState.buzzer.status = 'buzzed';
+        gameState.buzzer.winner = player;
+        gameState.buzzer.buzzTime = (Math.random() * 0.2 + 0.1).toFixed(2);
+        
+        if (!gameState.buzzer.pressOrder.includes(player)) {
+            gameState.buzzer.pressOrder.push(player);
+        }
+
+        broadcastState(gameState);
+        broadcastSound(`buzz_${player}`);
+    }
+
+    // Lưu state xuống bộ nhớ tạm
+    function saveStateToStorage(state) {
+        try {
+            localStorage.setItem('attack25_gamestate', JSON.stringify(state));
+        } catch (e) {}
+    }
+
+    // Gửi thông báo cập nhật State tới tất cả thiết bị
+    function broadcastState(state) {
+        gameState = state;
+        saveStateToStorage(state);
+        notifyStateChange(state);
+
+        const payload = { type: 'STATE_UPDATE', state: state };
+
+        if (localChannel) localChannel.postMessage(payload);
+        if (socket && socket.connected) socket.emit('update_state', state);
+    }
+
+    // Gửi tín hiệu âm thanh
+    function broadcastSound(sound) {
+        notifySound(sound);
+        const payload = { type: 'PLAY_SOUND', sound: sound };
+
+        if (localChannel) localChannel.postMessage(payload);
+        if (socket && socket.connected) socket.emit('trigger_sound', sound);
+    }
+
+    // Gửi yêu cầu bấm chuông từ máy người chơi
+    function sendPlayerBuzz(playerRole) {
+        processBuzz(playerRole);
+        const payload = { type: 'PLAYER_BUZZ', player: playerRole };
+
+        if (localChannel) localChannel.postMessage(payload);
+        if (socket && socket.connected) socket.emit('player_buzz', { player: playerRole });
+    }
+
+    // Quản lý Callback Listeners
+    function notifyStateChange(state) {
+        listeners.stateChange.forEach(fn => fn(state));
+    }
+
+    function notifySound(sound) {
+        listeners.sound.forEach(fn => fn(sound));
+    }
+
+    function notifyConnection(status, mode) {
+        listeners.connection.forEach(fn => fn({ connected: status, mode: mode }));
+    }
+
+    // Khởi chạy khi load xong DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            initSocketIO();
+            initSupabase();
+        });
+    } else {
+        initSocketIO();
+        initSupabase();
+    }
+
+    // API Export ra toàn cục (Attack25Sync)
+    window.Attack25Sync = {
+        getState: () => gameState,
+        setState: broadcastState,
+        playSound: broadcastSound,
+        sendPlayerBuzz: sendPlayerBuzz,
+        onStateChange: (fn) => {
+            listeners.stateChange.push(fn);
+            fn(gameState); // Gọi ngay lập tức dữ liệu hiện tại khi Đăng ký
+        },
+        onSound: (fn) => listeners.sound.push(fn),
+        onConnectionChange: (fn) => listeners.connection.push(fn),
+        setServerHost: (host) => {
+            localStorage.setItem('attack25_ws_server_host', host);
+            CONFIG.serverHost = host;
+            initSocketIO();
+        }
+    };
+
+})(window);
