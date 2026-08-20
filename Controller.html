@@ -8,6 +8,12 @@
 
 <!-- SheetJS for Excel (.xlsx, .xls, .csv) import -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- 3 Required Connector Libraries -->
+<script src="jquery.js"></script>
+<script src="socket.io.js"></script>
+<script src="howler.js"></script>
+<!-- Universal Real-time Synchronizer (Relative path for file:/// and web) -->
+<script src="sync-client.js"></script>
 
 <style>
 
@@ -810,77 +816,6 @@ html, body {
 }
 
 </style>
-
-<script>
-/* ATTACK 25 UNIVERSAL SYNC - inline, no UI changes */
-(function(){
-  const CHANNEL='attack25-sync-v3';
-  const KEY_STATE='attack25_gamestate';
-  const KEY_Q='attack25_questions';
-  const KEY_HOST='attack25_ws_server_host';
-  const id=(crypto&&crypto.randomUUID)?crypto.randomUUID():Math.random().toString(36).slice(2);
-  let ws=null, reconnectTimer=null, manualHost=localStorage.getItem(KEY_HOST)||'';
-  const stateHandlers=[], questionHandlers=[], soundHandlers=[], connectionHandlers=[];
-  const bc=('BroadcastChannel' in window)?new BroadcastChannel(CHANNEL):null;
-  function emit(list,v){list.slice().forEach(fn=>{try{fn(v)}catch(e){console.error(e)}})}
-  function wsUrl(){
-    let host=manualHost.trim();
-    if(!host && location.protocol!=='file:') host=location.host;
-    if(!host) host='localhost:3000';
-    if(/^wss?:\/\//i.test(host)) return host.replace(/^http/i,'ws');
-    const secure=location.protocol==='https:';
-    return (secure?'wss://':'ws://')+host;
-  }
-  function conn(v){emit(connectionHandlers,v)}
-  function send(msg){
-    msg=Object.assign({channel:CHANNEL,source:id,ts:Date.now()},msg);
-    if(bc) try{bc.postMessage(msg)}catch(e){}
-    if(ws&&ws.readyState===WebSocket.OPEN) try{ws.send(JSON.stringify(msg))}catch(e){}
-  }
-  function receive(msg){
-    if(!msg||msg.channel!==CHANNEL||msg.source===id) return;
-    if(msg.type==='state') emit(stateHandlers,msg.state);
-    else if(msg.type==='questions') emit(questionHandlers,msg.questions);
-    else if(msg.type==='sound') emit(soundHandlers,msg.sound);
-  }
-  if(bc) bc.onmessage=e=>receive(e.data);
-  window.addEventListener('storage',e=>{
-    try{
-      if(e.key===KEY_STATE&&e.newValue) emit(stateHandlers,JSON.parse(e.newValue));
-      if(e.key===KEY_Q&&e.newValue) emit(questionHandlers,JSON.parse(e.newValue));
-    }catch(_){}
-  });
-  function connect(){
-    clearTimeout(reconnectTimer);
-    if(ws){try{ws.close()}catch(e){}}
-    let url=wsUrl();
-    try{ws=new WebSocket(url)}catch(e){conn({connected:false,mode:'local',url}); schedule();return}
-    conn({connected:false,mode:'connecting',url});
-    ws.onopen=()=>{conn({connected:true,mode:'websocket',url}); send({type:'hello'});};
-    ws.onmessage=e=>{try{receive(JSON.parse(e.data))}catch(_){}};
-    ws.onerror=()=>{};
-    ws.onclose=()=>{conn({connected:false,mode:'local',url}); schedule();};
-  }
-  function schedule(){clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,2500)}
-  const api={
-    broadcastState(state,action='update',soundEvent=null){
-      try{localStorage.setItem(KEY_STATE,JSON.stringify(state))}catch(e){}
-      send({type:'state',state,action});
-      if(soundEvent) send({type:'sound',sound:soundEvent});
-    },
-    broadcastQuestions(questions){try{localStorage.setItem(KEY_Q,JSON.stringify(questions))}catch(e){};send({type:'questions',questions})},
-    onStateChange(fn){stateHandlers.push(fn);try{const x=localStorage.getItem(KEY_STATE);if(x) setTimeout(()=>fn(JSON.parse(x)),0)}catch(e){}},
-    onQuestionsChange(fn){questionHandlers.push(fn);try{const x=localStorage.getItem(KEY_Q);if(x) setTimeout(()=>fn(JSON.parse(x)),0)}catch(e){}},
-    onSound(fn){soundHandlers.push(fn)},
-    onConnectionChange(fn){connectionHandlers.push(fn)},
-    setServerHost(host){manualHost=(host||'').replace(/^https?:\/\//i,'').replace(/^wss?:\/\//i,'').replace(/\/$/,'');try{localStorage.setItem(KEY_HOST,manualHost)}catch(e){};connect()},
-    getServerHost(){return manualHost||((location.protocol!=='file:')?location.host:'localhost:3000')},
-    reconnect:connect
-  };
-  window.Attack25Sync=api;
-  setTimeout(connect,0);
-})();
-</script>
 </head>
 
 <body>
