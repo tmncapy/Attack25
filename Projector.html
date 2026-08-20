@@ -477,106 +477,9 @@ img {
     to { filter: brightness(1.3); box-shadow: 0 0 45px #ffd43b; }
 }
 
-/* =====================================================
-   FLOATING HUD TOOLBAR (AUTO-HIDING FOR PROJECTORS)
-===================================================== */
-.projector-hud {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 30px;
-    padding: 4px 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-    opacity: 1;
-}
-
-.projector-hud.idle {
-    opacity: 0.15;
-    transform: translateY(-4px);
-}
-
-.projector-hud:hover, .projector-hud:focus-within {
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-}
-
-.hud-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #e2e8f0;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    outline: none;
-    padding: 4px 8px;
-    border-radius: 20px;
-    transition: background 0.2s ease;
-}
-
-.hud-pill:hover {
-    background: rgba(255, 255, 255, 0.12);
-}
-
-.status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #22c55e;
-    box-shadow: 0 0 8px #22c55e;
-}
-
-.hud-btn {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #e2e8f0;
-    padding: 4px 10px;
-    border-radius: 16px;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.2s ease;
-}
-
-.hud-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    transform: translateY(-1px);
-}
-
-/* Audio Unblock Notification Banner */
-.audio-banner {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(30, 41, 59, 0.95);
-    border: 1px solid #f59f00;
-    color: #f8fafc;
-    padding: 10px 24px;
-    border-radius: 24px;
-    font-size: 13px;
-    font-weight: 600;
-    z-index: 1000;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: bounce 2s infinite ease-in-out;
+/* FLOATING HUD TOOLBAR & AUDIO BANNER HIDDEN */
+.projector-hud, .audio-banner {
+    display: none !important;
 }
 
 @keyframes bounce {
@@ -588,25 +491,6 @@ img {
 </head>
 
 <body>
-
-<!-- HUD CONTROLS FOR PROJECTOR / SCREEN SETUP -->
-<div class="projector-hud" id="projectorHud">
-    <button class="hud-pill" id="hudConnStatus" title="Nhấp để cấu hình IP/Domain máy chủ WebSocket từ xa">
-        <div class="status-dot" id="hudDot"></div>
-        <span id="hudText">WS CONNECTING...</span>
-    </button>
-    <button class="hud-btn" id="btnAudioToggle" title="Bật/Tắt âm thanh (Phím M)">
-        🔊 Âm thanh
-    </button>
-    <button class="hud-btn" id="btnFullscreen" title="Toàn màn hình (Phím F hoặc F11)">
-        ⛶ Toàn màn hình
-    </button>
-</div>
-
-<!-- AUDIO UNBLOCK PROMPT (Disappears after first user interaction) -->
-<div class="audio-banner" id="audioBanner" style="display: none;">
-    <span>🔊 Nhấp chuột bất kỳ đâu để kích hoạt âm thanh máy chiếu</span>
-</div>
 
 <div id="game-container">
     <div id="game">
@@ -745,7 +629,7 @@ function toggleFullScreen() {
     }
 }
 
-document.getElementById('btnFullscreen').addEventListener('click', toggleFullScreen);
+document.getElementById('btnFullscreen')?.addEventListener('click', toggleFullScreen);
 document.body.addEventListener('dblclick', toggleFullScreen);
 
 window.addEventListener('keydown', (e) => {
@@ -792,30 +676,22 @@ function getAudioContext() {
     return audioCtx;
 }
 
-// Check initial audio state
-setTimeout(() => {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') {
-        const banner = document.getElementById('audioBanner');
-        if (banner) banner.style.display = 'flex';
-    }
-}, 500);
-
 window.addEventListener('click', () => {
     getAudioContext();
 }, { once: true });
 
-document.getElementById('audioBanner').addEventListener('click', () => {
+document.getElementById('audioBanner')?.addEventListener('click', () => {
     getAudioContext();
 });
 
 function toggleAudio() {
     isMuted = !isMuted;
-    document.getElementById('btnAudioToggle').textContent = isMuted ? '🔇 Đã tắt âm' : '🔊 Âm thanh';
+    const btn = document.getElementById('btnAudioToggle');
+    if (btn) btn.textContent = isMuted ? '🔇 Đã tắt âm' : '🔊 Âm thanh';
     if (!isMuted) getAudioContext();
 }
 
-document.getElementById('btnAudioToggle').addEventListener('click', toggleAudio);
+document.getElementById('btnAudioToggle')?.addEventListener('click', toggleAudio);
 
 function playSound(type) {
     if (isMuted || (window.self !== window.top) || window.location.search.includes('preview=1')) return;
@@ -1137,7 +1013,7 @@ function promptServerConfig() {
     }
 }
 
-document.getElementById('hudConnStatus').addEventListener('click', promptServerConfig);
+document.getElementById('hudConnStatus')?.addEventListener('click', promptServerConfig);
 
 if (window.Attack25Sync) {
     Attack25Sync.onStateChange((state) => {
