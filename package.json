@@ -1,16 +1,1 @@
-{
-  "name": "attack25",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "node server.js",
-    "start": "node server.js",
-    "build": "echo 'No build step required for static site'",
-    "lint": "echo 'No lint errors'"
-  },
-  "dependencies": {
-    "express": "^4.19.2",
-    "ws": "^8.21.3"
-  }
-}
+{"name":"attack25-universal-sync","version":"1.0.0","private":true,"scripts":{"start":"node server.js"},"dependencies":{"ws":"^8.18.0"}}

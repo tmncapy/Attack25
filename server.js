@@ -1,220 +1,934 @@
-import express from 'express';
-import http from 'http';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { WebSocketServer, WebSocket } from 'ws';
+/**
+ * ============================================================
+ * PANEL QUIZ ATTACK 25 - UNIVERSAL REAL-TIME SERVER
+ * ============================================================
+ *
+ * Chức năng:
+ * - Phục vụ toàn bộ file HTML/CSS/JS/image/audio trong thư mục.
+ * - WebSocket đồng bộ thời gian thực.
+ * - Controller <-> Projector <-> các thiết bị khác.
+ * - Lưu trạng thái game hiện tại trong RAM.
+ * - Thiết bị mới kết nối sẽ tự nhận trạng thái mới nhất.
+ * - Hoạt động Localhost / LAN / Internet.
+ *
+ * Cài đặt:
+ *   npm install
+ *
+ * Chạy:
+ *   npm start
+ *
+ * Hoặc:
+ *   node server.js
+ *
+ * Local:
+ *   http://localhost:3000/Controller(2).html
+ *   http://localhost:3000/Projector.html
+ *
+ * LAN:
+ *   http://IP-MAY-CHU:3000/Controller(2).html
+ *   http://IP-MAY-CHU:3000/Projector.html
+ *
+ * ============================================================
+ */
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+"use strict";
 
-const app = express();
-const PORT = 3000;
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+const { WebSocketServer, WebSocket } = require("ws");
 
-// Enable CORS for all local and remote origins
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+/* ============================================================
+   CONFIG
+============================================================ */
 
-// Explicit named routes (case-insensitive and alias friendly)
-app.get(['/host', '/host.html', '/Host.html', '/Host'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'Host.html'));
-});
+const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.HOST || "0.0.0.0";
 
-app.get(['/projector', '/projector.html', '/Projector.html', '/Projector'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'Projector.html'));
-});
+const ROOT_DIR = __dirname;
 
-app.get(['/controller', '/controller.html', '/Controller.html', '/Controller', '/admin'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'Controller.html'));
-});
+/*
+ * Giới hạn file upload qua HTTP nếu sau này project có thêm API.
+ * Hiện tại server chỉ phục vụ file tĩnh + WebSocket.
+ */
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
-app.get(['/player1', '/player1.html', '/p1', '/red'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'player1.html'));
-});
 
-app.get(['/player2', '/player2.html', '/p2', '/green'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'player2.html'));
-});
+/* ============================================================
+   MIME TYPES
+============================================================ */
 
-app.get(['/player3', '/player3.html', '/p3', '/white'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'player3.html'));
-});
+const MIME_TYPES = {
+    ".html": "text/html; charset=utf-8",
+    ".htm": "text/html; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".mjs": "application/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".txt": "text/plain; charset=utf-8",
 
-app.get(['/player4', '/player4.html', '/p4', '/blue'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'player4.html'));
-});
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
 
-app.use(express.static(__dirname));
+    ".mp3": "audio/mpeg",
+    ".wav": "audio/wav",
+    ".ogg": "audio/ogg",
+    ".m4a": "audio/mp4",
 
-// Server Authoritative State
-let gameState = {
-  selectedPanel: null,
-  panels: Array.from({ length: 25 }, (_, i) => ({ number: i + 1, used: false, color: null })),
-  players: {
-    red: { name: "PLAYER 1", score: 0 },
-    green: { name: "PLAYER 2", score: 0 },
-    white: { name: "PLAYER 3", score: 0 },
-    blue: { name: "PLAYER 4", score: 0 }
-  },
-  buzzer: {
-    status: 'locked',
-    winner: null,
-    buzzTime: null,
-    pressOrder: [],
-    lockedPlayers: []
-  }
+    ".mp4": "video/mp4",
+    ".webm": "video/webm",
+
+    ".ttf": "font/ttf",
+    ".otf": "font/otf",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
+
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".xls": "application/vnd.ms-excel",
+    ".csv": "text/csv; charset=utf-8",
+
+    ".pdf": "application/pdf"
 };
 
-let questionsList = [
-  { stt: 1, question: "Năm 2026 là năm con gì theo can chi?", answer: "Bính Ngọ (Con Ngựa)" },
-  { stt: 2, question: "Đỉnh núi cao nhất Việt Nam là đỉnh núi nào?", answer: "Fansipan (3.143m)" },
-  { stt: 3, question: "Hành tinh nào gần Mặt Trời nhất trong Hệ Mặt Trời?", answer: "Sao Thủy (Mercury)" },
-  { stt: 4, question: "Bức họa nổi tiếng 'Mona Lisa' là tác phẩm của danh họa nào?", answer: "Leonardo da Vinci" },
-  { stt: 5, question: "Kim loại nào dẫn điện tốt nhất ở điều kiện tiêu chuẩn?", answer: "Bạc (Ag)" }
-];
 
-let buzzerArmTime = null;
+/* ============================================================
+   GAME STATE
+============================================================ */
 
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    app: 'Attack25',
-    connections: wss ? wss.clients.size : 0,
-    timestamp: Date.now()
-  });
-});
+/*
+ * Server không tự quyết định luật game.
+ * Server chỉ lưu và chuyển tiếp dữ liệu từ Controller.
+ */
 
-app.get('/api/state', (req, res) => {
-  res.json({ state: gameState, questions: questionsList });
-});
+let latestGameState = null;
+let latestQuestions = null;
+let latestBuzzerState = null;
 
-// Default route sends Controller.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'Controller.html'));
-});
+/*
+ * Danh sách sự kiện gần nhất.
+ * Giúp thiết bị mới kết nối có thể biết trạng thái cơ bản.
+ */
+const eventHistory = [];
+const MAX_EVENT_HISTORY = 50;
 
-// Fallback to Controller.html if route not found
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'Controller.html'));
-});
 
-// Create HTTP and WebSocket Server
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server, path: '/ws' });
+/* ============================================================
+   HTTP STATIC SERVER
+============================================================ */
 
-function broadcast(data, excludeWs = null) {
-  const message = JSON.stringify(data);
-  wss.clients.forEach(client => {
-    if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
-      try {
-        client.send(message);
-      } catch (e) {}
-    }
-  });
-}
-
-function recalculateScores(state) {
-  if (state && state.panels && Array.isArray(state.panels) && state.players) {
-    ['red', 'green', 'white', 'blue'].forEach(color => {
-      const count = state.panels.filter(p => p.color === color).length;
-      if (state.players[color]) {
-        state.players[color].score = count;
-      }
+function sendResponse(res, statusCode, contentType, data, extraHeaders = {}) {
+    res.writeHead(statusCode, {
+        "Content-Type": contentType,
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
+        "Expires": "0",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        ...extraHeaders
     });
-  }
+
+    res.end(data);
 }
 
-wss.on('connection', (ws) => {
-  // Send current authoritative state on connection
-  try {
-    recalculateScores(gameState);
-    ws.send(JSON.stringify({
-      type: 'INIT_STATE',
-      state: gameState,
-      questions: questionsList
-    }));
-  } catch (e) {}
 
-  ws.on('message', (message) => {
+function send404(res) {
+    sendResponse(
+        res,
+        404,
+        "text/plain; charset=utf-8",
+        "404 - File not found"
+    );
+}
+
+
+function send500(res, error) {
+    console.error("HTTP ERROR:", error);
+
+    sendResponse(
+        res,
+        500,
+        "text/plain; charset=utf-8",
+        "500 - Internal Server Error"
+    );
+}
+
+
+/*
+ * Chống truy cập ra ngoài thư mục project.
+ */
+function getSafeFilePath(urlPath) {
     try {
-      const data = JSON.parse(message.toString());
+        const decodedPath = decodeURIComponent(urlPath);
 
-      if (data.type === 'GET_STATE') {
-        recalculateScores(gameState);
-        ws.send(JSON.stringify({
-          type: 'INIT_STATE',
-          state: gameState,
-          questions: questionsList
-        }));
-      } else if (data.type === 'SYNC_STATE') {
-        if (data.state) {
-          gameState = data.state;
-          recalculateScores(gameState);
-          if (data.action === 'buzzer_armed') {
-            buzzerArmTime = Date.now();
-          }
-        }
-        // Broadcast to all other clients
-        broadcast({
-          type: 'SYNC_STATE',
-          action: data.action,
-          state: gameState,
-          sound: data.sound
-        }, ws);
-      } else if (data.type === 'SYNC_QUESTIONS') {
-        if (data.questions) {
-          questionsList = data.questions;
-        }
-        broadcast({
-          type: 'SYNC_QUESTIONS',
-          questions: questionsList
-        }, ws);
-      } else if (data.type === 'PLAYER_BUZZ') {
-        const player = data.player;
-        if (gameState.buzzer.status === 'armed' && (!gameState.buzzer.lockedPlayers || !gameState.buzzer.lockedPlayers.includes(player))) {
-          const now = Date.now();
-          const elapsed = buzzerArmTime ? ((now - buzzerArmTime) / 1000).toFixed(3) : "0.150";
+        let relativePath = decodedPath;
 
-          if (!gameState.buzzer.winner) {
-            gameState.buzzer.status = 'buzzed';
-            gameState.buzzer.winner = player;
-            gameState.buzzer.buzzTime = elapsed;
-            gameState.buzzer.pressOrder = [{ player: player, time: elapsed }];
-
-            // Broadcast winner buzz immediately to EVERYONE including sender with color sound
-            broadcast({
-              type: 'SYNC_STATE',
-              action: 'buzzer_hit',
-              state: gameState,
-              sound: `buzzer_${player}`
-            });
-          } else {
-            // Already someone buzzed, add to press order if not there
-            if (!gameState.buzzer.pressOrder.some(p => p.player === player)) {
-              gameState.buzzer.pressOrder.push({ player: player, time: elapsed });
-              broadcast({
-                type: 'SYNC_STATE',
-                action: 'buzzer_order_update',
-                state: gameState
-              });
-            }
-          }
+        if (relativePath === "/" || relativePath === "") {
+            relativePath = "/Controller(2).html";
         }
-      }
-    } catch (err) {
-      console.error('WebSocket message error:', err);
+
+        relativePath = relativePath.replace(/^[/\\]+/, "");
+
+        const normalizedPath = path.normalize(relativePath);
+
+        const absolutePath = path.resolve(ROOT_DIR, normalizedPath);
+        const rootPath = path.resolve(ROOT_DIR);
+
+        /*
+         * Kiểm tra file có nằm trong thư mục project không.
+         */
+        if (
+            absolutePath !== rootPath &&
+            !absolutePath.startsWith(rootPath + path.sep)
+        ) {
+            return null;
+        }
+
+        return absolutePath;
+
+    } catch (error) {
+        return null;
     }
-  });
+}
 
-  ws.on('error', () => {});
+
+function handleHttpRequest(req, res) {
+    /*
+     * CORS preflight
+     */
+    if (req.method === "OPTIONS") {
+        res.writeHead(204, {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type"
+        });
+
+        res.end();
+        return;
+    }
+
+
+    /*
+     * Chỉ phục vụ GET / HEAD.
+     */
+    if (req.method !== "GET" && req.method !== "HEAD") {
+        sendResponse(
+            res,
+            405,
+            "text/plain; charset=utf-8",
+            "405 - Method Not Allowed",
+            {
+                "Allow": "GET, HEAD, OPTIONS"
+            }
+        );
+
+        return;
+    }
+
+
+    let requestUrl;
+
+    try {
+        requestUrl = new URL(
+            req.url,
+            `http://${req.headers.host || "localhost"}`
+        );
+    } catch (error) {
+        send404(res);
+        return;
+    }
+
+
+    const pathname = requestUrl.pathname;
+
+
+    /*
+     * API kiểm tra trạng thái server.
+     */
+    if (pathname === "/api/health") {
+        const payload = JSON.stringify({
+            ok: true,
+            service: "Panel Quiz Attack 25",
+            clients: clients.size,
+            timestamp: Date.now()
+        });
+
+        sendResponse(
+            res,
+            200,
+            "application/json; charset=utf-8",
+            payload
+        );
+
+        return;
+    }
+
+
+    /*
+     * API lấy state hiện tại.
+     */
+    if (pathname === "/api/state") {
+        const payload = JSON.stringify({
+            gameState: latestGameState,
+            questions: latestQuestions,
+            buzzer: latestBuzzerState,
+            timestamp: Date.now()
+        });
+
+        sendResponse(
+            res,
+            200,
+            "application/json; charset=utf-8",
+            payload
+        );
+
+        return;
+    }
+
+
+    const filePath = getSafeFilePath(pathname);
+
+    if (!filePath) {
+        send404(res);
+        return;
+    }
+
+
+    fs.stat(filePath, (statError, stats) => {
+        if (statError) {
+            send404(res);
+            return;
+        }
+
+
+        /*
+         * Nếu truy cập thư mục.
+         */
+        if (stats.isDirectory()) {
+            const indexFile = path.join(
+                filePath,
+                "Controller(2).html"
+            );
+
+            fs.stat(indexFile, (indexError, indexStats) => {
+                if (
+                    indexError ||
+                    !indexStats ||
+                    !indexStats.isFile()
+                ) {
+                    send404(res);
+                    return;
+                }
+
+                serveFile(indexFile, req, res);
+            });
+
+            return;
+        }
+
+
+        if (!stats.isFile()) {
+            send404(res);
+            return;
+        }
+
+
+        /*
+         * Tránh phục vụ file quá lớn ngoài ý muốn.
+         */
+        if (stats.size > MAX_FILE_SIZE) {
+            sendResponse(
+                res,
+                413,
+                "text/plain; charset=utf-8",
+                "413 - File Too Large"
+            );
+
+            return;
+        }
+
+
+        serveFile(filePath, req, res);
+    });
+}
+
+
+function serveFile(filePath, req, res) {
+    const extension = path.extname(filePath).toLowerCase();
+
+    const contentType =
+        MIME_TYPES[extension] ||
+        "application/octet-stream";
+
+
+    /*
+     * HEAD chỉ trả header.
+     */
+    if (req.method === "HEAD") {
+        res.writeHead(200, {
+            "Content-Type": contentType,
+            "Content-Length": fs.statSync(filePath).size,
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Access-Control-Allow-Origin": "*"
+        });
+
+        res.end();
+        return;
+    }
+
+
+    const stream = fs.createReadStream(filePath);
+
+    res.writeHead(200, {
+        "Content-Type": contentType,
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
+        "Expires": "0",
+        "Access-Control-Allow-Origin": "*"
+    });
+
+
+    stream.on("error", (error) => {
+        console.error("FILE STREAM ERROR:", error);
+
+        if (!res.headersSent) {
+            send500(res, error);
+        } else {
+            res.destroy(error);
+        }
+    });
+
+
+    stream.pipe(res);
+}
+
+
+/* ============================================================
+   CREATE HTTP SERVER
+============================================================ */
+
+const server = http.createServer(handleHttpRequest);
+
+
+/* ============================================================
+   WEBSOCKET SERVER
+============================================================ */
+
+const wss = new WebSocketServer({
+    server,
+    path: "/ws",
+
+    /*
+     * Tránh payload quá lớn.
+     */
+    maxPayload: 10 * 1024 * 1024
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Attack 25 synchronized server running on http://0.0.0.0:${PORT}`);
+
+const clients = new Set();
+
+
+/* ============================================================
+   HELPERS
+============================================================ */
+
+function safeJsonParse(data) {
+    try {
+        return JSON.parse(data);
+    } catch (error) {
+        return null;
+    }
+}
+
+
+function safeJsonStringify(data) {
+    try {
+        return JSON.stringify(data);
+    } catch (error) {
+        console.error("JSON STRINGIFY ERROR:", error);
+        return null;
+    }
+}
+
+
+function sendToClient(ws, data) {
+    if (!ws) return false;
+
+    if (ws.readyState !== WebSocket.OPEN) {
+        return false;
+    }
+
+    const json = safeJsonStringify(data);
+
+    if (!json) return false;
+
+    try {
+        ws.send(json);
+        return true;
+    } catch (error) {
+        console.error("WEBSOCKET SEND ERROR:", error);
+        return false;
+    }
+}
+
+
+function broadcast(data, excludeClient = null) {
+    const json = safeJsonStringify(data);
+
+    if (!json) return;
+
+    for (const client of clients) {
+        if (
+            client === excludeClient ||
+            client.readyState !== WebSocket.OPEN
+        ) {
+            continue;
+        }
+
+        try {
+            client.send(json);
+        } catch (error) {
+            console.error("WEBSOCKET BROADCAST ERROR:", error);
+        }
+    }
+}
+
+
+function addToHistory(event) {
+    eventHistory.push({
+        ...event,
+        serverTimestamp: Date.now()
+    });
+
+    if (eventHistory.length > MAX_EVENT_HISTORY) {
+        eventHistory.splice(
+            0,
+            eventHistory.length - MAX_EVENT_HISTORY
+        );
+    }
+}
+
+
+/* ============================================================
+   SAVE STATE
+============================================================ */
+
+function processIncomingMessage(message) {
+    if (!message || typeof message !== "object") {
+        return;
+    }
+
+
+    /*
+     * Hỗ trợ nhiều kiểu protocol.
+     *
+     * Ví dụ:
+     * {
+     *   type: "state",
+     *   state: {...}
+     * }
+     *
+     * hoặc:
+     * {
+     *   type: "questions",
+     *   questions: [...]
+     * }
+     *
+     * hoặc:
+     * {
+     *   type: "sound",
+     *   sound: "arm"
+     * }
+     */
+
+    const type =
+        message.type ||
+        message.action ||
+        "message";
+
+
+    /*
+     * GAME STATE
+     */
+    if (
+        type === "state" ||
+        type === "game_state" ||
+        type === "update" ||
+        type === "sync" ||
+        type === "buzzer_armed" ||
+        type === "buzzer_locked" ||
+        type === "buzzer_reset" ||
+        message.state
+    ) {
+        if (message.state && typeof message.state === "object") {
+            latestGameState = message.state;
+
+            if (latestGameState.buzzer) {
+                latestBuzzerState =
+                    latestGameState.buzzer;
+            }
+        }
+    }
+
+
+    /*
+     * QUESTIONS
+     */
+    if (
+        type === "questions" ||
+        type === "question_list" ||
+        Array.isArray(message.questions)
+    ) {
+        if (Array.isArray(message.questions)) {
+            latestQuestions = message.questions;
+        }
+    }
+
+
+    /*
+     * BUZZER
+     */
+    if (
+        type === "buzzer" ||
+        message.buzzer
+    ) {
+        if (
+            message.buzzer &&
+            typeof message.buzzer === "object"
+        ) {
+            latestBuzzerState = message.buzzer;
+        }
+    }
+
+
+    /*
+     * SOUND không cần lưu lâu dài.
+     * Chỉ broadcast ngay.
+     */
+
+    addToHistory({
+        type,
+        hasState: !!message.state,
+        hasQuestions: Array.isArray(message.questions),
+        hasSound: !!message.sound
+    });
+}
+
+
+/* ============================================================
+   SEND INITIAL SYNC
+============================================================ */
+
+function sendInitialState(ws) {
+    /*
+     * Gửi snapshot tổng.
+     */
+    sendToClient(ws, {
+        type: "sync_snapshot",
+        timestamp: Date.now(),
+        state: latestGameState,
+        questions: latestQuestions,
+        buzzer: latestBuzzerState
+    });
+
+
+    /*
+     * Gửi riêng từng dữ liệu để tương thích client cũ.
+     */
+
+    if (latestGameState) {
+        sendToClient(ws, {
+            type: "state",
+            action: "sync",
+            state: latestGameState
+        });
+    }
+
+
+    if (latestQuestions) {
+        sendToClient(ws, {
+            type: "questions",
+            questions: latestQuestions
+        });
+    }
+
+
+    if (latestBuzzerState) {
+        sendToClient(ws, {
+            type: "buzzer",
+            buzzer: latestBuzzerState
+        });
+    }
+}
+
+
+/* ============================================================
+   WEBSOCKET CONNECTION
+============================================================ */
+
+wss.on("connection", (ws, request) => {
+    clients.add(ws);
+
+    const remoteAddress =
+        request.socket.remoteAddress || "unknown";
+
+    console.log(
+        `[WS] Connected: ${remoteAddress} | Clients: ${clients.size}`
+    );
+
+
+    /*
+     * Chào client.
+     */
+    sendToClient(ws, {
+        type: "connected",
+        connected: true,
+        serverTime: Date.now(),
+        clients: clients.size
+    });
+
+
+    /*
+     * Đồng bộ state hiện tại cho client mới.
+     */
+    sendInitialState(ws);
+
+
+    /*
+     * Thông báo số client mới.
+     */
+    broadcast({
+        type: "clients",
+        count: clients.size
+    });
+
+
+    ws.on("message", (rawData, isBinary) => {
+        /*
+         * Không xử lý binary.
+         */
+        if (isBinary) {
+            return;
+        }
+
+
+        const text = rawData.toString("utf8");
+
+        const message = safeJsonParse(text);
+
+        if (!message) {
+            console.warn(
+                "[WS] Invalid JSON from:",
+                remoteAddress
+            );
+
+            return;
+        }
+
+
+        /*
+         * Client yêu cầu sync lại.
+         */
+        if (
+            message.type === "request_sync" ||
+            message.type === "get_state"
+        ) {
+            sendInitialState(ws);
+            return;
+        }
+
+
+        /*
+         * Ping cấp ứng dụng.
+         */
+        if (message.type === "ping") {
+            sendToClient(ws, {
+                type: "pong",
+                timestamp: Date.now()
+            });
+
+            return;
+        }
+
+
+        /*
+         * Lưu trạng thái.
+         */
+        processIncomingMessage(message);
+
+
+        /*
+         * Chuyển nguyên message đến tất cả client khác.
+         *
+         * Không gửi lại client gửi để tránh vòng lặp.
+         */
+        broadcast(message, ws);
+    });
+
+
+    ws.on("close", () => {
+        clients.delete(ws);
+
+        console.log(
+            `[WS] Disconnected: ${remoteAddress} | Clients: ${clients.size}`
+        );
+
+
+        broadcast({
+            type: "clients",
+            count: clients.size
+        });
+    });
+
+
+    ws.on("error", (error) => {
+        console.error(
+            `[WS] Error from ${remoteAddress}:`,
+            error.message
+        );
+    });
+});
+
+
+/* ============================================================
+   HEARTBEAT
+============================================================ */
+
+/*
+ * Phát hiện client chết mà không gửi sự kiện close.
+ */
+
+const heartbeatInterval = setInterval(() => {
+    for (const ws of clients) {
+
+        if (ws.isAlive === false) {
+            clients.delete(ws);
+
+            try {
+                ws.terminate();
+            } catch (error) {}
+
+            continue;
+        }
+
+
+        ws.isAlive = false;
+
+
+        try {
+            ws.ping();
+        } catch (error) {}
+    }
+
+}, 30000);
+
+
+wss.on("connection", (ws) => {
+    ws.isAlive = true;
+
+    ws.on("pong", () => {
+        ws.isAlive = true;
+    });
+});
+
+
+/* ============================================================
+   SERVER ERROR
+============================================================ */
+
+server.on("error", (error) => {
+    console.error("\n==================================================");
+    console.error("SERVER ERROR");
+    console.error("==================================================");
+    console.error(error);
+
+    if (error.code === "EADDRINUSE") {
+        console.error(
+            `\nPort ${PORT} đang được sử dụng.`
+        );
+
+        console.error(
+            "Hãy đóng server khác hoặc chạy với PORT khác."
+        );
+    }
+
+    console.error("==================================================\n");
+});
+
+
+/* ============================================================
+   START SERVER
+============================================================ */
+
+server.listen(PORT, HOST, () => {
+
+    console.log("");
+    console.log("==================================================");
+    console.log(" PANEL QUIZ ATTACK 25 - UNIVERSAL SERVER");
+    console.log("==================================================");
+    console.log(`Server running on port: ${PORT}`);
+    console.log(`Host: ${HOST}`);
+    console.log("");
+    console.log(`Local Controller:`);
+    console.log(`http://localhost:${PORT}/Controller(2).html`);
+    console.log("");
+    console.log(`Local Projector:`);
+    console.log(`http://localhost:${PORT}/Projector.html`);
+    console.log("");
+    console.log(`WebSocket:`);
+    console.log(`ws://localhost:${PORT}/ws`);
+    console.log("");
+    console.log(`Health check:`);
+    console.log(`http://localhost:${PORT}/api/health`);
+    console.log("==================================================");
+    console.log("");
+});
+
+
+/* ============================================================
+   GRACEFUL SHUTDOWN
+============================================================ */
+
+function shutdown(signal) {
+    console.log(`\n[SERVER] ${signal} received. Shutting down...`);
+
+    clearInterval(heartbeatInterval);
+
+
+    for (const ws of clients) {
+        try {
+            ws.close(1001, "Server shutting down");
+        } catch (error) {}
+    }
+
+
+    wss.close(() => {
+        server.close(() => {
+            console.log("[SERVER] Closed successfully.");
+            process.exit(0);
+        });
+    });
+
+
+    /*
+     * Ép thoát nếu có client treo.
+     */
+    setTimeout(() => {
+        process.exit(0);
+    }, 5000).unref();
+}
+
+
+process.on("SIGINT", () => {
+    shutdown("SIGINT");
+});
+
+
+process.on("SIGTERM", () => {
+    shutdown("SIGTERM");
 });
