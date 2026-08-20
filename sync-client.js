@@ -1,308 +1,571 @@
-// ==========================================
-// SYNC CLIENT - API + WEBSOCKET
-// Chạy được trên:
-// - localhost
-// - mạng LAN
-// - Render / HTTPS
-// ==========================================
+/* =========================================================
+   ATTACK 25 - UNIVERSAL REAL-TIME SYNC CLIENT
+   Hoạt động:
+   - localhost
+   - LAN
+   - Render
+   - HTTP / HTTPS
+   ========================================================= */
 
-// API luôn lấy từ domain gốc
-const API_BASE = "/api";
+(function () {
+    "use strict";
 
-// Tự động chọn ws hoặc wss
-const WS_PROTOCOL =
-    window.location.protocol === "https:" ? "wss:" : "ws:";
+    const CHANNEL = "attack25-sync-v3";
 
-// URL WebSocket
-const WS_URL = `${WS_PROTOCOL}//${window.location.host}/ws`;
+    const KEY_STATE = "attack25_gamestate";
+    const KEY_QUESTIONS = "attack25_questions";
+    const KEY_HOST = "attack25_ws_server_host";
 
-let socket = null;
-let reconnectTimer = null;
+    const instanceId =
+        (window.crypto && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : "attack25_" +
+              Date.now() +
+              "_" +
+              Math.random().toString(36).slice(2);
 
+    let ws = null;
+    let reconnectTimer = null;
+    let reconnecting = false;
 
-// ==========================================
-// LẤY STATE TỪ SERVER
-// ==========================================
+    let manualHost = "";
 
-async function getState() {
     try {
-        const response = await fetch(`${API_BASE}/state`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            cache: "no-store"
+        manualHost = localStorage.getItem(KEY_HOST) || "";
+    } catch (e) {
+        manualHost = "";
+    }
+
+    const stateHandlers = [];
+    const questionHandlers = [];
+    const soundHandlers = [];
+    const connectionHandlers = [];
+
+    let broadcastChannel = null;
+
+    if ("BroadcastChannel" in window) {
+        try {
+            broadcastChannel = new BroadcastChannel(CHANNEL);
+        } catch (e) {
+            console.warn("BroadcastChannel unavailable:", e);
+        }
+    }
+
+
+    /* =========================================================
+       HELPER
+       ========================================================= */
+
+    function emit(handlers, data) {
+        handlers.slice().forEach(function (handler) {
+            try {
+                handler(data);
+            } catch (error) {
+                console.error("Attack25Sync handler error:", error);
+            }
         });
-
-        if (!response.ok) {
-            throw new Error(
-                `API /state lỗi: ${response.status} ${response.statusText}`
-            );
-        }
-
-        const state = await response.json();
-
-        console.log("Đã nhận state:", state);
-
-        // Nếu project của bạn có hàm xử lý state,
-        // hãy giữ hoặc gọi nó tại đây
-        if (typeof applyState === "function") {
-            applyState(state);
-        }
-
-        return state;
-
-    } catch (error) {
-        console.error("Không thể lấy state:", error);
-        return null;
     }
-}
 
-
-// ==========================================
-// CẬP NHẬT STATE LÊN SERVER
-// ==========================================
-
-async function updateState(data) {
-    try {
-        const response = await fetch(`${API_BASE}/state`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
+    function emitConnection(connected, url) {
+        emit(connectionHandlers, {
+            connected: connected,
+            mode: "websocket",
+            url: url || ""
         });
+    }
 
-        if (!response.ok) {
-            throw new Error(
-                `Không thể cập nhật state: ${response.status}`
-            );
+
+    /* =========================================================
+       WEBSOCKET URL
+       QUAN TRỌNG:
+       Không dùng location.pathname
+       Vì pathname có thể là /controller.html
+       hoặc /Projector.html
+       ========================================================= */
+
+    function normalizeHost(host) {
+        return String(host || "")
+            .trim()
+            .replace(/^https?:\/\//i, "")
+            .replace(/^wss?:\/\//i, "")
+            .replace(/\/+$/, "")
+            .replace(/\/ws$/i, "");
+    }
+
+    function getWebSocketUrl() {
+        let host = normalizeHost(manualHost);
+
+        // Nếu người dùng chưa nhập server riêng:
+        // tự dùng domain/IP hiện tại
+        if (!host && window.location.protocol !== "file:") {
+            host = window.location.host;
         }
 
-        const result = await response.json();
+        // Chạy trực tiếp file HTML
+        if (!host) {
+            host = "localhost:3000";
+        }
 
-        console.log("State đã cập nhật:", result);
+        // HTTPS -> WSS
+        // HTTP -> WS
+        const protocol =
+            window.location.protocol === "https:"
+                ? "wss:"
+                : "ws:";
 
-        return result;
+        /*
+           Endpoint cố định là /ws
 
-    } catch (error) {
-        console.error("Lỗi cập nhật state:", error);
-        return null;
-    }
-}
+           Render:
+           wss://attack25.onrender.com/ws
 
+           LAN:
+           ws://192.168.x.x:3000/ws
 
-// ==========================================
-// KẾT NỐI WEBSOCKET
-// ==========================================
-
-function connectWebSocket() {
-
-    // Tránh tạo nhiều kết nối cùng lúc
-    if (
-        socket &&
-        (
-            socket.readyState === WebSocket.OPEN ||
-            socket.readyState === WebSocket.CONNECTING
-        )
-    ) {
-        return;
-    }
-
-    console.log("Đang kết nối WebSocket:", WS_URL);
-
-    try {
-        socket = new WebSocket(WS_URL);
-
-    } catch (error) {
-        console.error("Không thể tạo WebSocket:", error);
-        scheduleReconnect();
-        return;
+           Local:
+           ws://localhost:3000/ws
+        */
+        return protocol + "//" + host + "/ws";
     }
 
 
-    // --------------------------------------
-    // KẾT NỐI THÀNH CÔNG
-    // --------------------------------------
+    /* =========================================================
+       LOCAL STORAGE
+       ========================================================= */
 
-    socket.onopen = () => {
+    function saveStateLocal(state) {
+        try {
+            localStorage.setItem(KEY_STATE, JSON.stringify(state));
+        } catch (e) {}
+    }
 
-        console.log("WebSocket đã kết nối thành công");
+    function saveQuestionsLocal(questions) {
+        try {
+            localStorage.setItem(
+                KEY_QUESTIONS,
+                JSON.stringify(questions)
+            );
+        } catch (e) {}
+    }
 
-        // Xóa timer reconnect nếu có
+
+    /* =========================================================
+       XỬ LÝ MESSAGE
+       ========================================================= */
+
+    function handleMessage(message) {
+        if (!message || typeof message !== "object") {
+            return;
+        }
+
+        // Bỏ qua message từ phiên bản/protocol khác
+        if (message.channel !== CHANNEL) {
+            return;
+        }
+
+        // Không cần xử lý lại message của chính mình
+        // BroadcastChannel không gửi lại cho chính tab,
+        // nhưng WebSocket server có thể broadcast lại.
+        if (message.source === instanceId) {
+            return;
+        }
+
+        switch (message.type) {
+            case "state":
+                if (message.state !== undefined) {
+                    saveStateLocal(message.state);
+                    emit(stateHandlers, message.state);
+                }
+                break;
+
+            case "questions":
+                if (message.questions !== undefined) {
+                    saveQuestionsLocal(message.questions);
+                    emit(questionHandlers, message.questions);
+                }
+                break;
+
+            case "sound":
+                if (message.sound !== undefined) {
+                    emit(soundHandlers, message.sound);
+                }
+                break;
+
+            default:
+                console.log(
+                    "Attack25Sync unknown message:",
+                    message
+                );
+                break;
+        }
+    }
+
+
+    /* =========================================================
+       GỬI MESSAGE
+       ========================================================= */
+
+    function send(message) {
+        if (!message || typeof message !== "object") {
+            return false;
+        }
+
+        const payload = Object.assign(
+            {
+                channel: CHANNEL,
+                source: instanceId,
+                ts: Date.now()
+            },
+            message
+        );
+
+        // Đồng bộ giữa các tab cùng trình duyệt
+        if (broadcastChannel) {
+            try {
+                broadcastChannel.postMessage(payload);
+            } catch (e) {
+                console.warn(
+                    "BroadcastChannel send failed:",
+                    e
+                );
+            }
+        }
+
+        // Đồng bộ qua Internet/LAN
+        if (
+            ws &&
+            ws.readyState === WebSocket.OPEN
+        ) {
+            try {
+                ws.send(JSON.stringify(payload));
+                return true;
+            } catch (e) {
+                console.error(
+                    "WebSocket send failed:",
+                    e
+                );
+            }
+        }
+
+        return false;
+    }
+
+
+    /* =========================================================
+       KẾT NỐI WEBSOCKET
+       ========================================================= */
+
+    function connect() {
+        // Không tạo nhiều WebSocket cùng lúc
+        if (
+            ws &&
+            (
+                ws.readyState === WebSocket.OPEN ||
+                ws.readyState === WebSocket.CONNECTING
+            )
+        ) {
+            return;
+        }
+
         if (reconnectTimer) {
             clearTimeout(reconnectTimer);
             reconnectTimer = null;
         }
 
-        // Lấy state mới nhất khi vừa kết nối
-        getState();
-    };
+        const url = getWebSocketUrl();
 
+        console.log(
+            "[Attack25Sync] Connecting to:",
+            url
+        );
 
-    // --------------------------------------
-    // NHẬN DỮ LIỆU TỪ SERVER
-    // --------------------------------------
-
-    socket.onmessage = (event) => {
+        reconnecting = true;
 
         try {
-
-            const message = JSON.parse(event.data);
-
-            console.log("WebSocket nhận:", message);
-
-            // Nếu server gửi state trực tiếp
-            if (message.type === "state") {
-
-                if (typeof applyState === "function") {
-                    applyState(message.data);
-                }
-
-            }
-
-            // Nếu server báo state đã thay đổi
-            else if (
-                message.type === "state-update" ||
-                message.type === "update"
-            ) {
-
-                if (message.data && typeof applyState === "function") {
-                    applyState(message.data);
-                } else {
-                    getState();
-                }
-
-            }
-
-            // Xử lý các message khác nếu project có
-            if (typeof handleSocketMessage === "function") {
-                handleSocketMessage(message);
-            }
-
+            ws = new WebSocket(url);
         } catch (error) {
-
             console.error(
-                "Không thể xử lý dữ liệu WebSocket:",
+                "[Attack25Sync] Cannot create WebSocket:",
                 error
             );
 
+            ws = null;
+            emitConnection(false, url);
+            scheduleReconnect();
+
+            return;
+        }
+
+
+        ws.onopen = function () {
+            console.log(
+                "[Attack25Sync] WebSocket connected:",
+                url
+            );
+
+            reconnecting = false;
+
+            emitConnection(true, url);
+        };
+
+
+        ws.onmessage = function (event) {
+            try {
+                const message = JSON.parse(event.data);
+                handleMessage(message);
+            } catch (error) {
+                console.error(
+                    "[Attack25Sync] Invalid WebSocket message:",
+                    error
+                );
+            }
+        };
+
+
+        ws.onerror = function () {
+            // onclose sẽ xử lý reconnect
+        };
+
+
+        ws.onclose = function () {
+            console.warn(
+                "[Attack25Sync] WebSocket disconnected:",
+                url
+            );
+
+            ws = null;
+            reconnecting = false;
+
+            emitConnection(false, url);
+
+            scheduleReconnect();
+        };
+    }
+
+
+    /* =========================================================
+       TỰ ĐỘNG KẾT NỐI LẠI
+       ========================================================= */
+
+    function scheduleReconnect() {
+        if (reconnectTimer) {
+            return;
+        }
+
+        reconnectTimer = setTimeout(function () {
+            reconnectTimer = null;
+            connect();
+        }, 2500);
+    }
+
+
+    /* =========================================================
+       BROADCAST CHANNEL
+       ========================================================= */
+
+    if (broadcastChannel) {
+        broadcastChannel.onmessage = function (event) {
+            if (!event.data) {
+                return;
+            }
+
+            handleMessage(event.data);
+        };
+    }
+
+
+    /* =========================================================
+       PUBLIC API
+       Không thay đổi tên hàm để Controller/Projector
+       hiện tại vẫn hoạt động
+       ========================================================= */
+
+    window.Attack25Sync = {
+
+        broadcastState: function (
+            state,
+            action,
+            soundEvent
+        ) {
+            action = action || "update";
+
+            saveStateLocal(state);
+
+            send({
+                type: "state",
+                state: state,
+                action: action
+            });
+
+            if (soundEvent) {
+                send({
+                    type: "sound",
+                    sound: soundEvent
+                });
+            }
+        },
+
+
+        broadcastQuestions: function (questions) {
+            saveQuestionsLocal(questions);
+
+            send({
+                type: "questions",
+                questions: questions
+            });
+        },
+
+
+        onStateChange: function (callback) {
+            if (typeof callback !== "function") {
+                return;
+            }
+
+            stateHandlers.push(callback);
+
+            // Khôi phục dữ liệu local nếu có
+            try {
+                const saved =
+                    localStorage.getItem(KEY_STATE);
+
+                if (saved) {
+                    const state = JSON.parse(saved);
+
+                    setTimeout(function () {
+                        callback(state);
+                    }, 0);
+                }
+            } catch (e) {}
+        },
+
+
+        onQuestionsChange: function (callback) {
+            if (typeof callback !== "function") {
+                return;
+            }
+
+            questionHandlers.push(callback);
+
+            try {
+                const saved =
+                    localStorage.getItem(KEY_QUESTIONS);
+
+                if (saved) {
+                    const questions = JSON.parse(saved);
+
+                    setTimeout(function () {
+                        callback(questions);
+                    }, 0);
+                }
+            } catch (e) {}
+        },
+
+
+        onSound: function (callback) {
+            if (typeof callback !== "function") {
+                return;
+            }
+
+            soundHandlers.push(callback);
+        },
+
+
+        onConnectionChange: function (callback) {
+            if (typeof callback !== "function") {
+                return;
+            }
+
+            connectionHandlers.push(callback);
+
+            const url = getWebSocketUrl();
+
+            setTimeout(function () {
+                callback({
+                    connected: !!(
+                        ws &&
+                        ws.readyState === WebSocket.OPEN
+                    ),
+                    mode: "websocket",
+                    url: url
+                });
+            }, 0);
+        },
+
+
+        setServerHost: function (host) {
+            manualHost = normalizeHost(host);
+
+            try {
+                if (manualHost) {
+                    localStorage.setItem(
+                        KEY_HOST,
+                        manualHost
+                    );
+                } else {
+                    localStorage.removeItem(KEY_HOST);
+                }
+            } catch (e) {}
+
+            // Đóng kết nối cũ
+            if (ws) {
+                try {
+                    ws.onclose = null;
+                    ws.close();
+                } catch (e) {}
+
+                ws = null;
+            }
+
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+
+            connect();
+        },
+
+
+        getServerHost: function () {
+            return manualHost ||
+                (
+                    window.location.protocol !== "file:"
+                        ? window.location.host
+                        : "localhost:3000"
+                );
+        },
+
+
+        getWebSocketUrl: function () {
+            return getWebSocketUrl();
+        },
+
+
+        reconnect: function () {
+            if (ws) {
+                try {
+                    ws.onclose = null;
+                    ws.close();
+                } catch (e) {}
+
+                ws = null;
+            }
+
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+
+            connect();
         }
     };
 
 
-    // --------------------------------------
-    // LỖI WEBSOCKET
-    // --------------------------------------
+    /* =========================================================
+       KHỞI ĐỘNG
+       ========================================================= */
 
-    socket.onerror = (error) => {
-        console.error("WebSocket xảy ra lỗi:", error);
-    };
+    setTimeout(function () {
+        connect();
+    }, 0);
 
-
-    // --------------------------------------
-    // MẤT KẾT NỐI
-    // --------------------------------------
-
-    socket.onclose = () => {
-
-        console.warn(
-            "WebSocket đã ngắt kết nối. Đang thử kết nối lại..."
-        );
-
-        socket = null;
-
-        scheduleReconnect();
-    };
-}
-
-
-// ==========================================
-// TỰ ĐỘNG KẾT NỐI LẠI
-// ==========================================
-
-function scheduleReconnect() {
-
-    if (reconnectTimer) {
-        return;
-    }
-
-    reconnectTimer = setTimeout(() => {
-
-        reconnectTimer = null;
-
-        connectWebSocket();
-
-    }, 3000);
-}
-
-
-// ==========================================
-// GỬI MESSAGE QUA WEBSOCKET
-// ==========================================
-
-function sendWebSocketMessage(data) {
-
-    if (
-        !socket ||
-        socket.readyState !== WebSocket.OPEN
-    ) {
-
-        console.warn(
-            "WebSocket chưa kết nối, không thể gửi dữ liệu"
-        );
-
-        return false;
-    }
-
-    try {
-
-        socket.send(JSON.stringify(data));
-
-        return true;
-
-    } catch (error) {
-
-        console.error(
-            "Không thể gửi WebSocket message:",
-            error
-        );
-
-        return false;
-    }
-}
-
-
-// ==========================================
-// KHỞI ĐỘNG
-// ==========================================
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    console.log("API:", API_BASE);
-    console.log("WebSocket:", WS_URL);
-
-    // Kết nối WebSocket
-    connectWebSocket();
-
-    // Lấy state lần đầu
-    getState();
-
-});
-
-
-// ==========================================
-// DỌN KẾT NỐI KHI ĐÓNG TRANG
-// ==========================================
-
-window.addEventListener("beforeunload", () => {
-
-    if (socket) {
-
-        socket.onclose = null;
-
-        socket.close();
-
-    }
-
-});
+})();
