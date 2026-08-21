@@ -9,12 +9,35 @@
 <script src="socket.io.js"></script>
 <script src="howler.js"></script>
 <script src="sync-client.js"></script>
+<!-- Disable DevTool -->
+<script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+<script>
+    (function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('roomid');
+        const auth = urlParams.get('auth');
+        if (!roomId || !auth) {
+            window.location.href = '/index.html';
+            return;
+        }
+    })();
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && e.keyCode === 85)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+</script>
 
 <style>
 
 @font-face {
     font-family: "UTM Impact";
     src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
     font-display: swap;
 }
 
@@ -39,6 +62,45 @@
     margin: 0;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
+    font-weight: bold !important;
+}
+
+/* Tắt bold đối với tất cả thành phần sử dụng font UTM Impact */
+.profile-name,
+.profile-score-val,
+.giant-buzzer,
+.status-headline,
+.mini-cell,
+#buzzerText,
+[style*="UTM Impact"],
+[style*="utm impact"],
+[style*="Impact"],
+.utm-impact {
+    font-weight: normal !important;
+    font-synthesis: none !important;
+}
+
+button:hover,
+.button:hover,
+.btn:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+[role="button"]:hover,
+.action-btn:hover,
+.panel-btn:hover,
+.reset-btn:hover,
+.buzzer-btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-success:hover,
+.btn-danger:hover,
+.btn-warning:hover,
+.btn-info:hover,
+.btn-dark:hover {
+    background: #C2410C !important;
+    background-color: #C2410C !important;
+    color: white !important;
+    font-weight: bold !important;
 }
 
 html, body {
@@ -479,6 +541,12 @@ function capitalize(text) {
 }
 
 
+if (window.Attack25Sync) {
+    Attack25Sync.onStateChange((state) => {
+        if (state) applyState(state);
+    });
+}
+
 /* =====================================================
    BUZZER TAP ACTION
 ===================================================== */
@@ -493,6 +561,10 @@ function handleBuzzerClick() {
         navigator.vibrate(100);
     }
     playBuzzerChime();
+
+    if (window.Attack25Sync) {
+        Attack25Sync.sendPlayerBuzz(myRole);
+    }
 
     // Dispatch buzz action
     const buzzPayload = {

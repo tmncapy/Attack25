@@ -14,6 +14,17 @@
 <script src="howler.js"></script>
 <!-- Universal Real-time Synchronizer (Relative path for file:/// and web) -->
 <script src="sync-client.js"></script>
+<!-- Disable DevTool -->
+<script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+<script>
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && e.keyCode === 85)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+</script>
 
 <style>
 
@@ -23,6 +34,8 @@
 @font-face {
     font-family: "UTM Impact";
     src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
     font-display: swap;
 }
 
@@ -54,16 +67,67 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    font-weight: bold !important;
+}
+
+/* Tắt bold đối với tất cả thành phần sử dụng font UTM Impact */
+.card-title,
+.q-number-tag,
+#qNumberTag,
+.buzzer-state-val,
+.panel-button,
+.status-value,
+.player-number,
+.score-button,
+.score-input,
+.preview-cell,
+.preview-player,
+[style*="UTM Impact"],
+[style*="utm impact"],
+[style*="Impact"],
+.utm-impact {
+    font-weight: normal !important;
+    font-synthesis: none !important;
+}
+
+button:hover,
+.button:hover,
+.btn:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+[role="button"]:hover,
+.action-btn:hover,
+.panel-btn:hover,
+.reset-btn:hover,
+.buzzer-btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-success:hover,
+.btn-danger:hover,
+.btn-warning:hover,
+.btn-info:hover,
+.btn-dark:hover {
+    background: #C2410C !important;
+    background-color: #C2410C !important;
+    color: white !important;
+    font-weight: bold !important;
 }
 
 html, body {
     width: 100%;
-    height: 100%;
+    height: 100vh;
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    overflow-x: hidden;
-    font-size: 13px;
+    font-weight: 700;
+    overflow: hidden;
+    font-size: 11px;
+    margin: 0;
+    padding: 0;
+}
+
+body * {
+    font-weight: 700;
 }
 
 /* =====================================================
@@ -71,72 +135,13 @@ html, body {
 ===================================================== */
 .app {
     width: 100%;
-    min-height: 100vh;
-    padding: 8px 10px;
+    height: 100vh;
+    padding: 4px 6px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-}
-
-/* =====================================================
-   HEADER (COMPACT)
-===================================================== */
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 14px;
-}
-
-.logo-area {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.logo-title {
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 20px;
-    letter-spacing: 0.5px;
-    color: var(--gold-light);
-}
-
-.logo-subtitle {
-    color: var(--muted);
-    font-size: 11px;
-    background: #1c2433;
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.connection {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    background: #111822;
-    padding: 4px 10px;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-}
-
-.connection-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #2fb344;
-    box-shadow: 0 0 6px #2fb344;
+    gap: 4px;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* =====================================================
@@ -144,16 +149,20 @@ html, body {
 ===================================================== */
 .workspace-grid {
     flex: 1;
+    height: 100%;
     display: grid;
-    grid-template-columns: minmax(320px, 1.15fr) minmax(310px, 1.1fr) minmax(300px, 1fr);
-    gap: 8px;
-    align-items: start;
+    grid-template-columns: 1.15fr 1fr 0.95fr;
+    gap: 6px;
+    align-items: stretch;
+    overflow: hidden;
 }
 
 .column {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
+    height: 100%;
+    overflow: hidden;
 }
 
 /* =====================================================
@@ -162,13 +171,16 @@ html, body {
 .card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 6px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .card-header {
-    height: 36px;
-    padding: 0 12px;
+    height: 26px;
+    min-height: 26px;
+    padding: 0 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -178,26 +190,30 @@ html, body {
 
 .card-title {
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 15px;
-    letter-spacing: .3px;
+    font-size: 13px;
+    letter-spacing: .2px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     color: #f3f5f8;
 }
 
 .card-badge {
-    padding: 2px 6px;
-    border-radius: 4px;
+    padding: 1px 5px;
+    border-radius: 3px;
     background: #1e2636;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     color: var(--gold-light);
     border: 1px solid #334057;
 }
 
 .card-body {
-    padding: 10px;
+    padding: 6px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
 }
 
 /* =====================================================
@@ -206,9 +222,9 @@ html, body {
 .question-teleprompter {
     background: linear-gradient(180deg, #18202d 0%, #121822 100%);
     border: 1px solid #374357;
-    border-radius: 7px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
+    border-radius: 5px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
     position: relative;
 }
 
@@ -216,46 +232,48 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
 }
 
 .q-number-tag {
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 14px;
+    font-size: 11px;
     color: var(--gold-light);
     background: rgba(245, 159, 0, 0.15);
-    padding: 2px 8px;
-    border-radius: 4px;
+    padding: 1px 5px;
+    border-radius: 3px;
     border: 1px solid rgba(245, 159, 0, 0.3);
 }
 
 .q-count-tag {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--muted);
 }
 
 .q-text-box {
-    font-size: 15px;
+    font-size: 12px;
     font-weight: 600;
-    line-height: 1.4;
+    line-height: 1.3;
     color: #ffffff;
-    min-height: 52px;
-    margin-bottom: 8px;
+    min-height: 32px;
+    max-height: 44px;
+    overflow-y: auto;
+    margin-bottom: 4px;
     user-select: text;
 }
 
 .q-answer-box {
     background: rgba(47, 179, 68, 0.12);
     border: 1px solid rgba(47, 179, 68, 0.4);
-    border-radius: 5px;
-    padding: 6px 10px;
+    border-radius: 4px;
+    padding: 3px 6px;
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 6px;
 }
 
 .q-answer-label {
-    font-size: 10px;
+    font-size: 9px;
     text-transform: uppercase;
     font-weight: 800;
     color: #2fb344;
@@ -264,7 +282,7 @@ html, body {
 }
 
 .q-answer-val {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
     color: #40c057;
     user-select: text;
@@ -273,34 +291,46 @@ html, body {
 .q-nav-row {
     display: grid;
     grid-template-columns: 1fr 1.3fr 1fr;
-    gap: 6px;
-    margin-bottom: 8px;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.q-nav-row .button {
+    height: 24px;
+    font-size: 10px;
+    padding: 0 4px;
 }
 
 .q-jump-row {
     display: flex;
-    gap: 6px;
+    gap: 4px;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+}
+
+.q-jump-row .button {
+    height: 24px;
+    font-size: 10px;
+    padding: 0 6px;
 }
 
 .q-select-dropdown {
     flex: 1;
-    height: 30px;
+    height: 24px;
     background: #18202d;
     border: 1px solid var(--border);
-    border-radius: 5px;
+    border-radius: 4px;
     color: #fff;
-    font-size: 12px;
-    padding: 0 8px;
+    font-size: 10px;
+    padding: 0 6px;
     outline: none;
 }
 
 .excel-dropzone {
-    border: 1.5px dashed #404e67;
-    border-radius: 6px;
+    border: 1px dashed #404e67;
+    border-radius: 5px;
     background: #111620;
-    padding: 8px;
+    padding: 4px 6px;
     text-align: center;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -312,12 +342,12 @@ html, body {
 }
 
 .excel-dropzone-text {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--muted);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 /* =====================================================
@@ -327,11 +357,11 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 10px;
-    border-radius: 6px;
+    padding: 4px 6px;
+    border-radius: 5px;
     background: #18202d;
     border: 1px solid var(--border);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .buzzer-status-banner.armed {
@@ -352,19 +382,19 @@ html, body {
 }
 
 .buzzer-state-title {
-    font-size: 9px;
+    font-size: 8px;
     text-transform: uppercase;
     color: var(--muted);
 }
 
 .buzzer-state-val {
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 17px;
+    font-size: 14px;
     color: #fff;
 }
 
 .buzzer-winner-info {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: bold;
     text-align: right;
 }
@@ -372,21 +402,26 @@ html, body {
 .buzzer-master-btns {
     display: grid;
     grid-template-columns: 1.3fr 0.9fr 0.9fr;
-    gap: 6px;
-    margin-bottom: 8px;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.buzzer-master-btns .button {
+    height: 26px;
+    font-size: 10px;
 }
 
 .buzzer-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin-bottom: 8px;
+    gap: 4px;
+    margin-bottom: 4px;
 }
 
 .buzzer-btn {
-    height: 48px;
+    height: 38px;
     border: 1.5px solid transparent;
-    border-radius: 6px;
+    border-radius: 5px;
     background: var(--panel-2);
     color: #fff;
     cursor: pointer;
@@ -394,7 +429,7 @@ html, body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 1px;
     transition: all 0.1s ease;
     user-select: none;
     position: relative;
@@ -432,7 +467,7 @@ html, body {
 }
 
 .buzzer-key {
-    font-size: 9px;
+    font-size: 8px;
     font-weight: bold;
     color: #ced4da;
 }
@@ -441,18 +476,23 @@ html, body {
     position: absolute;
     top: 2px;
     right: 2px;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 900;
     background: #f59f00;
     color: #111;
-    padding: 0 4px;
-    border-radius: 3px;
+    padding: 0 3px;
+    border-radius: 2px;
 }
 
 .buzzer-judge-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    gap: 4px;
+}
+
+.buzzer-judge-row .button {
+    height: 26px;
+    font-size: 10px;
 }
 
 /* =====================================================
@@ -461,19 +501,19 @@ html, body {
 .panel-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    margin-bottom: 10px;
+    gap: 4px;
+    margin-bottom: 5px;
 }
 
 .panel-button {
-    aspect-ratio: 1.2 / 1;
-    min-height: 40px;
-    border: 2px solid #374254;
-    border-radius: 6px;
+    aspect-ratio: 1.25 / 1;
+    min-height: 28px;
+    border: 1.5px solid #374254;
+    border-radius: 4px;
     background: linear-gradient(135deg, #1e293b, #0f172a);
     color: #f8fafc;
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: clamp(16px, 2vw, 24px);
+    font-size: 15px;
     font-weight: 900;
     cursor: pointer;
     transition: all .15s ease;
@@ -481,21 +521,21 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 .panel-button:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     border-color: #f59f00;
-    box-shadow: 0 4px 12px rgba(245, 159, 0, 0.35);
+    box-shadow: 0 2px 8px rgba(245, 159, 0, 0.35);
 }
 
 .panel-button.active {
     background: #ffffff !important;
     color: #000000 !important;
     border-color: #38bdf8 !important;
-    box-shadow: 0 0 16px #38bdf8, inset 0 0 6px #fff !important;
-    transform: scale(1.08);
+    box-shadow: 0 0 12px #38bdf8, inset 0 0 4px #fff !important;
+    transform: scale(1.05);
     z-index: 5;
 }
 
@@ -519,35 +559,59 @@ html, body {
 .panel-button.panel-white { background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important; color: #0f172a !important; border-color: #ffffff !important; text-shadow: none; }
 .panel-button.panel-blue { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; color: #fff !important; border-color: #60a5fa !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
 
+.panel-button.color-hidden {
+    opacity: 0.35 !important;
+    filter: grayscale(0.7) !important;
+    position: relative;
+    border-style: dashed !important;
+}
+.panel-button.color-hidden::after {
+    content: "🙈";
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    font-size: 9px;
+}
+
 .color-actions {
-    margin-top: 8px;
+    margin-top: 4px;
     display: grid;
-    grid-template-columns: repeat(4, 1fr) 1.2fr;
-    gap: 4px;
+    grid-template-columns: repeat(4, 1fr) 1.1fr;
+    gap: 3px;
+}
+.color-actions .button {
+    height: 24px;
+    font-size: 10px;
+    padding: 0 2px;
 }
 
 .board-actions {
-    margin-top: 6px;
+    margin-top: 4px;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 5px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+}
+.board-actions .button {
+    height: 24px;
+    font-size: 10px;
+    padding: 0 2px;
 }
 
 .button {
-    height: 32px;
+    height: 26px;
     border: none;
-    border-radius: 5px;
-    padding: 0 8px;
+    border-radius: 4px;
+    padding: 0 6px;
     color: #fff;
     font-weight: 700;
-    font-size: 11px;
+    font-size: 10px;
     cursor: pointer;
     transition: transform .1s ease, filter .15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    gap: 4px;
+    gap: 3px;
 }
 
 .button:hover { filter: brightness(1.15); }
@@ -561,30 +625,32 @@ html, body {
 .button-white { background: #dee2e6; color: #111; }
 
 .status-row {
-    margin-top: 8px;
+    margin-top: 4px;
     display: flex;
-    gap: 6px;
+    gap: 4px;
 }
 
 .status-box {
     flex: 1;
     background: var(--panel-2);
-    border-radius: 5px;
-    padding: 4px 8px;
+    border-radius: 4px;
+    padding: 2px 5px;
     border: 1px solid var(--border);
 }
 
 .status-label {
     display: block;
     color: var(--muted);
-    font-size: 9px;
+    font-size: 8px;
     text-transform: uppercase;
+    font-weight: bold !important;
 }
 
 .status-value {
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 16px;
+    font-size: 13px;
     color: #fff;
+    font-weight: 400 !important;
 }
 
 /* =====================================================
@@ -593,15 +659,15 @@ html, body {
 .player-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
 }
 
 .player-card {
     background: var(--panel-2);
     border: 1px solid var(--border);
-    border-left: 5px solid #777;
-    border-radius: 6px;
-    padding: 6px 8px;
+    border-left: 4px solid #777;
+    border-radius: 5px;
+    padding: 4px 6px;
 }
 
 .player-card.red { border-left-color: var(--red); }
@@ -611,52 +677,52 @@ html, body {
 
 .player-top {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     align-items: center;
 }
 
 .player-number {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
-    border-radius: 4px;
+    border-radius: 3px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #10141c;
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 13px;
+    font-size: 11px;
 }
 
 .player-name-input {
     flex: 1;
     min-width: 0;
-    height: 28px;
-    padding: 0 6px;
+    height: 22px;
+    padding: 0 4px;
     background: #11151d;
     border: 1px solid #333d4f;
-    border-radius: 4px;
+    border-radius: 3px;
     color: white;
     outline: none;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .player-controls {
-    margin-top: 5px;
+    margin-top: 3px;
     display: grid;
-    grid-template-columns: 32px 1fr 32px;
-    gap: 4px;
+    grid-template-columns: 26px 1fr 26px;
+    gap: 3px;
 }
 
 .score-button {
-    height: 28px;
+    height: 22px;
     border: none;
-    border-radius: 4px;
+    border-radius: 3px;
     background: #2f3849;
     color: white;
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 16px;
+    font-size: 14px;
     cursor: pointer;
 }
 
@@ -664,14 +730,14 @@ html, body {
 
 .score-input {
     width: 100%;
-    height: 28px;
+    height: 22px;
     background: #11151d;
     border: 1px solid #333d4f;
-    border-radius: 4px;
+    border-radius: 3px;
     color: white;
     text-align: center;
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 17px;
+    font-size: 14px;
     outline: none;
 }
 
@@ -822,30 +888,6 @@ html, body {
 
 <div class="app">
 
-    <!-- COMPACT HEADER -->
-    <header class="header">
-        <div class="logo-area">
-            <div class="logo-title">ATTACK 25</div>
-            <div class="logo-subtitle">Host &amp; Question Controller</div>
-        </div>
-
-        <div class="header-right">
-            <a href="/Host.html" target="_blank" class="button button-gray" style="height:26px; padding:0 8px; text-decoration:none; color:#fff;" title="Mở máy MC">🎤 Host</a>
-            <a href="/player1.html" target="_blank" class="button button-red" style="height:26px; padding:0 6px; text-decoration:none; color:#fff;" title="Mở chuông Player 1">P1 (Đỏ)</a>
-            <a href="/player2.html" target="_blank" class="button button-green" style="height:26px; padding:0 6px; text-decoration:none; color:#fff;" title="Mở chuông Player 2">P2 (Xanh)</a>
-            <a href="/player3.html" target="_blank" class="button button-white" style="height:26px; padding:0 6px; text-decoration:none; color:#111;" title="Mở chuông Player 3">P3 (Trắng)</a>
-            <a href="/player4.html" target="_blank" class="button button-blue" style="height:26px; padding:0 6px; text-decoration:none; color:#fff;" title="Mở chuông Player 4">P4 (Lam)</a>
-            <a href="/Projector.html" target="_blank" class="button button-orange" style="height:26px; padding:0 8px; text-decoration:none; color:#fff;" title="Mở màn hình Projector">📽️ Projector</a>
-            <div class="connection">
-                <div class="connection-dot" id="connectionDot"></div>
-                <span id="connectionText">ĐỒNG BỘ</span>
-            </div>
-            <button class="button button-gray" style="height:26px; padding:0 8px;" onclick="broadcastState('sync')">
-                🔄 Sync
-            </button>
-        </div>
-    </header>
-
     <!-- 3-COLUMN WORKSPACE -->
     <main class="workspace-grid">
 
@@ -910,6 +952,36 @@ html, body {
                             <span><strong>Kéo thả hoặc bấm để nhập file Excel / CSV</strong> (Không giới hạn số câu)</span>
                         </div>
                     </div>
+
+                    <!-- STREAMABLE VIDEO CONTROLLER -->
+                    <div class="video-control-box" style="margin-top: 10px; padding: 10px; background: #111620; border: 1px solid #374357; border-radius: 6px;">
+                        <div style="font-size: 12px; font-weight: bold; color: #f3f5f8; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                            <span>🎬 STREAMABLE VIDEO BẢNG SỐ</span>
+                            <span id="videoStatusBadge" class="card-badge" style="background:#1e2636; color:#94a3b8;">ĐÃ ẨN</span>
+                        </div>
+
+                        <!-- INPUT & UPDATE LINK -->
+                        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                            <input type="text" id="streamableUrlInput" placeholder="Nhập share link Streamable (VD: https://streamable.com/xyz)..." 
+                                style="flex: 1; padding: 6px 8px; border-radius: 5px; border: 1px solid var(--border); background: #18202d; color: #fff; font-size: 12px; outline: none;" />
+                            <button class="button button-blue" style="padding: 0 10px; font-size: 11px; flex-shrink: 0;" onclick="updateVideoUrl()">
+                                Cập nhật link
+                            </button>
+                        </div>
+
+                        <!-- 3 ACTION BUTTONS -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
+                            <button class="button button-orange" id="btnShowVideo" style="font-size: 11px; padding: 6px 2px;" onclick="showVideo()">
+                                👁️ Hiện video
+                            </button>
+                            <button class="button button-green" id="btnPlayVideo" style="font-size: 11px; padding: 6px 2px;" onclick="playVideo()">
+                                ▶️ Phát video
+                            </button>
+                            <button class="button button-gray" id="btnHideVideo" style="font-size: 11px; padding: 6px 2px;" onclick="hideVideo()">
+                                🙈 Ẩn video
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -934,6 +1006,22 @@ html, body {
                         <button class="button button-white" onclick="setPanelColor('white')">Ô TRẮNG</button>
                         <button class="button button-blue" onclick="setPanelColor('blue')">Ô XANH DƯƠNG</button>
                         <button class="button button-gray" onclick="setPanelColor(null)">XÓA MÀU</button>
+                    </div>
+
+                    <!-- 4 HIDE COLOR BUTTONS -->
+                    <div class="color-hide-actions" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px;">
+                        <button class="button button-red" id="btnHideRed" onclick="toggleHideColor('red')" style="font-size: 11px; padding: 6px 2px;">
+                            🙈 Ẩn đỏ
+                        </button>
+                        <button class="button button-green" id="btnHideGreen" onclick="toggleHideColor('green')" style="font-size: 11px; padding: 6px 2px;">
+                            🙈 Ẩn xanh lá
+                        </button>
+                        <button class="button button-white" id="btnHideWhite" onclick="toggleHideColor('white')" style="font-size: 11px; padding: 6px 2px; color: #111;">
+                            🙈 Ẩn trắng
+                        </button>
+                        <button class="button button-blue" id="btnHideBlue" onclick="toggleHideColor('blue')" style="font-size: 11px; padding: 6px 2px;">
+                            🙈 Ẩn xanh dương
+                        </button>
                     </div>
 
                     <!-- BOARD ACTIONS -->
@@ -979,7 +1067,7 @@ html, body {
                     <div class="buzzer-status-banner locked" id="buzzerBanner">
                         <div>
                             <div class="buzzer-state-title">Trạng thái</div>
-                            <div class="buzzer-state-val" id="buzzerStateText">ĐÃ KHÓA CHUÔNG</div>
+                            <div class="buzzer-state-val buzzer-state-normal" id="buzzerStateText">ĐÃ KHÓA CHUÔNG</div>
                         </div>
                         <div class="buzzer-winner-info" id="buzzerWinnerDisplay">
                             Chưa có ai bấm chuông
@@ -1056,6 +1144,74 @@ html, body {
 
         <!-- COLUMN 3: PLAYERS & SYSTEM -->
         <div class="column">
+
+            <!-- ROOM CODE & PASSWORD GENERATOR CARD -->
+            <section class="card" style="margin-bottom: 4px;">
+                <div class="card-header" style="padding: 4px 8px;">
+                    <div class="card-title" style="font-size: 11px;">🔑 TẠO MÃ PHÒNG &amp; MẬT KHẨU</div>
+                    <span class="card-badge" id="ctrlActiveRoomBadge" style="font-size: 9px; padding: 1px 5px;">PHÒNG: 123456</span>
+                </div>
+                <div class="card-body" style="padding: 5px; gap: 4px;">
+                    <div style="display: flex; gap: 4px; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 3px;">
+                            <span style="font-size: 10px; color: var(--muted);">Mã phòng (6 số):</span>
+                            <input type="text" id="ctrlRoomId" maxlength="6" value="123456" style="width: 58px; height: 22px; background: #11151d; border: 1px solid #333d4f; border-radius: 3px; color: #f59f00; font-weight: bold; text-align: center; font-size: 11px;">
+                        </div>
+                        <div style="display: flex; gap: 3px;">
+                            <button class="button button-gray" style="height:22px; font-size:10px; padding:0 5px;" onclick="generateRandomRoomInfo()">🎲 Random</button>
+                            <button class="button button-gold" style="height:22px; font-size:10px; padding:0 6px;color: black;" onclick="activateRoomFromController()">💾 KÍCH HOẠT</button>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin-top: 2px;">
+                        <div style="display:flex; flex-direction:column; gap:1px;">
+                            <span style="font-size:8px; color:var(--muted); text-align:center;">Host</span>
+                            <input type="text" id="ctrlPassHost" maxlength="4" value="1234" style="height:20px; background:#11151d; border:1px solid #333d4f; border-radius:3px; color:#fff; text-align:center; font-size:10px; font-weight:bold;">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:1px;">
+                            <span style="font-size:8px; color:var(--red); text-align:center;">P1 (Đỏ)</span>
+                            <input type="text" id="ctrlPassRed" maxlength="4" value="1111" style="height:20px; background:#11151d; border:1px solid #333d4f; border-radius:3px; color:#fff; text-align:center; font-size:10px; font-weight:bold;">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:1px;">
+                            <span style="font-size:8px; color:var(--green); text-align:center;">P2 (Xanh)</span>
+                            <input type="text" id="ctrlPassGreen" maxlength="4" value="2222" style="height:20px; background:#11151d; border:1px solid #333d4f; border-radius:3px; color:#fff; text-align:center; font-size:10px; font-weight:bold;">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:1px;">
+                            <span style="font-size:8px; color:#ced4da; text-align:center;">P3 (Trắng)</span>
+                            <input type="text" id="ctrlPassWhite" maxlength="4" value="3333" style="height:20px; background:#11151d; border:1px solid #333d4f; border-radius:3px; color:#fff; text-align:center; font-size:10px; font-weight:bold;">
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:1px;">
+                            <span style="font-size:8px; color:var(--blue); text-align:center;">P4 (Lam)</span>
+                            <input type="text" id="ctrlPassBlue" maxlength="4" value="4444" style="height:20px; background:#11151d; border:1px solid #333d4f; border-radius:3px; color:#fff; text-align:center; font-size:10px; font-weight:bold;">
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:3px; margin-top:2px;">
+                        <button class="button button-gray" style="height:20px; font-size:9px; width:100%;" onclick="copyRoomInfoToClipboard()">📋 Sao chép thông tin phòng</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- QUICK NAVIGATION & SYNC TOOLBAR -->
+            <section class="card" style="margin-bottom: 0px;">
+                <div class="card-body" style="padding: 4px 6px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; gap: 3px; flex-wrap: wrap; align-items: center;">
+                        <a id="navLinkHost" href="/Host.html?roomid=123456&auth=1234" target="_blank" class="button button-gray" style="height:22px; padding:0 5px; text-decoration:none; color:#fff; font-size:10px;" title="Mở máy MC">🎤 Host</a>
+                        <a id="navLinkP1" href="/player1.html?roomid=123456&auth=1111" target="_blank" class="button button-red" style="height:22px; padding:0 5px; text-decoration:none; color:#fff; font-size:10px;" title="Mở chuông Player 1">P1</a>
+                        <a id="navLinkP2" href="/player2.html?roomid=123456&auth=2222" target="_blank" class="button button-green" style="height:22px; padding:0 5px; text-decoration:none; color:#fff; font-size:10px;" title="Mở chuông Player 2">P2</a>
+                        <a id="navLinkP3" href="/player3.html?roomid=123456&auth=3333" target="_blank" class="button button-white" style="height:22px; padding:0 5px; text-decoration:none; color:#111; font-size:10px;" title="Mở chuông Player 3">P3</a>
+                        <a id="navLinkP4" href="/player4.html?roomid=123456&auth=4444" target="_blank" class="button button-blue" style="height:22px; padding:0 5px; text-decoration:none; color:#fff; font-size:10px;" title="Mở chuông Player 4">P4</a>
+                        <a id="navLinkProj" href="/Projector.html?roomid=123456" target="_blank" class="button button-orange" style="height:22px; padding:0 5px; text-decoration:none; color:#fff; font-size:10px;" title="Mở màn hình Projector">📽️ Proj</a>
+                    </div>
+                    <div style="display: flex; gap: 4px; align-items: center;">
+                        <div class="connection" style="padding: 2px 6px; font-size: 10px; display:flex; align-items:center; gap:4px; background:#111822; border-radius:10px; border:1px solid var(--border);">
+                            <div class="connection-dot" id="connectionDot" style="width:6px; height:6px; border-radius:50%; background:#2fb344; box-shadow:0 0 5px #2fb344;"></div>
+                            <span id="connectionText" style="font-size:9px; font-weight:bold;">ĐỒNG BỘ</span>
+                        </div>
+                        <button class="button button-gray" style="height:22px; padding:0 5px; font-size:10px;" onclick="broadcastState('sync')" title="Đồng bộ thủ công">
+                            🔄 Sync
+                        </button>
+                    </div>
+                </div>
+            </section>
 
             <!-- PLAYER CONTROLS (CLEAN +/- SCORE) -->
             <section class="card">
@@ -1292,11 +1448,29 @@ const defaultState = {
         buzzTime: null,
         pressOrder: [],
         lockedPlayers: []
+    },
+    video: {
+        url: '',
+        embedUrl: '',
+        visible: false,
+        playing: false
+    },
+    hiddenColors: {
+        red: false,
+        green: false,
+        white: false,
+        blue: false
     }
 };
 
 function ensureValidPanels(state) {
     if (!state) return;
+    if (!state.video) {
+        state.video = { url: '', embedUrl: '', visible: false, playing: false };
+    }
+    if (!state.hiddenColors) {
+        state.hiddenColors = { red: false, green: false, white: false, blue: false };
+    }
     if (!state.panels || !Array.isArray(state.panels) || state.panels.length !== 25) {
         state.panels = Array.from({ length: 25 }, (_, index) => ({
             number: index + 1,
@@ -1385,11 +1559,12 @@ if (window.Attack25Sync) {
         connBox.style.cursor = 'pointer';
         connBox.onclick = () => {
             const current = localStorage.getItem('attack25_ws_server_host') || window.location.host || 'localhost:3000';
-            const server = prompt("Nhập địa chỉ máy chủ WebSocket (IP:PORT ví dụ: 192.168.1.10:3000 hoặc localhost:3000):", current);
-            if (server !== null) {
-                Attack25Sync.setServerHost(server.trim());
-                showToast(`Đang kết nối lại tới máy chủ: ${server.trim() || 'Mặc định'}`);
-            }
+            showPrompt("Nhập địa chỉ máy chủ WebSocket (IP:PORT ví dụ: 192.168.1.10:3000 hoặc localhost:3000):", current, (server) => {
+                if (server !== null && server !== undefined) {
+                    Attack25Sync.setServerHost(server.trim());
+                    showToast(`Đang kết nối lại tới máy chủ: ${server.trim() || 'Mặc định'}`);
+                }
+            });
         };
     }
 }
@@ -1879,6 +2054,7 @@ function renderBuzzerUI() {
         badge.style.color = '#2fb344';
         badge.style.borderColor = '#2fb344';
         stateText.textContent = 'SẴN SÀNG BẤM CHUÔNG';
+        stateText.classList.add('buzzer-state-normal');
         winnerDisplay.innerHTML = '<span style="color:#2fb344;">Đang chờ thí sinh...</span>';
     } else if (b.status === 'buzzed' && b.winner) {
         const pName = gameState.players[b.winner].name;
@@ -1886,12 +2062,14 @@ function renderBuzzerUI() {
         badge.style.color = '#f59f00';
         badge.style.borderColor = '#f59f00';
         stateText.textContent = pName.toUpperCase();
+        stateText.classList.remove('buzzer-state-normal');
         winnerDisplay.innerHTML = `<span style="color:#ffd43b; font-size:13px;">#1: ${pName} (+${b.buzzTime}s)</span>`;
     } else {
         badge.textContent = 'ĐÃ KHÓA';
         badge.style.color = '#e03131';
         badge.style.borderColor = '#e03131';
         stateText.textContent = 'ĐÃ KHÓA CHUÔNG';
+        stateText.classList.add('buzzer-state-normal');
         winnerDisplay.textContent = 'Nhấn Mở Chuông để bắt đầu';
     }
 
@@ -2093,6 +2271,125 @@ function clearSelection() {
     showToast(`❌ Đã hủy lựa chọn ô ${prev}`);
 }
 
+/* =====================================================
+   STREAMABLE VIDEO & PANEL COLOR HIDE LOGIC
+===================================================== */
+function parseStreamableUrl(input) {
+    if (!input || !input.trim()) return '';
+    const str = input.trim();
+    const match = str.match(/streamable\.com\/(?:e\/)?([a-zA-Z0-9]+)/i);
+    if (match && match[1]) {
+        return `https://streamable.com/e/${match[1]}`;
+    }
+    if (/^[a-zA-Z0-9]+$/.test(str)) {
+        return `https://streamable.com/e/${str}`;
+    }
+    const srcMatch = str.match(/src=["']([^"']+)["']/i);
+    if (srcMatch && srcMatch[1]) {
+        return parseStreamableUrl(srcMatch[1]);
+    }
+    return str;
+}
+
+function updateVideoUrl() {
+    const inputEl = document.getElementById("streamableUrlInput");
+    if (!inputEl) return;
+    const rawUrl = inputEl.value;
+    if (!rawUrl.trim()) {
+        showToast("Vui lòng nhập link Streamable trước!");
+        return;
+    }
+    const embedUrl = parseStreamableUrl(rawUrl);
+    if (!embedUrl) {
+        showToast("Link Streamable không hợp lệ!");
+        return;
+    }
+    gameState.video.url = rawUrl.trim();
+    gameState.video.embedUrl = embedUrl;
+    renderVideoUI();
+    broadcastState("updateVideo");
+    showToast("✅ Đã cập nhật link Streamable!");
+}
+
+function showVideo() {
+    if (!gameState.video || !gameState.video.embedUrl) {
+        showToast("⚠️ Chưa có link Streamable! Vui lòng nhập link và bấm 'Cập nhật link'.");
+        return;
+    }
+    gameState.video.visible = true;
+    gameState.video.playing = false;
+    renderVideoUI();
+    broadcastState("showVideo");
+    showToast("👁️ Khung hình video đã hiển thị dưới bảng số (Tạm dừng)");
+}
+
+function playVideo() {
+    if (!gameState.video || !gameState.video.embedUrl) {
+        showToast("⚠️ Chưa có link Streamable! Vui lòng nhập link và bấm 'Cập nhật link'.");
+        return;
+    }
+    gameState.video.visible = true;
+    gameState.video.playing = true;
+    gameState.video.playToken = Date.now();
+    renderVideoUI();
+    broadcastState("playVideo");
+    showToast("▶️ Đang phát video Streamable!");
+}
+
+function hideVideo() {
+    if (!gameState.video) {
+        gameState.video = { url: '', embedUrl: '', visible: false, playing: false };
+    }
+    gameState.video.visible = false;
+    gameState.video.playing = false;
+    renderVideoUI();
+    broadcastState("hideVideo");
+    showToast("🙈 Đã ẩn video khỏi bảng số");
+}
+
+function renderVideoUI() {
+    if (!gameState.video) {
+        gameState.video = { url: '', embedUrl: '', visible: false, playing: false };
+    }
+    const inputEl = document.getElementById("streamableUrlInput");
+    if (inputEl && document.activeElement !== inputEl) {
+        inputEl.value = gameState.video.url || '';
+    }
+
+    const badge = document.getElementById("videoStatusBadge");
+    if (badge) {
+        if (!gameState.video.visible) {
+            badge.textContent = "ĐÃ ẨN";
+            badge.style.background = "#1e2636";
+            badge.style.color = "#94a3b8";
+        } else if (gameState.video.playing) {
+            badge.textContent = "ĐANG PHÁT";
+            badge.style.background = "#142a1a";
+            badge.style.color = "#4ade80";
+        } else {
+            badge.textContent = "ĐANG HIỂN THỊ (PAUSE)";
+            badge.style.background = "#352814";
+            badge.style.color = "#ffd43b";
+        }
+    }
+}
+
+function toggleHideColor(color) {
+    if (!gameState.hiddenColors) {
+        gameState.hiddenColors = { red: false, green: false, white: false, blue: false };
+    }
+    gameState.hiddenColors[color] = !gameState.hiddenColors[color];
+    const isHidden = gameState.hiddenColors[color];
+    const colorNames = { red: "ĐỎ", green: "XANH LÁ", white: "TRẮNG", blue: "XANH DƯƠNG" };
+    if (isHidden) {
+        showToast(`🙈 Đã ẩn tất cả ô màu ${colorNames[color]} trên bảng số`);
+    } else {
+        showToast(`👁️ Đã hiện lại tất cả ô màu ${colorNames[color]} trên bảng số`);
+    }
+    renderPanels();
+    broadcastState("toggleHideColor");
+}
+
 function renderPanels() {
     ensureValidPanels(gameState);
     const pGrid = document.getElementById("panelGrid");
@@ -2111,11 +2408,34 @@ function renderPanels() {
         button.classList.toggle("active", number === selected);
         button.classList.toggle("used", !!panel.used);
 
-        button.classList.remove("panel-red", "panel-green", "panel-white", "panel-blue");
+        button.classList.remove("panel-red", "panel-green", "panel-white", "panel-blue", "color-hidden");
         if (panel.color) {
             button.classList.add("panel-" + panel.color);
+            if (gameState.hiddenColors && gameState.hiddenColors[panel.color]) {
+                button.classList.add("color-hidden");
+            }
         }
     });
+
+    // Update 4 Hide Color Buttons UI
+    ['red', 'green', 'white', 'blue'].forEach(color => {
+        const btn = document.getElementById("btnHide" + capitalize(color));
+        if (btn) {
+            const isHidden = gameState.hiddenColors && gameState.hiddenColors[color];
+            const names = { red: "đỏ", green: "xanh lá", white: "trắng", blue: "xanh dương" };
+            if (isHidden) {
+                btn.innerHTML = "👁️ Hiện " + names[color];
+                btn.style.opacity = "0.75";
+                btn.style.boxShadow = "inset 0 0 0 2px #ef4444";
+            } else {
+                btn.innerHTML = "🙈 Ẩn " + names[color];
+                btn.style.opacity = "1";
+                btn.style.boxShadow = "none";
+            }
+        }
+    });
+
+    renderVideoUI();
 
     document.getElementById("selectedPanelText").textContent =
         selected === null ? "Chưa chọn ô" : "Đang chọn ô " + selected;
@@ -2220,8 +2540,155 @@ function showToast(msg) {
     }, 2500);
 }
 
+function showPrompt(title, defaultValue, onConfirm) {
+    let overlay = document.getElementById('customPromptModal');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'customPromptModal';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:inherit;';
+        overlay.innerHTML = `
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;max-width:480px;width:90%;color:#fff;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
+                <div id="customPromptTitle" style="font-size:15px;font-weight:bold;margin-bottom:12px;line-height:1.4;color:#f8fafc;"></div>
+                <input type="text" id="customPromptInput" style="width:100%;padding:10px 12px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:14px;margin-bottom:20px;box-sizing:border-box;outline:none;" />
+                <div style="display:flex;justify-content:flex-end;gap:10px;">
+                    <button id="customPromptCancel" style="padding:8px 16px;border-radius:6px;border:1px solid #475569;background:#334155;color:#fff;cursor:pointer;font-weight:bold;">Hủy</button>
+                    <button id="customPromptOk" style="padding:8px 16px;border-radius:6px;border:none;background:#2563eb;color:#fff;cursor:pointer;font-weight:bold;">Xác nhận</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+    const titleEl = overlay.querySelector('#customPromptTitle');
+    const inputEl = overlay.querySelector('#customPromptInput');
+    const okBtn = overlay.querySelector('#customPromptOk');
+    const cancelBtn = overlay.querySelector('#customPromptCancel');
+
+    titleEl.textContent = title;
+    inputEl.value = defaultValue || '';
+    overlay.style.display = 'flex';
+    setTimeout(() => inputEl.focus(), 50);
+
+    const close = () => {
+        overlay.style.display = 'none';
+        okBtn.onclick = null;
+        cancelBtn.onclick = null;
+        inputEl.onkeydown = null;
+    };
+
+    okBtn.onclick = () => {
+        const val = inputEl.value;
+        close();
+        if (onConfirm) onConfirm(val);
+    };
+
+    cancelBtn.onclick = () => {
+        close();
+    };
+
+    inputEl.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+            okBtn.click();
+        } else if (e.key === 'Escape') {
+            cancelBtn.click();
+        }
+    };
+}
+
 function capitalize(text) {
     return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function generateRandomRoomInfo() {
+    const randomRoomId = Math.floor(100000 + Math.random() * 900000).toString();
+    const randomPass = () => Math.floor(1000 + Math.random() * 9000).toString();
+
+    document.getElementById('ctrlRoomId').value = randomRoomId;
+    document.getElementById('ctrlPassHost').value = randomPass();
+    document.getElementById('ctrlPassRed').value = randomPass();
+    document.getElementById('ctrlPassGreen').value = randomPass();
+    document.getElementById('ctrlPassWhite').value = randomPass();
+    document.getElementById('ctrlPassBlue').value = randomPass();
+}
+
+async function activateRoomFromController() {
+    const roomId = document.getElementById('ctrlRoomId').value.trim();
+    const passwords = {
+        host: document.getElementById('ctrlPassHost').value.trim(),
+        red: document.getElementById('ctrlPassRed').value.trim(),
+        green: document.getElementById('ctrlPassGreen').value.trim(),
+        white: document.getElementById('ctrlPassWhite').value.trim(),
+        blue: document.getElementById('ctrlPassBlue').value.trim()
+    };
+
+    if (roomId.length !== 6 || !/^\d{6}$/.test(roomId)) {
+        showToast('⚠️ Mã phòng phải gồm 6 chữ số!');
+        return;
+    }
+
+    for (let key in passwords) {
+        if (passwords[key].length !== 4 || !/^\d{4}$/.test(passwords[key])) {
+            showToast('⚠️ Mật khẩu phải gồm 4 chữ số!');
+            return;
+        }
+    }
+
+    try {
+        const res = await fetch('/api/create-room', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ roomId, passwords })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+            Attack25Sync.setRoomId(roomId, passwords.host);
+            const badge = document.getElementById('ctrlActiveRoomBadge');
+            if (badge) badge.textContent = 'PHÒNG: ' + roomId;
+            updateQuickNavLinks(roomId, passwords);
+            showToast(`✅ Đã kích hoạt phòng ${roomId}!`);
+        } else {
+            showToast('❌ Lỗi kích hoạt phòng!');
+        }
+    } catch (e) {
+        showToast('❌ Không kết nối được server!');
+    }
+}
+
+function updateQuickNavLinks(roomId, passwords) {
+    const navHost = document.getElementById('navLinkHost');
+    const navP1 = document.getElementById('navLinkP1');
+    const navP2 = document.getElementById('navLinkP2');
+    const navP3 = document.getElementById('navLinkP3');
+    const navP4 = document.getElementById('navLinkP4');
+    const navProj = document.getElementById('navLinkProj');
+    const projPreview = document.getElementById('projectorPreviewIframe');
+
+    if (navHost) navHost.href = `/Host.html?roomid=${roomId}&auth=${passwords.host}`;
+    if (navP1) navP1.href = `/player1.html?roomid=${roomId}&auth=${passwords.red}`;
+    if (navP2) navP2.href = `/player2.html?roomid=${roomId}&auth=${passwords.green}`;
+    if (navP3) navP3.href = `/player3.html?roomid=${roomId}&auth=${passwords.white}`;
+    if (navP4) navP4.href = `/player4.html?roomid=${roomId}&auth=${passwords.blue}`;
+    if (navProj) navProj.href = `/Projector.html?roomid=${roomId}`;
+    if (projPreview) projPreview.src = `/Projector.html?roomid=${roomId}&preview=1`;
+}
+
+function copyRoomInfoToClipboard() {
+    const roomId = document.getElementById('ctrlRoomId').value.trim();
+    const h = document.getElementById('ctrlPassHost').value.trim();
+    const p1 = document.getElementById('ctrlPassRed').value.trim();
+    const p2 = document.getElementById('ctrlPassGreen').value.trim();
+    const p3 = document.getElementById('ctrlPassWhite').value.trim();
+    const p4 = document.getElementById('ctrlPassBlue').value.trim();
+
+    const info = `🎮 ATTACK 25 - PHÒNG CHƠI: ${roomId}\nHost: ${h}\nPlayer 1 (Đỏ): ${p1}\nPlayer 2 (Xanh): ${p2}\nPlayer 3 (Trắng): ${p3}\nPlayer 4 (Lam): ${p4}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(info).then(() => {
+            showToast('📋 Đã sao chép thông tin phòng!');
+        }).catch(() => {
+            showToast('⚠️ Không thể sao chép tự động!');
+        });
+    } else {
+        showToast('📋 Đã sao chép thông tin phòng!');
+    }
 }
 
 function renderAll() {
@@ -2235,6 +2702,7 @@ function renderAll() {
    INITIALIZE
 ===================================================== */
 renderAll();
+activateRoomFromController();
 broadcastState("sync");
 
 </script>

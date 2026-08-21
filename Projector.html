@@ -12,6 +12,31 @@
 <script src="howler.js"></script>
 <!-- Universal Real-time Synchronizer (Global Edition) -->
 <script src="sync-client.js"></script>
+<!-- Disable DevTool -->
+<script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+<script>
+    (function checkProjectorRoom() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('roomid');
+        if (!roomId) {
+            document.addEventListener('DOMContentLoaded', function () {
+                const overlay = document.createElement('div');
+                overlay.id = 'noRoomOverlay';
+                overlay.style.cssText = 'position:fixed; inset:0; background:#0b0f17; z-index:999999; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#ff6b6b; font-size:28px; font-weight:bold; padding:20px; font-family:sans-serif;';
+                overlay.innerHTML = '<div style="font-size:60px; margin-bottom:16px;">⚠️</div><div>Vui lòng nhập tham số ?roomid=Mã phòng trên URL</div>';
+                document.body.appendChild(overlay);
+            });
+        }
+    })();
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && e.keyCode === 85)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+</script>
 
 <style>
 
@@ -21,6 +46,8 @@
 @font-face {
     font-family: "UTM Impact";
     src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
     font-display: swap;
 }
 
@@ -28,6 +55,43 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    font-weight: bold !important;
+}
+
+/* Tắt bold đối với tất cả thành phần sử dụng font UTM Impact */
+.panel-number,
+.score-text,
+.player-name,
+.screen-buzzer-alert,
+[style*="UTM Impact"],
+[style*="utm impact"],
+[style*="Impact"],
+.utm-impact {
+    font-weight: normal !important;
+    font-synthesis: none !important;
+}
+
+button:hover,
+.button:hover,
+.btn:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+[role="button"]:hover,
+.action-btn:hover,
+.panel-btn:hover,
+.reset-btn:hover,
+.buzzer-btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-success:hover,
+.btn-danger:hover,
+.btn-warning:hover,
+.btn-info:hover,
+.btn-dark:hover {
+    background: #C2410C !important;
+    background-color: #C2410C !important;
+    color: white !important;
+    font-weight: bold !important;
 }
 
 html,
@@ -108,13 +172,35 @@ img {
     top: 0;
     width: 1280px;
     height: 720px;
-    z-index: 2;
+    z-index: 1;
     pointer-events: none;
 }
 
 .board-background img {
     width: 100%;
     height: 100%;
+}
+
+/* =====================================================
+   STREAMABLE VIDEO CONTAINER UNDER BOARD
+===================================================== */
+.video-container {
+    position: absolute;
+    left: 122.42px;
+    top: 65.78px;
+    width: 778.56px;
+    height: 586.56px;
+    z-index: 2;
+    background: #000;
+    overflow: hidden;
+    display: none;
+    pointer-events: auto;
+}
+
+.video-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 
 /* =====================================================
@@ -146,7 +232,13 @@ img {
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease, opacity 0.2s ease;
+}
+
+.default-panel.color-hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }
 
 .default-panel img {
@@ -503,6 +595,11 @@ img {
         <!-- LAYER 2: BOARD BACKGROUND -->
         <div class="board-background">
             <img src="board.png" alt="">
+        </div>
+
+        <!-- LAYER 2.5: STREAMABLE VIDEO CONTAINER UNDER BOARD -->
+        <div class="video-container" id="projectorVideoContainer">
+            <iframe id="projectorVideoIframe" src="" frameborder="0" width="100%" height="100%" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
         </div>
 
         <!-- LAYER 3: BẢNG 5 x 5 -->
@@ -878,6 +975,119 @@ function setPlayerName(playerNumber, name) {
 
 
 /* =====================================================
+   PERSISTENT VIDEO PLAYBACK & KEEP-ALIVE SYSTEM
+===================================================== */
+let currentVideoState = { url: '', embedUrl: '', visible: false, playing: false };
+let keepAliveAudioCtx = null;
+let keepAliveTimer = null;
+
+function keepAudioActive() {
+    try {
+        if (!keepAliveAudioCtx) {
+            keepAliveAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (keepAliveAudioCtx.state === 'suspended') {
+            keepAliveAudioCtx.resume();
+        }
+        const osc = keepAliveAudioCtx.createOscillator();
+        const gain = keepAliveAudioCtx.createGain();
+        gain.gain.value = 0.00001;
+        osc.connect(gain);
+        gain.connect(keepAliveAudioCtx.destination);
+        osc.start();
+    } catch (e) {}
+}
+
+function startKeepAliveLoop() {
+    keepAudioActive();
+    if (keepAliveTimer) clearInterval(keepAliveTimer);
+    keepAliveTimer = setInterval(() => {
+        if (currentVideoState && currentVideoState.visible && currentVideoState.playing) {
+            keepAudioActive();
+            sendIframeCommand('play');
+        }
+    }, 1000);
+}
+
+function stopKeepAliveLoop() {
+    if (keepAliveTimer) {
+        clearInterval(keepAliveTimer);
+        keepAliveTimer = null;
+    }
+}
+
+function sendIframeCommand(cmd) {
+    const iframe = document.getElementById("projectorVideoIframe");
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+        iframe.contentWindow.postMessage(JSON.stringify({ method: cmd }), '*');
+        iframe.contentWindow.postMessage(cmd, '*');
+    } catch (e) {}
+}
+
+let lastPlayToken = null;
+
+function updateProjectorVideo(videoState) {
+    if (!videoState) return;
+    const container = document.getElementById("projectorVideoContainer");
+    const iframe = document.getElementById("projectorVideoIframe");
+    if (!container || !iframe) return;
+
+    currentVideoState = Object.assign({}, videoState);
+
+    let targetSrc = videoState.embedUrl || '';
+    if (targetSrc) {
+        let params = [];
+        if (videoState.playing) params.push('autoplay=1');
+        params.push('loop=0');
+        params.push('muted=0');
+        targetSrc += (targetSrc.includes('?') ? '&' : '?') + params.join('&');
+    }
+
+    const isNewPlayToken = videoState.playToken && videoState.playToken !== lastPlayToken;
+    if (isNewPlayToken) {
+        lastPlayToken = videoState.playToken;
+    }
+
+    if (videoState.visible && targetSrc) {
+        container.style.display = "block";
+        const currentDataSrc = iframe.getAttribute("data-src");
+        if (currentDataSrc !== targetSrc || isNewPlayToken) {
+            iframe.src = targetSrc;
+            iframe.setAttribute("data-src", targetSrc);
+        }
+    } else {
+        container.style.display = "none";
+        if (iframe.src && iframe.src !== 'about:blank') {
+            iframe.src = "about:blank";
+            iframe.removeAttribute("data-src");
+        }
+    }
+
+    if (videoState.visible && videoState.playing) {
+        sendIframeCommand('play');
+        startKeepAliveLoop();
+    } else {
+        sendIframeCommand('pause');
+        stopKeepAliveLoop();
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && currentVideoState.visible && currentVideoState.playing) {
+        sendIframeCommand('play');
+        keepAudioActive();
+    }
+});
+
+window.addEventListener('focus', () => {
+    if (currentVideoState.visible && currentVideoState.playing) {
+        sendIframeCommand('play');
+        keepAudioActive();
+    }
+});
+
+/* =====================================================
    ÁP DỤNG GAME STATE TỪ CONTROLLER
 ===================================================== */
 function applyGameState(state) {
@@ -903,8 +1113,15 @@ function applyGameState(state) {
                     blue: "BluePanel.png"
                 };
                 elObj.image.src = colorMap[panelData.color] || "DefaultPanel.png";
+
+                if (state.hiddenColors && state.hiddenColors[panelData.color]) {
+                    elObj.container.classList.add("color-hidden");
+                } else {
+                    elObj.container.classList.remove("color-hidden");
+                }
             } else {
                 elObj.image.src = "DefaultPanel.png";
+                elObj.container.classList.remove("color-hidden");
             }
         });
 
@@ -936,6 +1153,11 @@ function applyGameState(state) {
     // 3. Cập nhật Buzzer Spotlight, Scoreboard Highlight & Banner
     if (state.buzzer) {
         updateBuzzerDisplay(state.buzzer, state.players);
+    }
+
+    // 4. Cập nhật Streamable Video Container & Playback
+    if (state.video) {
+        updateProjectorVideo(state.video);
     }
 }
 
@@ -1002,15 +1224,70 @@ function updateBuzzerDisplay(buzzer, players) {
 }
 
 
+function showPrompt(title, defaultValue, onConfirm) {
+    let overlay = document.getElementById('customPromptModal');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'customPromptModal';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:inherit;';
+        overlay.innerHTML = `
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;max-width:480px;width:90%;color:#fff;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
+                <div id="customPromptTitle" style="font-size:15px;font-weight:bold;margin-bottom:12px;line-height:1.4;color:#f8fafc;"></div>
+                <input type="text" id="customPromptInput" style="width:100%;padding:10px 12px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:14px;margin-bottom:20px;box-sizing:border-box;outline:none;" />
+                <div style="display:flex;justify-content:flex-end;gap:10px;">
+                    <button id="customPromptCancel" style="padding:8px 16px;border-radius:6px;border:1px solid #475569;background:#334155;color:#fff;cursor:pointer;font-weight:bold;">Hủy</button>
+                    <button id="customPromptOk" style="padding:8px 16px;border-radius:6px;border:none;background:#2563eb;color:#fff;cursor:pointer;font-weight:bold;">Xác nhận</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+    const titleEl = overlay.querySelector('#customPromptTitle');
+    const inputEl = overlay.querySelector('#customPromptInput');
+    const okBtn = overlay.querySelector('#customPromptOk');
+    const cancelBtn = overlay.querySelector('#customPromptCancel');
+
+    titleEl.textContent = title;
+    inputEl.value = defaultValue || '';
+    overlay.style.display = 'flex';
+    setTimeout(() => inputEl.focus(), 50);
+
+    const close = () => {
+        overlay.style.display = 'none';
+        okBtn.onclick = null;
+        cancelBtn.onclick = null;
+        inputEl.onkeydown = null;
+    };
+
+    okBtn.onclick = () => {
+        const val = inputEl.value;
+        close();
+        if (onConfirm) onConfirm(val);
+    };
+
+    cancelBtn.onclick = () => {
+        close();
+    };
+
+    inputEl.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+            okBtn.click();
+        } else if (e.key === 'Escape') {
+            cancelBtn.click();
+        }
+    };
+}
+
 /* =====================================================
    KẾT NỐI ĐỒNG BỘ THỜI GIAN THỰC (UNIVERSAL & CLOUD)
 ===================================================== */
 function promptServerConfig() {
     const current = localStorage.getItem('attack25_ws_server_host') || window.location.host || 'localhost:3000';
-    const server = prompt("Nhập địa chỉ máy chủ WebSocket từ xa (Ví dụ: 192.168.1.10:3000 hoặc your-app.run.app):", current);
-    if (server !== null) {
-        Attack25Sync.setServerHost(server.trim());
-    }
+    showPrompt("Nhập địa chỉ máy chủ WebSocket từ xa (Ví dụ: 192.168.1.10:3000 hoặc your-app.run.app):", current, (server) => {
+        if (server !== null && server !== undefined) {
+            Attack25Sync.setServerHost(server.trim());
+        }
+    });
 }
 
 document.getElementById('hudConnStatus')?.addEventListener('click', promptServerConfig);

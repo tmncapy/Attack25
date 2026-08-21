@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATTACK 25 - ĐĂNG NHẬP PHÒNG CHƠI</title>
+    <!-- Disable DevTool -->
+    <script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+    <script>
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && e.keyCode === 85)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+    <style>
+        * {
+            font-weight: bold !important;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Tắt bold đối với tất cả thành phần sử dụng font UTM Impact */
+        [style*="UTM Impact"],
+        [style*="utm impact"],
+        .utm-impact {
+            font-weight: normal !important;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #1a2332 0%, #0b0f17 100%);
+            color: #f3f5f8;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            background: #151d2a;
+            border: 2px solid #2d394e;
+            border-radius: 12px;
+            padding: 28px 24px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 159, 0, 0.15);
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .brand-title {
+            font-size: 32px;
+            color: #f59f00;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            text-shadow: 0 2px 10px rgba(245, 159, 0, 0.3);
+        }
+
+        .brand-subtitle {
+            font-size: 13px;
+            color: #8c9ba5;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            color: #d1d8e0;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            height: 42px;
+            background: #0d121c;
+            border: 1.5px solid #2d394e;
+            border-radius: 6px;
+            color: #ffffff;
+            padding: 0 12px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-control:focus {
+            border-color: #f59f00;
+            box-shadow: 0 0 8px rgba(245, 159, 0, 0.3);
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        select.form-control option {
+            background: #151d2a;
+            color: #ffffff;
+        }
+
+        .btn-submit {
+            width: 100%;
+            height: 46px;
+            background: linear-gradient(135deg, #f59f00, #d97706);
+            border: none;
+            border-radius: 6px;
+            color: #000000;
+            font-size: 15px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+            box-shadow: 0 4px 12px rgba(245, 159, 0, 0.3);
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        .btn-submit:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: rgba(224, 36, 36, 0.15);
+            border: 1px solid rgba(224, 36, 36, 0.5);
+            color: #ff6b6b;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-bottom: 16px;
+            display: none;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .footer-note {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 11px;
+            color: #6c7a89;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="brand-header">
+            <div class="brand-title">ATTACK 25</div>
+            <div class="brand-subtitle">CỔNG ĐĂNG NHẬP PHÒNG CHƠI</div>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="loginForm">
+            <!-- Ô 1: VAI TRÒ (ROLE) -->
+            <div class="form-group">
+                <label class="form-label" for="roleSelect">1. VAI TRÒ</label>
+                <select id="roleSelect" class="form-control" required>
+                    <option value="host">Host (Quản trò)</option>
+                    <option value="player1">Player 1 (Đỏ)</option>
+                    <option value="player2">Player 2 (Xanh)</option>
+                    <option value="player3">Player 3 (Trắng)</option>
+                    <option value="player4">Player 4 (Lam)</option>
+                </select>
+            </div>
+
+            <!-- Ô 2: MÃ PHÒNG (6 CHỮ SỐ) -->
+            <div class="form-group">
+                <label class="form-label" for="roomIdInput">2. MÃ PHÒNG (6 CHỮ SỐ)</label>
+                <input type="text" id="roomIdInput" class="form-control" maxlength="6" placeholder="Ví dụ: 123456" pattern="\d{6}" autocomplete="off" required>
+            </div>
+
+            <!-- Ô 3: MẬT KHẨU (4 CHỮ SỐ) -->
+            <div class="form-group">
+                <label class="form-label" for="authInput">3. MẬT KHẨU (4 CHỮ SỐ)</label>
+                <input type="password" id="authInput" class="form-control" maxlength="4" placeholder="Ví dụ: 1234" pattern="\d{4}" autocomplete="off" required>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">VÀO PHÒNG CHƠI</button>
+        </form>
+
+        <div class="footer-note">
+            Vui lòng nhận mã phòng và mật khẩu từ Controller.
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const roleSelect = document.getElementById('roleSelect');
+        const roomIdInput = document.getElementById('roomIdInput');
+        const authInput = document.getElementById('authInput');
+        const errorMessage = document.getElementById('errorMessage');
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        loginForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            hideError();
+
+            const role = roleSelect.value;
+            const roomId = roomIdInput.value.trim();
+            const auth = authInput.value.trim();
+
+            if (!roomId || roomId.length !== 6 || !/^\d{6}$/.test(roomId)) {
+                showError('Mã phòng phải gồm đúng 6 chữ số!');
+                return;
+            }
+
+            if (!auth || auth.length !== 4 || !/^\d{4}$/.test(auth)) {
+                showError('Mật khẩu phải gồm đúng 4 chữ số!');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/verify-room', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role, roomId, auth })
+                });
+
+                const data = await res.json();
+
+                if (data && data.success) {
+                    let page = 'Host.html';
+                    if (role === 'player1') page = 'player1.html';
+                    if (role === 'player2') page = 'player2.html';
+                    if (role === 'player3') page = 'player3.html';
+                    if (role === 'player4') page = 'player4.html';
+
+                    window.location.href = `/${page}?roomid=${encodeURIComponent(roomId)}&auth=${encodeURIComponent(auth)}`;
+                } else {
+                    showError((data && data.message) ? data.message : 'Đăng nhập không thành công. Sai mã phòng hoặc mật khẩu!');
+                }
+            } catch (err) {
+                showError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối!');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,243 +1,457 @@
-/**
- * Universal Real-time Synchronizer for Panel Quiz Attack 25
- * Hỗ trợ Socket.io, Supabase Realtime, BroadcastChannel & LocalStorage Fallback.
- */
+/* =========================================================
+   ATTACK 25 - UNIVERSAL REAL-TIME SYNC CLIENT (ROOM SCOPED)
+   ========================================================= */
 
-(function (window) {
-    'use strict';
+(function () {
+    "use strict";
 
-    // Cấu hình kết nối mặc định
-    const CONFIG = {
-        supabaseUrl: 'YOUR_SUPABASE_URL', // Thay bằng Supabase URL của bạn nếu dùng Supabase
-        supabaseKey: 'YOUR_SUPABASE_ANON_KEY', // Thay bằng Anon Key của bạn
-        serverHost: localStorage.getItem('attack25_ws_server_host') || window.location.host,
-        channelName: 'panel_quiz_attack_25'
-    };
+    const CHANNEL_BASE = "attack25-sync-v3";
 
-    // State mặc định khởi tạo
-    let gameState = {
-        selectedPanel: null,
-        panels: Array.from({ length: 25 }, (_, i) => ({ number: i + 1, used: false, color: null })),
-        players: {
-            red: { name: "PLAYER 1", score: 0 },
-            green: { name: "PLAYER 2", score: 0 },
-            white: { name: "PLAYER 3", score: 0 },
-            blue: { name: "PLAYER 4", score: 0 }
-        },
-        buzzer: {
-            status: 'locked', // 'locked' | 'armed' | 'buzzed'
-            winner: null,
-            buzzTime: null,
-            pressOrder: [],
-            lockedPlayers: []
-        }
-    };
+    const KEY_STATE_PREFIX = "attack25_gamestate_";
+    const KEY_QUESTIONS_PREFIX = "attack25_questions_";
+    const KEY_HOST = "attack25_ws_server_host";
 
-    const listeners = {
-        stateChange: [],
-        sound: [],
-        connection: []
-    };
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentRoomId = urlParams.get('roomid') || '123456';
+    let currentAuth = urlParams.get('auth') || '';
 
-    let socket = null;
-    let localChannel = null;
-    let isConnected = false;
+    const instanceId =
+        (window.crypto && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : "attack25_" +
+              Date.now() +
+              "_" +
+              Math.random().toString(36).slice(2);
 
-    // 1. Tải trạng thái đã lưu trước đó (nếu có)
+    let ws = null;
+    let reconnectTimer = null;
+    let reconnecting = false;
+
+    let manualHost = "";
+
     try {
-        const saved = localStorage.getItem('attack25_gamestate');
-        if (saved) gameState = JSON.parse(saved);
+        manualHost = localStorage.getItem(KEY_HOST) || "";
     } catch (e) {
-        console.warn('Lỗi đọc LocalStorage:', e);
+        manualHost = "";
     }
 
-    // 2. Thiết lập BroadcastChannel cho cùng trình duyệt/thiết bị
-    if ('BroadcastChannel' in window) {
-        localChannel = new BroadcastChannel(CONFIG.channelName);
-        localChannel.onmessage = (event) => {
-            if (event.data) handleIncomingMessage(event.data);
-        };
-    }
+    const stateHandlers = [];
+    const questionHandlers = [];
+    const soundHandlers = [];
+    const connectionHandlers = [];
 
-    // 3. Theo dõi biến đổi LocalStorage
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'attack25_gamestate' && e.newValue) {
-            try {
-                handleIncomingMessage({ type: 'STATE_UPDATE', state: JSON.parse(e.newValue) });
-            } catch (err) {}
-        }
-    });
+    let broadcastChannel = null;
 
-    // 4. Khởi tạo kết nối Socket.io (khi deploy lên server Node.js / Render / Glitch)
-    function initSocketIO() {
-        if (typeof io !== 'undefined') {
-            try {
-                const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-                const socketUrl = CONFIG.serverHost.startsWith('http') ? CONFIG.serverHost : `${window.location.protocol}//${CONFIG.serverHost}`;
-                
-                socket = io(socketUrl, {
-                    transports: ['websocket', 'polling'],
-                    reconnectionAttempts: 5,
-                    timeout: 5000
-                });
-
-                socket.on('connect', () => {
-                    isConnected = true;
-                    notifyConnection(true, 'websocket');
-                });
-
-                socket.on('disconnect', () => {
-                    isConnected = false;
-                    notifyConnection(false, 'websocket');
-                });
-
-                socket.on('sync_state', (state) => {
-                    handleIncomingMessage({ type: 'STATE_UPDATE', state: state });
-                });
-
-                socket.on('play_sound', (sound) => {
-                    notifySound(sound);
-                });
-
-                socket.on('player_buzzed', (data) => {
-                    if (data && data.player) processBuzz(data.player);
-                });
-            } catch (err) {
-                console.warn('Socket.io không thể khởi tạo:', err);
-                notifyConnection(false, 'local');
+    function initBroadcastChannel() {
+        if ("BroadcastChannel" in window) {
+            if (broadcastChannel) {
+                try { broadcastChannel.close(); } catch (e) {}
             }
-        } else {
-            notifyConnection(true, 'local');
+            try {
+                broadcastChannel = new BroadcastChannel(CHANNEL_BASE + "_" + currentRoomId);
+                broadcastChannel.onmessage = function (event) {
+                    if (event.data) {
+                        handleMessage(event.data);
+                    }
+                };
+            } catch (e) {
+                console.warn("BroadcastChannel unavailable:", e);
+            }
         }
     }
 
-    // 5. Khởi tạo kết nối Supabase Realtime (Nếu file html có import thư viện Supabase)
-    function initSupabase() {
-        if (window.supabase && CONFIG.supabaseUrl !== 'YOUR_SUPABASE_URL') {
-            const client = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
-            const channel = client.channel(CONFIG.channelName);
+    initBroadcastChannel();
 
-            channel.on('broadcast', { event: 'sync' }, (payload) => {
-                if (payload.payload) handleIncomingMessage(payload.payload);
-            }).subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                    isConnected = true;
-                    notifyConnection(true, 'supabase');
-                }
-            });
-        }
+    /* =========================================================
+       HELPER
+       ========================================================= */
+
+    function emit(handlers, data) {
+        handlers.slice().forEach(function (handler) {
+            try {
+                handler(data);
+            } catch (error) {
+                console.error("Attack25Sync handler error:", error);
+            }
+        });
     }
 
-    // Xử lý thông điệp nhận được
-    function handleIncomingMessage(msg) {
-        if (!msg) return;
-
-        if (msg.type === 'STATE_UPDATE' && msg.state) {
-            gameState = msg.state;
-            saveStateToStorage(gameState);
-            notifyStateChange(gameState);
-        } else if (msg.type === 'PLAY_SOUND' && msg.sound) {
-            notifySound(msg.sound);
-        } else if (msg.type === 'PLAYER_BUZZ' && msg.player) {
-            processBuzz(msg.player);
-        }
+    function emitConnection(connected, url) {
+        emit(connectionHandlers, {
+            connected: connected,
+            mode: "websocket",
+            url: url || "",
+            roomId: currentRoomId
+        });
     }
 
-    // Xử lý logic bấm chuông
-    function processBuzz(player) {
-        if (gameState.buzzer.status !== 'armed') return;
-        if (gameState.buzzer.lockedPlayers && gameState.buzzer.lockedPlayers.includes(player)) return;
-
-        gameState.buzzer.status = 'buzzed';
-        gameState.buzzer.winner = player;
-        gameState.buzzer.buzzTime = (Math.random() * 0.2 + 0.1).toFixed(2);
-        
-        if (!gameState.buzzer.pressOrder.includes(player)) {
-            gameState.buzzer.pressOrder.push(player);
-        }
-
-        broadcastState(gameState);
-        broadcastSound(`buzz_${player}`);
+    function normalizeHost(host) {
+        return String(host || "")
+            .trim()
+            .replace(/^https?:\/\//i, "")
+            .replace(/^wss?:\/\//i, "")
+            .replace(/\/+$/, "")
+            .replace(/\/ws$/i, "");
     }
 
-    // Lưu state xuống bộ nhớ tạm
-    function saveStateToStorage(state) {
+    function getWebSocketUrl() {
+        let host = normalizeHost(manualHost);
+
+        if (!host && window.location.protocol !== "file:") {
+            host = window.location.host;
+        }
+
+        if (!host) {
+            host = "localhost:3000";
+        }
+
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        return protocol + "//" + host + "/ws";
+    }
+
+    /* =========================================================
+       LOCAL STORAGE PER ROOM
+       ========================================================= */
+
+    function saveStateLocal(state) {
         try {
-            localStorage.setItem('attack25_gamestate', JSON.stringify(state));
+            localStorage.setItem(KEY_STATE_PREFIX + currentRoomId, JSON.stringify(state));
         } catch (e) {}
     }
 
-    // Gửi thông báo cập nhật State tới tất cả thiết bị
-    function broadcastState(state) {
-        gameState = state;
-        saveStateToStorage(state);
-        notifyStateChange(state);
-
-        const payload = { type: 'STATE_UPDATE', state: state };
-
-        if (localChannel) localChannel.postMessage(payload);
-        if (socket && socket.connected) socket.emit('update_state', state);
+    function saveQuestionsLocal(questions) {
+        try {
+            localStorage.setItem(KEY_QUESTIONS_PREFIX + currentRoomId, JSON.stringify(questions));
+        } catch (e) {}
     }
 
-    // Gửi tín hiệu âm thanh
-    function broadcastSound(sound) {
-        notifySound(sound);
-        const payload = { type: 'PLAY_SOUND', sound: sound };
+    /* =========================================================
+       XỬ LÝ MESSAGE
+       ========================================================= */
 
-        if (localChannel) localChannel.postMessage(payload);
-        if (socket && socket.connected) socket.emit('trigger_sound', sound);
+    function handleMessage(message) {
+        if (!message || typeof message !== "object") {
+            return;
+        }
+
+        // Drop messages belonging to other rooms
+        if (message.roomId && message.roomId !== currentRoomId) {
+            return;
+        }
+
+        if (message.source && message.source === instanceId) {
+            return;
+        }
+
+        const msgType = message.type;
+
+        if (msgType === "state" || msgType === "SYNC_STATE" || msgType === "INIT_STATE") {
+            if (message.state !== undefined) {
+                saveStateLocal(message.state);
+                emit(stateHandlers, message.state);
+            }
+            if (message.questions !== undefined) {
+                saveQuestionsLocal(message.questions);
+                emit(questionHandlers, message.questions);
+            }
+            if (message.sound !== undefined) {
+                emit(soundHandlers, message.sound);
+            }
+        } else if (msgType === "questions" || msgType === "SYNC_QUESTIONS") {
+            if (message.questions !== undefined) {
+                saveQuestionsLocal(message.questions);
+                emit(questionHandlers, message.questions);
+            }
+        } else if (msgType === "sound") {
+            if (message.sound !== undefined) {
+                emit(soundHandlers, message.sound);
+            }
+        }
     }
 
-    // Gửi yêu cầu bấm chuông từ máy người chơi
-    function sendPlayerBuzz(playerRole) {
-        processBuzz(playerRole);
-        const payload = { type: 'PLAYER_BUZZ', player: playerRole };
+    /* =========================================================
+       GỬI MESSAGE
+       ========================================================= */
 
-        if (localChannel) localChannel.postMessage(payload);
-        if (socket && socket.connected) socket.emit('player_buzz', { player: playerRole });
+    function send(message) {
+        if (!message || typeof message !== "object") {
+            return false;
+        }
+
+        const payload = Object.assign(
+            {
+                channel: CHANNEL_BASE,
+                source: instanceId,
+                roomId: currentRoomId,
+                auth: currentAuth,
+                ts: Date.now()
+            },
+            message
+        );
+
+        if (broadcastChannel) {
+            try {
+                broadcastChannel.postMessage(payload);
+            } catch (e) {}
+        }
+
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            try {
+                ws.send(JSON.stringify(payload));
+                return true;
+            } catch (e) {
+                console.error("WebSocket send failed:", e);
+            }
+        }
+
+        return false;
     }
 
-    // Quản lý Callback Listeners
-    function notifyStateChange(state) {
-        listeners.stateChange.forEach(fn => fn(state));
+    /* =========================================================
+       KẾT NỐI WEBSOCKET
+       ========================================================= */
+
+    function connect() {
+        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+            return;
+        }
+
+        if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+        }
+
+        const url = getWebSocketUrl();
+        reconnecting = true;
+
+        try {
+            ws = new WebSocket(url);
+        } catch (error) {
+            ws = null;
+            emitConnection(false, url);
+            scheduleReconnect();
+            return;
+        }
+
+        ws.onopen = function () {
+            reconnecting = false;
+            emitConnection(true, url);
+
+            // Request state for current room on connect
+            ws.send(JSON.stringify({
+                channel: CHANNEL_BASE,
+                source: instanceId,
+                type: 'GET_STATE',
+                roomId: currentRoomId,
+                auth: currentAuth
+            }));
+        };
+
+        ws.onmessage = function (event) {
+            try {
+                const message = JSON.parse(event.data);
+                handleMessage(message);
+            } catch (error) {}
+        };
+
+        ws.onerror = function () {};
+
+        ws.onclose = function () {
+            ws = null;
+            reconnecting = false;
+            emitConnection(false, url);
+            scheduleReconnect();
+        };
     }
 
-    function notifySound(sound) {
-        listeners.sound.forEach(fn => fn(sound));
+    function scheduleReconnect() {
+        if (reconnectTimer) return;
+        reconnectTimer = setTimeout(function () {
+            reconnectTimer = null;
+            connect();
+        }, 2500);
     }
 
-    function notifyConnection(status, mode) {
-        listeners.connection.forEach(fn => fn({ connected: status, mode: mode }));
-    }
+    /* =========================================================
+       PUBLIC API
+       ========================================================= */
 
-    // Khởi chạy khi load xong DOM
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            initSocketIO();
-            initSupabase();
-        });
-    } else {
-        initSocketIO();
-        initSupabase();
-    }
-
-    // API Export ra toàn cục (Attack25Sync)
     window.Attack25Sync = {
-        getState: () => gameState,
-        setState: broadcastState,
-        playSound: broadcastSound,
-        sendPlayerBuzz: sendPlayerBuzz,
-        onStateChange: (fn) => {
-            listeners.stateChange.push(fn);
-            fn(gameState); // Gọi ngay lập tức dữ liệu hiện tại khi Đăng ký
+        setRoomId: function (roomId, auth) {
+            if (roomId) {
+                currentRoomId = String(roomId).trim();
+                if (auth !== undefined) currentAuth = String(auth).trim();
+                initBroadcastChannel();
+
+                try {
+                    const savedState = localStorage.getItem(KEY_STATE_PREFIX + currentRoomId);
+                    if (savedState) {
+                        emit(stateHandlers, JSON.parse(savedState));
+                    }
+                } catch (e) {}
+
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        channel: CHANNEL_BASE,
+                        source: instanceId,
+                        type: 'GET_STATE',
+                        roomId: currentRoomId,
+                        auth: currentAuth
+                    }));
+                }
+            }
         },
-        onSound: (fn) => listeners.sound.push(fn),
-        onConnectionChange: (fn) => listeners.connection.push(fn),
-        setServerHost: (host) => {
-            localStorage.setItem('attack25_ws_server_host', host);
-            CONFIG.serverHost = host;
-            initSocketIO();
+
+        getRoomId: function () {
+            return currentRoomId;
+        },
+
+        getAuth: function () {
+            return currentAuth;
+        },
+
+        broadcastState: function (state, action, soundEvent) {
+            action = action || "update";
+            saveStateLocal(state);
+
+            send({
+                type: "state",
+                state: state,
+                action: action,
+                roomId: currentRoomId
+            });
+
+            if (soundEvent) {
+                send({
+                    type: "sound",
+                    sound: soundEvent,
+                    roomId: currentRoomId
+                });
+            }
+        },
+
+        broadcastQuestions: function (questions) {
+            saveQuestionsLocal(questions);
+
+            send({
+                type: "questions",
+                questions: questions,
+                roomId: currentRoomId
+            });
+        },
+
+        sendPlayerBuzz: function (player) {
+            send({
+                type: "buzz",
+                player: player,
+                roomId: currentRoomId
+            });
+        },
+
+        onStateChange: function (callback) {
+            if (typeof callback !== "function") return;
+            stateHandlers.push(callback);
+
+            try {
+                const saved = localStorage.getItem(KEY_STATE_PREFIX + currentRoomId);
+                if (saved) {
+                    const state = JSON.parse(saved);
+                    setTimeout(function () {
+                        callback(state);
+                    }, 0);
+                }
+            } catch (e) {}
+        },
+
+        onQuestionsChange: function (callback) {
+            if (typeof callback !== "function") return;
+            questionHandlers.push(callback);
+
+            try {
+                const saved = localStorage.getItem(KEY_QUESTIONS_PREFIX + currentRoomId);
+                if (saved) {
+                    const questions = JSON.parse(saved);
+                    setTimeout(function () {
+                        callback(questions);
+                    }, 0);
+                }
+            } catch (e) {}
+        },
+
+        onSound: function (callback) {
+            if (typeof callback !== "function") return;
+            soundHandlers.push(callback);
+        },
+
+        onConnectionChange: function (callback) {
+            if (typeof callback !== "function") return;
+            connectionHandlers.push(callback);
+            const url = getWebSocketUrl();
+
+            setTimeout(function () {
+                callback({
+                    connected: !!(ws && ws.readyState === WebSocket.OPEN),
+                    mode: "websocket",
+                    url: url,
+                    roomId: currentRoomId
+                });
+            }, 0);
+        },
+
+        setServerHost: function (host) {
+            manualHost = normalizeHost(host);
+            try {
+                if (manualHost) {
+                    localStorage.setItem(KEY_HOST, manualHost);
+                } else {
+                    localStorage.removeItem(KEY_HOST);
+                }
+            } catch (e) {}
+
+            if (ws) {
+                try {
+                    ws.onclose = null;
+                    ws.close();
+                } catch (e) {}
+                ws = null;
+            }
+
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+
+            connect();
+        },
+
+        getServerHost: function () {
+            return manualHost || (window.location.protocol !== "file:" ? window.location.host : "localhost:3000");
+        },
+
+        getWebSocketUrl: function () {
+            return getWebSocketUrl();
+        },
+
+        reconnect: function () {
+            if (ws) {
+                try {
+                    ws.onclose = null;
+                    ws.close();
+                } catch (e) {}
+                ws = null;
+            }
+
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+
+            connect();
         }
     };
 
-})(window);
+    setTimeout(function () {
+        connect();
+    }, 0);
+
+})();
