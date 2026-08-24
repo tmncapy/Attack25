@@ -1,457 +1,392 @@
-/* =========================================================
-   ATTACK 25 - UNIVERSAL REAL-TIME SYNC CLIENT (ROOM SCOPED)
-   ========================================================= */
+/**
+ * Attack 25 Real-Time Universal Synchronizer (Global & Cross-Platform Edition)
+ * Works everywhere: Local LAN, Global Internet Cloud, Cross-Browser, Multi-Device
+ * Supports:
+ * 1. Secure WebSockets (wss:// & ws://) with auto-reconnect
+ * 2. URL Server Parameter (?server=...) for zero-config remote pairing
+ * 3. HTTP State Sync Polling Fallback (Cross-continent firewall bypass)
+ * 4. Local BroadcastChannel & Storage Event Sync
+ */
 
-(function () {
-    "use strict";
+(function(window) {
+    'use strict';
 
-    const CHANNEL_BASE = "attack25-sync-v3";
+    const SYNC_CHANNEL_NAME = 'panel_quiz_attack_25_channel';
+    const STATE_KEY = 'attack25_gamestate';
+    const QUESTIONS_KEY = 'attack25_questions';
+    const SERVER_CONFIG_KEY = 'attack25_ws_server_host';
 
-    const KEY_STATE_PREFIX = "attack25_gamestate_";
-    const KEY_QUESTIONS_PREFIX = "attack25_questions_";
-    const KEY_HOST = "attack25_ws_server_host";
-
-    const urlParams = new URLSearchParams(window.location.search);
-    let currentRoomId = urlParams.get('roomid') || '123456';
-    let currentAuth = urlParams.get('auth') || '';
-
-    const instanceId =
-        (window.crypto && crypto.randomUUID)
-            ? crypto.randomUUID()
-            : "attack25_" +
-              Date.now() +
-              "_" +
-              Math.random().toString(36).slice(2);
-
-    let ws = null;
-    let reconnectTimer = null;
-    let reconnecting = false;
-
-    let manualHost = "";
-
-    try {
-        manualHost = localStorage.getItem(KEY_HOST) || "";
-    } catch (e) {
-        manualHost = "";
-    }
-
-    const stateHandlers = [];
-    const questionHandlers = [];
-    const soundHandlers = [];
-    const connectionHandlers = [];
-
+    let socket = null;
     let broadcastChannel = null;
+    let reconnectTimeout = null;
+    let pollingInterval = null;
+    let isWsConnected = false;
+    let activeServerUrl = '';
 
-    function initBroadcastChannel() {
-        if ("BroadcastChannel" in window) {
-            if (broadcastChannel) {
-                try { broadcastChannel.close(); } catch (e) {}
-            }
-            try {
-                broadcastChannel = new BroadcastChannel(CHANNEL_BASE + "_" + currentRoomId);
-                broadcastChannel.onmessage = function (event) {
-                    if (event.data) {
-                        handleMessage(event.data);
-                    }
-                };
-            } catch (e) {
-                console.warn("BroadcastChannel unavailable:", e);
-            }
+    const listeners = {
+        state: [],
+        questions: [],
+        sound: [],
+        connection: []
+    };
+
+    // 1. Initialize BroadcastChannel (instant zero-latency local fallback)
+    try {
+        if (typeof BroadcastChannel !== 'undefined') {
+            broadcastChannel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+            broadcastChannel.onmessage = function(event) {
+                if (event && event.data) {
+                    handleIncomingMessage(event.data, 'broadcast');
+                }
+            };
         }
-    }
+    } catch (e) {}
 
-    initBroadcastChannel();
-
-    /* =========================================================
-       HELPER
-       ========================================================= */
-
-    function emit(handlers, data) {
-        handlers.slice().forEach(function (handler) {
-            try {
-                handler(data);
-            } catch (error) {
-                console.error("Attack25Sync handler error:", error);
+    // 2. Storage event listener (cross-tab local sync)
+    try {
+        window.addEventListener('storage', function(e) {
+            if (e.key === STATE_KEY && e.newValue) {
+                try {
+                    const state = JSON.parse(e.newValue);
+                    notifyListeners('state', state);
+                } catch (err) {}
+            }
+            if (e.key === QUESTIONS_KEY && e.newValue) {
+                try {
+                    const questions = JSON.parse(e.newValue);
+                    notifyListeners('questions', questions);
+                } catch (err) {}
             }
         });
-    }
+    } catch (e) {}
 
-    function emitConnection(connected, url) {
-        emit(connectionHandlers, {
-            connected: connected,
-            mode: "websocket",
-            url: url || "",
-            roomId: currentRoomId
-        });
-    }
-
-    function normalizeHost(host) {
-        return String(host || "")
-            .trim()
-            .replace(/^https?:\/\//i, "")
-            .replace(/^wss?:\/\//i, "")
-            .replace(/\/+$/, "")
-            .replace(/\/ws$/i, "");
-    }
-
+    // 3. Determine WebSocket Server URL
     function getWebSocketUrl() {
-        let host = normalizeHost(manualHost);
-
-        if (!host && window.location.protocol !== "file:") {
-            host = window.location.host;
-        }
-
-        if (!host) {
-            host = "localhost:3000";
-        }
-
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        return protocol + "//" + host + "/ws";
-    }
-
-    /* =========================================================
-       LOCAL STORAGE PER ROOM
-       ========================================================= */
-
-    function saveStateLocal(state) {
         try {
-            localStorage.setItem(KEY_STATE_PREFIX + currentRoomId, JSON.stringify(state));
+            // Check URL query param ?server=...
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryServer = urlParams.get('server') || urlParams.get('ws') || urlParams.get('host');
+            if (queryServer && queryServer.trim()) {
+                let s = queryServer.trim();
+                if (s.startsWith('http://')) s = 'ws://' + s.slice(7);
+                else if (s.startsWith('https://')) s = 'wss://' + s.slice(8);
+                else if (!s.startsWith('ws://') && !s.startsWith('wss://')) {
+                    s = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + s;
+                }
+                if (!s.endsWith('/ws')) s = s.replace(/\/+$/, '') + '/ws';
+                return s;
+            }
+
+            // Check localStorage saved server
+            const savedHost = localStorage.getItem(SERVER_CONFIG_KEY);
+            if (savedHost && savedHost.trim()) {
+                let s = savedHost.trim();
+                if (s.startsWith('http://')) s = 'ws://' + s.slice(7);
+                else if (s.startsWith('https://')) s = 'wss://' + s.slice(8);
+                else if (!s.startsWith('ws://') && !s.startsWith('wss://')) {
+                    s = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + s;
+                }
+                if (!s.endsWith('/ws')) s = s.replace(/\/+$/, '') + '/ws';
+                return s;
+            }
         } catch (e) {}
+
+        // If accessed via HTTP or HTTPS web server (Cloud / LAN)
+        if (window.location.host) {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            return `${protocol}//${window.location.host}/ws`;
+        }
+
+        // Default local port
+        return 'ws://localhost:3000/ws';
     }
 
-    function saveQuestionsLocal(questions) {
+    // 4. WebSocket Manager
+    function connectWebSocket() {
+        if (reconnectTimeout) {
+            clearTimeout(reconnectTimeout);
+            reconnectTimeout = null;
+        }
+
+        const wsUrl = getWebSocketUrl();
+        activeServerUrl = wsUrl;
+
         try {
-            localStorage.setItem(KEY_QUESTIONS_PREFIX + currentRoomId, JSON.stringify(questions));
-        } catch (e) {}
-    }
+            socket = new WebSocket(wsUrl);
 
-    /* =========================================================
-       XỬ LÝ MESSAGE
-       ========================================================= */
+            socket.onopen = function() {
+                isWsConnected = true;
+                stopPollingFallback();
+                notifyListeners('connection', { connected: true, mode: 'websocket', url: wsUrl });
+                // Request server authoritative state
+                sendWs({ type: 'GET_STATE' });
+            };
 
-    function handleMessage(message) {
-        if (!message || typeof message !== "object") {
-            return;
-        }
+            socket.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleIncomingMessage(data, 'websocket');
+                } catch (e) {}
+            };
 
-        // Drop messages belonging to other rooms
-        if (message.roomId && message.roomId !== currentRoomId) {
-            return;
-        }
+            socket.onclose = function() {
+                isWsConnected = false;
+                notifyListeners('connection', { connected: false, mode: 'local_fallback', url: wsUrl });
+                startPollingFallback();
+                reconnectTimeout = setTimeout(connectWebSocket, 2500);
+            };
 
-        if (message.source && message.source === instanceId) {
-            return;
-        }
-
-        const msgType = message.type;
-
-        if (msgType === "state" || msgType === "SYNC_STATE" || msgType === "INIT_STATE") {
-            if (message.state !== undefined) {
-                saveStateLocal(message.state);
-                emit(stateHandlers, message.state);
-            }
-            if (message.questions !== undefined) {
-                saveQuestionsLocal(message.questions);
-                emit(questionHandlers, message.questions);
-            }
-            if (message.sound !== undefined) {
-                emit(soundHandlers, message.sound);
-            }
-        } else if (msgType === "questions" || msgType === "SYNC_QUESTIONS") {
-            if (message.questions !== undefined) {
-                saveQuestionsLocal(message.questions);
-                emit(questionHandlers, message.questions);
-            }
-        } else if (msgType === "sound") {
-            if (message.sound !== undefined) {
-                emit(soundHandlers, message.sound);
-            }
+            socket.onerror = function() {
+                isWsConnected = false;
+                notifyListeners('connection', { connected: false, mode: 'local_fallback', url: wsUrl });
+            };
+        } catch (err) {
+            isWsConnected = false;
+            notifyListeners('connection', { connected: false, mode: 'local_fallback', url: wsUrl });
+            startPollingFallback();
+            reconnectTimeout = setTimeout(connectWebSocket, 3500);
         }
     }
 
-    /* =========================================================
-       GỬI MESSAGE
-       ========================================================= */
+    // HTTP Polling Fallback (for strict networks / long distance proxies)
+    function startPollingFallback() {
+        if (pollingInterval) return;
+        if (!window.location.host && !localStorage.getItem(SERVER_CONFIG_KEY)) return;
 
-    function send(message) {
-        if (!message || typeof message !== "object") {
-            return false;
-        }
-
-        const payload = Object.assign(
-            {
-                channel: CHANNEL_BASE,
-                source: instanceId,
-                roomId: currentRoomId,
-                auth: currentAuth,
-                ts: Date.now()
-            },
-            message
-        );
-
-        if (broadcastChannel) {
+        pollingInterval = setInterval(function() {
+            if (isWsConnected) {
+                stopPollingFallback();
+                return;
+            }
             try {
-                broadcastChannel.postMessage(payload);
+                let httpBase = window.location.origin;
+                const saved = localStorage.getItem(SERVER_CONFIG_KEY);
+                if (saved) {
+                    httpBase = saved.replace(/^ws/, 'http');
+                }
+                if (httpBase && !httpBase.startsWith('file:')) {
+                    fetch(`${httpBase}/api/state`, { cache: 'no-store' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.state) {
+                                handleIncomingMessage({ state: data.state, questions: data.questions }, 'polling');
+                            }
+                        })
+                        .catch(() => {});
+                }
+            } catch (e) {}
+        }, 1500);
+    }
+
+    function stopPollingFallback() {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
+    }
+
+    function handleIncomingMessage(data, source) {
+        if (!data) return;
+
+        if (data.type === 'PLAYER_BUZZ' && !isWsConnected) {
+            handleLocalPlayerBuzz(data.player);
+            return;
+        }
+
+        if (data.state) {
+            try {
+                localStorage.setItem(STATE_KEY, JSON.stringify(data.state));
+            } catch (e) {}
+            notifyListeners('state', data.state);
+        }
+
+        if (data.questions) {
+            try {
+                localStorage.setItem(QUESTIONS_KEY, JSON.stringify(data.questions));
+            } catch (e) {}
+            notifyListeners('questions', data.questions);
+        }
+
+        if (data.sound) {
+            notifyListeners('sound', data.sound);
+        }
+    }
+
+    // Local referee fallback
+    function handleLocalPlayerBuzz(playerColor) {
+        try {
+            const raw = localStorage.getItem(STATE_KEY);
+            if (!raw) return;
+            const state = JSON.parse(raw);
+
+            if (state.buzzer && state.buzzer.status === 'armed') {
+                const isLocked = (state.buzzer.lockedPlayers && state.buzzer.lockedPlayers.includes(playerColor)) ||
+                                 (state.penalties && state.penalties[playerColor] > 0);
+                if (isLocked) {
+                    return;
+                }
+
+                if (!state.buzzer.winner) {
+                    state.buzzer.status = 'buzzed';
+                    state.buzzer.winner = playerColor;
+                    state.buzzer.buzzTime = "0.150";
+                    state.buzzer.pressOrder = [{ player: playerColor, time: "0.150" }];
+
+                    try {
+                        localStorage.setItem(STATE_KEY, JSON.stringify(state));
+                    } catch (e) {}
+
+                    const payload = {
+                        type: 'SYNC_STATE',
+                        action: 'buzzer_hit',
+                        state: state,
+                        sound: `buzzer_${playerColor}`
+                    };
+
+                    if (broadcastChannel) {
+                        try { broadcastChannel.postMessage(payload); } catch (e) {}
+                    }
+
+                    notifyListeners('state', state);
+                    notifyListeners('sound', `buzzer_${playerColor}`);
+                }
+            }
+        } catch (e) {}
+    }
+
+    function notifyListeners(event, data) {
+        if (listeners[event]) {
+            listeners[event].forEach(function(fn) {
+                try { fn(data); } catch (err) {}
+            });
+        }
+    }
+
+    function sendWs(msgObj) {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            try {
+                socket.send(JSON.stringify(msgObj));
+                return true;
             } catch (e) {}
         }
-
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            try {
-                ws.send(JSON.stringify(payload));
-                return true;
-            } catch (e) {
-                console.error("WebSocket send failed:", e);
-            }
-        }
-
         return false;
     }
 
-    /* =========================================================
-       KẾT NỐI WEBSOCKET
-       ========================================================= */
-
-    function connect() {
-        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-            return;
-        }
-
-        if (reconnectTimer) {
-            clearTimeout(reconnectTimer);
-            reconnectTimer = null;
-        }
-
-        const url = getWebSocketUrl();
-        reconnecting = true;
-
-        try {
-            ws = new WebSocket(url);
-        } catch (error) {
-            ws = null;
-            emitConnection(false, url);
-            scheduleReconnect();
-            return;
-        }
-
-        ws.onopen = function () {
-            reconnecting = false;
-            emitConnection(true, url);
-
-            // Request state for current room on connect
-            ws.send(JSON.stringify({
-                channel: CHANNEL_BASE,
-                source: instanceId,
-                type: 'GET_STATE',
-                roomId: currentRoomId,
-                auth: currentAuth
-            }));
-        };
-
-        ws.onmessage = function (event) {
+    // Public API
+    const Attack25Sync = {
+        onStateChange(fn) {
+            listeners.state.push(fn);
             try {
-                const message = JSON.parse(event.data);
-                handleMessage(message);
-            } catch (error) {}
-        };
-
-        ws.onerror = function () {};
-
-        ws.onclose = function () {
-            ws = null;
-            reconnecting = false;
-            emitConnection(false, url);
-            scheduleReconnect();
-        };
-    }
-
-    function scheduleReconnect() {
-        if (reconnectTimer) return;
-        reconnectTimer = setTimeout(function () {
-            reconnectTimer = null;
-            connect();
-        }, 2500);
-    }
-
-    /* =========================================================
-       PUBLIC API
-       ========================================================= */
-
-    window.Attack25Sync = {
-        setRoomId: function (roomId, auth) {
-            if (roomId) {
-                currentRoomId = String(roomId).trim();
-                if (auth !== undefined) currentAuth = String(auth).trim();
-                initBroadcastChannel();
-
-                try {
-                    const savedState = localStorage.getItem(KEY_STATE_PREFIX + currentRoomId);
-                    if (savedState) {
-                        emit(stateHandlers, JSON.parse(savedState));
-                    }
-                } catch (e) {}
-
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({
-                        channel: CHANNEL_BASE,
-                        source: instanceId,
-                        type: 'GET_STATE',
-                        roomId: currentRoomId,
-                        auth: currentAuth
-                    }));
-                }
-            }
+                const saved = localStorage.getItem(STATE_KEY);
+                if (saved) fn(JSON.parse(saved));
+            } catch (e) {}
         },
 
-        getRoomId: function () {
-            return currentRoomId;
+        onQuestionsChange(fn) {
+            listeners.questions.push(fn);
+            try {
+                const saved = localStorage.getItem(QUESTIONS_KEY);
+                if (saved) fn(JSON.parse(saved));
+            } catch (e) {}
         },
 
-        getAuth: function () {
-            return currentAuth;
+        onSound(fn) {
+            listeners.sound.push(fn);
         },
 
-        broadcastState: function (state, action, soundEvent) {
-            action = action || "update";
-            saveStateLocal(state);
+        onConnectionChange(fn) {
+            listeners.connection.push(fn);
+            fn({
+                connected: isWsConnected,
+                mode: isWsConnected ? 'websocket' : 'local_fallback',
+                url: activeServerUrl || getWebSocketUrl()
+            });
+        },
 
-            send({
-                type: "state",
-                state: state,
+        broadcastState(state, action = 'update', sound = null) {
+            try {
+                localStorage.setItem(STATE_KEY, JSON.stringify(state));
+            } catch (e) {}
+
+            const payload = {
+                type: 'SYNC_STATE',
                 action: action,
-                roomId: currentRoomId
-            });
+                state: state,
+                sound: sound
+            };
 
-            if (soundEvent) {
-                send({
-                    type: "sound",
-                    sound: soundEvent,
-                    roomId: currentRoomId
-                });
+            const sentWs = sendWs(payload);
+
+            if (broadcastChannel) {
+                try { broadcastChannel.postMessage(payload); } catch (e) {}
             }
         },
 
-        broadcastQuestions: function (questions) {
-            saveQuestionsLocal(questions);
-
-            send({
-                type: "questions",
-                questions: questions,
-                roomId: currentRoomId
-            });
-        },
-
-        sendPlayerBuzz: function (player) {
-            send({
-                type: "buzz",
-                player: player,
-                roomId: currentRoomId
-            });
-        },
-
-        onStateChange: function (callback) {
-            if (typeof callback !== "function") return;
-            stateHandlers.push(callback);
-
+        broadcastQuestions(questions) {
             try {
-                const saved = localStorage.getItem(KEY_STATE_PREFIX + currentRoomId);
-                if (saved) {
-                    const state = JSON.parse(saved);
-                    setTimeout(function () {
-                        callback(state);
-                    }, 0);
-                }
+                localStorage.setItem(QUESTIONS_KEY, JSON.stringify(questions));
             } catch (e) {}
+
+            const payload = {
+                type: 'SYNC_QUESTIONS',
+                questions: questions
+            };
+
+            sendWs(payload);
+
+            if (broadcastChannel) {
+                try { broadcastChannel.postMessage(payload); } catch (e) {}
+            }
         },
 
-        onQuestionsChange: function (callback) {
-            if (typeof callback !== "function") return;
-            questionHandlers.push(callback);
+        sendPlayerBuzz(playerColor) {
+            const payload = {
+                type: 'PLAYER_BUZZ',
+                player: playerColor,
+                timestamp: Date.now()
+            };
 
+            const sentWs = sendWs(payload);
+
+            if (broadcastChannel) {
+                try { broadcastChannel.postMessage(payload); } catch (e) {}
+            }
+
+            if (!sentWs) {
+                handleLocalPlayerBuzz(playerColor);
+            }
+        },
+
+        setServerHost(host) {
             try {
-                const saved = localStorage.getItem(KEY_QUESTIONS_PREFIX + currentRoomId);
-                if (saved) {
-                    const questions = JSON.parse(saved);
-                    setTimeout(function () {
-                        callback(questions);
-                    }, 0);
-                }
-            } catch (e) {}
-        },
-
-        onSound: function (callback) {
-            if (typeof callback !== "function") return;
-            soundHandlers.push(callback);
-        },
-
-        onConnectionChange: function (callback) {
-            if (typeof callback !== "function") return;
-            connectionHandlers.push(callback);
-            const url = getWebSocketUrl();
-
-            setTimeout(function () {
-                callback({
-                    connected: !!(ws && ws.readyState === WebSocket.OPEN),
-                    mode: "websocket",
-                    url: url,
-                    roomId: currentRoomId
-                });
-            }, 0);
-        },
-
-        setServerHost: function (host) {
-            manualHost = normalizeHost(host);
-            try {
-                if (manualHost) {
-                    localStorage.setItem(KEY_HOST, manualHost);
+                if (host) {
+                    localStorage.setItem(SERVER_CONFIG_KEY, host);
                 } else {
-                    localStorage.removeItem(KEY_HOST);
+                    localStorage.removeItem(SERVER_CONFIG_KEY);
                 }
+                if (socket) {
+                    socket.close();
+                }
+                connectWebSocket();
             } catch (e) {}
-
-            if (ws) {
-                try {
-                    ws.onclose = null;
-                    ws.close();
-                } catch (e) {}
-                ws = null;
-            }
-
-            if (reconnectTimer) {
-                clearTimeout(reconnectTimer);
-                reconnectTimer = null;
-            }
-
-            connect();
         },
 
-        getServerHost: function () {
-            return manualHost || (window.location.protocol !== "file:" ? window.location.host : "localhost:3000");
+        getServerUrl() {
+            return activeServerUrl || getWebSocketUrl();
         },
 
-        getWebSocketUrl: function () {
-            return getWebSocketUrl();
+        isConnected() {
+            return isWsConnected;
         },
 
-        reconnect: function () {
-            if (ws) {
-                try {
-                    ws.onclose = null;
-                    ws.close();
-                } catch (e) {}
-                ws = null;
-            }
-
-            if (reconnectTimer) {
-                clearTimeout(reconnectTimer);
-                reconnectTimer = null;
-            }
-
-            connect();
+        getMode() {
+            return isWsConnected ? 'websocket' : 'local_fallback';
         }
     };
 
-    setTimeout(function () {
-        connect();
-    }, 0);
+    window.Attack25Sync = Attack25Sync;
 
-})();
+    // Connect immediately
+    connectWebSocket();
+
+})(window);

@@ -10,8 +10,6 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-
 // Enable CORS for all local and remote origins
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -23,11 +21,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Explicit named routes
-app.get(['/', '/index', '/index.html'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
+// Explicit named routes (case-insensitive and alias friendly)
 app.get(['/host', '/host.html', '/Host.html', '/Host'], (req, res) => {
   res.sendFile(path.join(__dirname, 'Host.html'));
 });
@@ -40,11 +34,7 @@ app.get(['/controller', '/controller.html', '/Controller.html', '/Controller', '
   res.sendFile(path.join(__dirname, 'Controller.html'));
 });
 
-app.get(['/player', '/player.html', '/Player.html', '/Player'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'Player.html'));
-});
-
-app.get(['/player1', '/player1.html', '/Player1.html', '/p1', '/red'], (req, res) => {
+app.get(['/player1', '/player1.html', '/p1', '/red'], (req, res) => {
   res.sendFile(path.join(__dirname, 'player1.html'));
 });
 
@@ -62,35 +52,28 @@ app.get(['/player4', '/player4.html', '/p4', '/blue'], (req, res) => {
 
 app.use(express.static(__dirname));
 
-// Server Authoritative State per Room
-function createInitialGameState() {
-  return {
-    selectedPanel: null,
-    panels: Array.from({ length: 25 }, (_, i) => ({ number: i + 1, used: false, color: null })),
-    players: {
-      red: { name: "PLAYER 1", score: 0 },
-      green: { name: "PLAYER 2", score: 0 },
-      white: { name: "PLAYER 3", score: 0 },
-      blue: { name: "PLAYER 4", score: 0 }
-    },
-    buzzer: {
-      status: 'locked',
-      winner: null,
-      buzzTime: null,
-      pressOrder: [],
-      lockedPlayers: []
-    },
-    video: {
-      url: '',
-      embedUrl: '',
-      playing: false,
-      visible: false,
-      playToken: null
-    }
-  };
-}
+// Server Authoritative State
+let gameState = {
+  currentQuestionIndex: 0,
+  penalties: { red: 0, green: 0, white: 0, blue: 0 },
+  selectedPanel: null,
+  panels: Array.from({ length: 25 }, (_, i) => ({ number: i + 1, used: false, color: null })),
+  players: {
+    red: { name: "PLAYER 1", score: 0 },
+    green: { name: "PLAYER 2", score: 0 },
+    white: { name: "PLAYER 3", score: 0 },
+    blue: { name: "PLAYER 4", score: 0 }
+  },
+  buzzer: {
+    status: 'locked',
+    winner: null,
+    buzzTime: null,
+    pressOrder: [],
+    lockedPlayers: []
+  }
+};
 
-const defaultQuestions = [
+let questionsList = [
   { stt: 1, question: "Năm 2026 là năm con gì theo can chi?", answer: "Bính Ngọ (Con Ngựa)" },
   { stt: 2, question: "Đỉnh núi cao nhất Việt Nam là đỉnh núi nào?", answer: "Fansipan (3.143m)" },
   { stt: 3, question: "Hành tinh nào gần Mặt Trời nhất trong Hệ Mặt Trời?", answer: "Sao Thủy (Mercury)" },
@@ -98,101 +81,29 @@ const defaultQuestions = [
   { stt: 5, question: "Kim loại nào dẫn điện tốt nhất ở điều kiện tiêu chuẩn?", answer: "Bạc (Ag)" }
 ];
 
-// Room storage: Map<roomId, RoomData>
-const rooms = new Map();
-
-function getOrCreateRoom(roomId, passwords = null) {
-  roomId = String(roomId || '123456').trim();
-  if (!rooms.has(roomId)) {
-    const defaultPasswords = {
-      host: "1234",
-      red: "1111",
-      green: "2222",
-      white: "3333",
-      blue: "4444"
-    };
-    rooms.set(roomId, {
-      roomId,
-      passwords: passwords || defaultPasswords,
-      state: createInitialGameState(),
-      questions: [...defaultQuestions],
-      buzzerArmTime: null
-    });
-  } else if (passwords) {
-    const room = rooms.get(roomId);
-    room.passwords = { ...room.passwords, ...passwords };
-  }
-  return rooms.get(roomId);
-}
-
-// Create default room for testing
-getOrCreateRoom("123456");
-
-function verifyRoomCredentials(roomId, auth, role) {
-  roomId = String(roomId || '').trim();
-  auth = String(auth || '').trim();
-  role = String(role || '').toLowerCase().trim();
-
-  if (role === 'player1') role = 'red';
-  if (role === 'player2') role = 'green';
-  if (role === 'player3') role = 'white';
-  if (role === 'player4') role = 'blue';
-
-  if (!rooms.has(roomId)) {
-    return { success: false, message: 'Mã phòng không tồn tại!' };
-  }
-  const room = rooms.get(roomId);
-
-  if (role === 'projector') {
-    return { success: true, roomId };
-  }
-
-  if (!role || !room.passwords[role]) {
-    return { success: false, message: 'Vai trò không hợp lệ!' };
-  }
-
-  if (room.passwords[role] !== auth) {
-    return { success: false, message: 'Mật khẩu không đúng!' };
-  }
-
-  return { success: true, roomId, role };
-}
-
-app.post('/api/create-room', (req, res) => {
-  const { roomId, passwords } = req.body || {};
-  if (!roomId || String(roomId).trim().length !== 6) {
-    return res.status(400).json({ success: false, message: 'Mã phòng phải gồm 6 chữ số!' });
-  }
-  const room = getOrCreateRoom(String(roomId).trim(), passwords);
-  res.json({ success: true, roomId: room.roomId, passwords: room.passwords });
-});
-
-app.post('/api/verify-room', (req, res) => {
-  const { roomId, auth, role } = req.body || {};
-  const result = verifyRoomCredentials(roomId, auth, role);
-  res.json(result);
-});
-
-app.get('/api/verify-room', (req, res) => {
-  const { roomid, auth, role } = req.query || {};
-  const result = verifyRoomCredentials(roomid, auth, role);
-  res.json(result);
-});
+let buzzerArmTime = null;
 
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     app: 'Attack25',
-    activeRooms: rooms.size,
     connections: wss ? wss.clients.size : 0,
     timestamp: Date.now()
   });
 });
 
 app.get('/api/state', (req, res) => {
-  const roomId = String(req.query.roomid || '123456').trim();
-  const room = getOrCreateRoom(roomId);
-  res.json({ state: room.state, questions: room.questions, roomId: room.roomId });
+  res.json({ state: gameState, questions: questionsList });
+});
+
+// Default route sends Controller.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Controller.html'));
+});
+
+// Fallback to Controller.html if route not found
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Controller.html'));
 });
 
 // Create HTTP and WebSocket Server
@@ -205,10 +116,10 @@ server.on('upgrade', (request, socket, head) => {
   });
 });
 
-function broadcastToRoom(roomId, data, excludeWs = null) {
+function broadcast(data, excludeWs = null) {
   const message = JSON.stringify(data);
   wss.clients.forEach(client => {
-    if (client.roomId === roomId && client !== excludeWs && client.readyState === WebSocket.OPEN) {
+    if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
       try {
         client.send(message);
       } catch (e) {}
@@ -228,115 +139,83 @@ function recalculateScores(state) {
 }
 
 wss.on('connection', (ws) => {
-  ws.roomId = '123456';
+  // Send current authoritative state on connection
+  try {
+    recalculateScores(gameState);
+    ws.send(JSON.stringify({
+      type: 'INIT_STATE',
+      state: gameState,
+      questions: questionsList
+    }));
+  } catch (e) {}
 
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message.toString());
-      const roomId = String(data.roomId || ws.roomId || '123456').trim();
-      ws.roomId = roomId;
-      const room = getOrCreateRoom(roomId);
 
-      if (data.type === 'CREATE_ROOM') {
-        if (data.roomId && data.passwords) {
-          getOrCreateRoom(String(data.roomId).trim(), data.passwords);
-          ws.send(JSON.stringify({
-            channel: 'attack25-sync-v3',
-            type: 'ROOM_CREATED',
-            roomId: data.roomId,
-            success: true
-          }));
-        }
-      } else if (data.type === 'GET_STATE') {
-        recalculateScores(room.state);
+      if (data.type === 'GET_STATE') {
+        recalculateScores(gameState);
         ws.send(JSON.stringify({
-          channel: 'attack25-sync-v3',
-          type: 'state',
-          roomId: room.roomId,
-          state: room.state,
-          questions: room.questions
+          type: 'INIT_STATE',
+          state: gameState,
+          questions: questionsList
         }));
-      } else if (data.type === 'SYNC_STATE' || data.type === 'state') {
+      } else if (data.type === 'SYNC_STATE') {
         if (data.state) {
-          room.state = data.state;
-          recalculateScores(room.state);
-          if (data.action === 'buzzer_armed' || data.action === 'arm') {
-            room.buzzerArmTime = Date.now();
+          gameState = data.state;
+          recalculateScores(gameState);
+          if (data.action === 'buzzer_armed') {
+            buzzerArmTime = Date.now();
           }
         }
-        broadcastToRoom(room.roomId, {
-          channel: 'attack25-sync-v3',
-          type: 'state',
-          roomId: room.roomId,
+        // Broadcast to all other clients
+        broadcast({
+          type: 'SYNC_STATE',
           action: data.action,
-          state: room.state,
+          state: gameState,
           sound: data.sound
         }, ws);
-
-        if (data.sound) {
-          broadcastToRoom(room.roomId, {
-            channel: 'attack25-sync-v3',
-            type: 'sound',
-            roomId: room.roomId,
-            sound: data.sound
-          }, ws);
-        }
-      } else if (data.type === 'SYNC_QUESTIONS' || data.type === 'questions') {
+      } else if (data.type === 'SYNC_QUESTIONS') {
         if (data.questions) {
-          room.questions = data.questions;
+          questionsList = data.questions;
         }
-        broadcastToRoom(room.roomId, {
-          channel: 'attack25-sync-v3',
-          type: 'questions',
-          roomId: room.roomId,
-          questions: room.questions
+        broadcast({
+          type: 'SYNC_QUESTIONS',
+          questions: questionsList
         }, ws);
-      } else if (data.type === 'PLAYER_BUZZ' || data.type === 'buzz') {
+      } else if (data.type === 'PLAYER_BUZZ') {
         const player = data.player;
-        if (room.state.buzzer.status === 'armed' && (!room.state.buzzer.lockedPlayers || !room.state.buzzer.lockedPlayers.includes(player))) {
+        const isLocked = (gameState.buzzer.lockedPlayers && gameState.buzzer.lockedPlayers.includes(player)) ||
+                         (gameState.penalties && gameState.penalties[player] > 0);
+        if (gameState.buzzer.status === 'armed' && !isLocked) {
           const now = Date.now();
-          const elapsed = room.buzzerArmTime ? ((now - room.buzzerArmTime) / 1000).toFixed(3) : "0.150";
+          const elapsed = buzzerArmTime ? ((now - buzzerArmTime) / 1000).toFixed(3) : "0.150";
 
-          if (!room.state.buzzer.winner) {
-            room.state.buzzer.status = 'buzzed';
-            room.state.buzzer.winner = player;
-            room.state.buzzer.buzzTime = elapsed;
-            room.state.buzzer.pressOrder = [{ player: player, time: elapsed }];
+          if (!gameState.buzzer.winner) {
+            gameState.buzzer.status = 'buzzed';
+            gameState.buzzer.winner = player;
+            gameState.buzzer.buzzTime = elapsed;
+            gameState.buzzer.pressOrder = [{ player: player, time: elapsed }];
 
-            broadcastToRoom(room.roomId, {
-              channel: 'attack25-sync-v3',
-              type: 'state',
-              roomId: room.roomId,
+            // Broadcast winner buzz immediately to EVERYONE including sender with color sound
+            broadcast({
+              type: 'SYNC_STATE',
               action: 'buzzer_hit',
-              state: room.state,
-              sound: `buzzer_${player}`
-            });
-            broadcastToRoom(room.roomId, {
-              channel: 'attack25-sync-v3',
-              type: 'sound',
-              roomId: room.roomId,
+              state: gameState,
               sound: `buzzer_${player}`
             });
           } else {
-            if (!room.state.buzzer.pressOrder.some(p => p.player === player)) {
-              room.state.buzzer.pressOrder.push({ player: player, time: elapsed });
-              broadcastToRoom(room.roomId, {
-                channel: 'attack25-sync-v3',
-                type: 'state',
-                roomId: room.roomId,
+            // Already someone buzzed, add to press order if not there
+            if (!gameState.buzzer.pressOrder.some(p => p.player === player)) {
+              gameState.buzzer.pressOrder.push({ player: player, time: elapsed });
+              broadcast({
+                type: 'SYNC_STATE',
                 action: 'buzzer_order_update',
-                state: room.state
+                state: gameState
               });
             }
           }
         }
-      } else if (data.type === 'sound') {
-        broadcastToRoom(room.roomId, {
-          channel: 'attack25-sync-v3',
-          type: 'sound',
-          roomId: room.roomId,
-          sound: data.sound
-        }, ws);
       }
     } catch (err) {
       console.error('WebSocket message error:', err);
@@ -347,5 +226,5 @@ wss.on('connection', (ws) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Attack 25 room-scoped server running on http://0.0.0.0:${PORT}`);
+  console.log(`Attack 25 synchronized server running on http://0.0.0.0:${PORT}`);
 });
