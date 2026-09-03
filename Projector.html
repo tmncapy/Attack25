@@ -727,13 +727,25 @@ function stopAllSounds() {
     }
 }
 
+let lastSoundKey = null;
+let lastSoundTime = 0;
+
 function playSound(type) {
     if (!type || isMuted) return;
 
     if (type === 'stop') {
         stopAllSounds();
+        lastSoundKey = null;
         return;
     }
+
+    // Chặn hoàn toàn phát lặp âm thanh: Nếu cùng một loại âm thanh được gọi trong 450ms thì bỏ qua
+    const now = Date.now();
+    if (type === lastSoundKey && (now - lastSoundTime) < 450) {
+        return;
+    }
+    lastSoundKey = type;
+    lastSoundTime = now;
 
     let audioSrc = colorWavMap[type];
     if (!audioSrc && (type.startsWith('data:audio') || type.startsWith('blob:') || type.endsWith('.mp3') || type.endsWith('.wav'))) {
@@ -750,20 +762,14 @@ function playSound(type) {
                 const idx = window.activeAudios.indexOf(audio);
                 if (idx > -1) window.activeAudios.splice(idx, 1);
             });
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                    playSynthTone(type);
-                });
-            }
+            audio.play().catch(() => {});
             return;
         } catch (e) {
-            playSynthTone(type);
             return;
         }
     }
 
-    // 2. Play standard game sound effect via synthesizer
+    // 2. Play standard game sound effect via synthesizer nếu không có file âm thanh
     playSynthTone(type);
 }
 

@@ -271,17 +271,9 @@ wss.on('connection', (ws) => {
           roomId: room.roomId,
           action: data.action,
           state: room.state,
-          sound: data.sound
+          sound: data.sound,
+          msgId: data.msgId || ('srv_state_' + Date.now())
         }, ws);
-
-        if (data.sound) {
-          broadcastToRoom(room.roomId, {
-            channel: 'attack25-sync-v3',
-            type: 'sound',
-            roomId: room.roomId,
-            sound: data.sound
-          }, ws);
-        }
       } else if (data.type === 'SYNC_QUESTIONS' || data.type === 'questions') {
         if (data.questions) {
           room.questions = data.questions;
@@ -290,7 +282,8 @@ wss.on('connection', (ws) => {
           channel: 'attack25-sync-v3',
           type: 'questions',
           roomId: room.roomId,
-          questions: room.questions
+          questions: room.questions,
+          msgId: data.msgId || ('srv_q_' + Date.now())
         }, ws);
       } else if (data.type === 'PLAYER_BUZZ' || data.type === 'buzz') {
         const player = data.player;
@@ -310,13 +303,8 @@ wss.on('connection', (ws) => {
               roomId: room.roomId,
               action: 'buzzer_hit',
               state: room.state,
-              sound: `buzzer_${player}`
-            });
-            broadcastToRoom(room.roomId, {
-              channel: 'attack25-sync-v3',
-              type: 'sound',
-              roomId: room.roomId,
-              sound: `buzzer_${player}`
+              sound: `buzzer_${player}`,
+              msgId: 'srv_buzz_' + Date.now() + '_' + player
             });
           } else {
             if (!room.state.buzzer.pressOrder.some(p => p.player === player)) {
@@ -326,7 +314,8 @@ wss.on('connection', (ws) => {
                 type: 'state',
                 roomId: room.roomId,
                 action: 'buzzer_order_update',
-                state: room.state
+                state: room.state,
+                msgId: 'srv_order_' + Date.now()
               });
             }
           }
@@ -336,7 +325,8 @@ wss.on('connection', (ws) => {
           channel: 'attack25-sync-v3',
           type: 'sound',
           roomId: room.roomId,
-          sound: data.sound
+          sound: data.sound,
+          msgId: data.msgId || ('srv_snd_' + Date.now())
         }, ws);
       }
     } catch (err) {

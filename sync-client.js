@@ -110,8 +110,22 @@
     }
 
     /* =========================================================
-       LOCAL STORAGE PER ROOM
+       LOCAL STORAGE PER ROOM & MESSAGE DEDUPLICATION
        ========================================================= */
+
+    const seenMsgIds = new Set();
+    const seenMsgOrder = [];
+    function isDuplicateMsg(id) {
+        if (!id) return false;
+        if (seenMsgIds.has(id)) return true;
+        seenMsgIds.add(id);
+        seenMsgOrder.push(id);
+        if (seenMsgOrder.length > 300) {
+            const oldId = seenMsgOrder.shift();
+            seenMsgIds.delete(oldId);
+        }
+        return false;
+    }
 
     function saveStateLocal(state) {
         try {
@@ -140,6 +154,10 @@
         }
 
         if (message.source && message.source === instanceId) {
+            return;
+        }
+
+        if (message.msgId && isDuplicateMsg(message.msgId)) {
             return;
         }
 
@@ -173,10 +191,14 @@
        GỬI MESSAGE
        ========================================================= */
 
+    let msgCounter = 0;
+
     function send(message) {
         if (!message || typeof message !== "object") {
             return false;
         }
+
+        const msgId = message.msgId || (instanceId + "_" + (++msgCounter) + "_" + Date.now());
 
         const payload = Object.assign(
             {
@@ -184,10 +206,15 @@
                 source: instanceId,
                 roomId: currentRoomId,
                 auth: currentAuth,
-                ts: Date.now()
+                ts: Date.now(),
+                msgId: msgId
             },
             message
         );
+        payload.msgId = msgId;
+
+        // Đánh dấu id đã gửi để không bị lặp lại
+        isDuplicateMsg(msgId);
 
         if (broadcastChannel) {
             try {
