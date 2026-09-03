@@ -881,6 +881,47 @@ body * {
     }
 }
 
+/* SOUNDBOARD VOLUME SLIDER */
+.soundboard-volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #374151;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.soundboard-volume-slider:hover {
+    background: #4b5563;
+}
+.soundboard-volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #38bdf8;
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+    border: 2px solid #0f172a;
+    transition: transform 0.12s ease, background 0.12s ease;
+}
+.soundboard-volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: #7dd3fc;
+}
+.soundboard-volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #38bdf8;
+    cursor: pointer;
+    border: 2px solid #0f172a;
+    box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+}
+
 </style>
 </head>
 
@@ -1283,11 +1324,30 @@ body * {
             </section>
 
             <!-- SYSTEM CONTROLS -->
-            <section class="card">
+            <section class="card" id="soundboardCard">
                 <div class="card-header">
                     <div class="card-title">🎵 BẢNG ĐIỀU KHIỂN SFX</div>
                 </div>
                 <div class="card-body" style="gap: 8px;">
+                    <!-- VOLUME CONTROL BAR -->
+                    <div style="background: #111827; padding: 9px 12px; border-radius: 6px; border: 1.5px solid #374151;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 11px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 5px;">
+                                <span id="sfxVolIcon" style="font-size: 14px;">🔊</span> ÂM LƯỢNG SOUNDBOARD
+                            </span>
+                            <span id="sfxVolPercent" style="font-size: 11px; font-weight: bold; color: #38bdf8; font-family: monospace; background: #0f172a; padding: 2px 7px; border-radius: 4px; border: 1px solid #1e293b;">100%</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button class="button button-gray" id="btnToggleMuteSfx" onclick="toggleMuteSoundboard()" style="height: 24px; font-size: 10px; padding: 0 6px; flex-shrink: 0;" title="Bật/Tắt tiếng nhanh">🔇 Mute</button>
+                            <input type="range" class="soundboard-volume-slider" id="soundboardVolumeSlider" min="0" max="100" value="100" oninput="onSoundboardVolumeInput(this.value)" onchange="onSoundboardVolumeChange(this.value)" title="Kéo để chỉnh âm lượng SFX / nhạc trên Projector">
+                            <div style="display: flex; gap: 3px; flex-shrink: 0;">
+                                <button class="button button-gray" onclick="setSoundboardVolume(25)" style="height: 22px; font-size: 9px; padding: 0 4px;" title="25%">25%</button>
+                                <button class="button button-gray" onclick="setSoundboardVolume(50)" style="height: 22px; font-size: 9px; padding: 0 4px;" title="50%">50%</button>
+                                <button class="button button-gray" onclick="setSoundboardVolume(100)" style="height: 22px; font-size: 9px; padding: 0 4px;" title="100%">100%</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- SECTION 1: LOCAL CUSTOM SFX -->
                     <div style="background: #111827; padding: 10px; border-radius: 6px; border: 1.5px solid #374151;">
                         <div style="font-size: 11px; font-weight: bold; margin-bottom: 6px; color: #f59f00; display: flex; align-items: center; gap: 4px;">
@@ -1464,11 +1524,15 @@ const defaultState = {
         green: false,
         white: false,
         blue: false
-    }
+    },
+    soundVolume: 100
 };
 
 function ensureValidPanels(state) {
     if (!state) return;
+    if (state.soundVolume === undefined) {
+        state.soundVolume = 100;
+    }
     if (!state.video) {
         state.video = { url: '', embedUrl: '', visible: false, playing: false };
     }
@@ -2735,16 +2799,93 @@ function triggerBroadcastSound(soundPath) {
     }
 }
 
+/* =====================================================
+   SOUNDBOARD VOLUME CONTROL
+===================================================== */
+let previousSoundboardVolume = 100;
+
+function updateSoundboardVolumeUI(val) {
+    const num = Math.max(0, Math.min(100, Number(val !== undefined ? val : 100)));
+    const slider = document.getElementById("soundboardVolumeSlider");
+    const percentEl = document.getElementById("sfxVolPercent");
+    const iconEl = document.getElementById("sfxVolIcon");
+    const btnMute = document.getElementById("btnToggleMuteSfx");
+
+    if (slider && Number(slider.value) !== num) {
+        slider.value = num;
+    }
+    if (percentEl) {
+        percentEl.textContent = `${num}%`;
+    }
+    if (iconEl) {
+        if (num === 0) iconEl.textContent = "🔇";
+        else if (num < 40) iconEl.textContent = "🔈";
+        else if (num < 75) iconEl.textContent = "🔉";
+        else iconEl.textContent = "🔊";
+    }
+    if (btnMute) {
+        btnMute.textContent = num === 0 ? "🔊 Unmute" : "🔇 Mute";
+    }
+}
+
+function onSoundboardVolumeInput(val) {
+    const num = Math.max(0, Math.min(100, Number(val)));
+    updateSoundboardVolumeUI(num);
+    gameState.soundVolume = num;
+
+    // Gửi realtime lệnh đổi âm lượng sang Projector ngay khi đang kéo thanh trượt
+    if (window.Attack25Sync && typeof Attack25Sync.broadcastSound === 'function') {
+        Attack25Sync.broadcastSound('volume:' + (num / 100));
+    }
+}
+
+function onSoundboardVolumeChange(val) {
+    const num = Math.max(0, Math.min(100, Number(val)));
+    gameState.soundVolume = num;
+    try {
+        localStorage.setItem("attack25_sound_volume", String(num));
+    } catch (e) {}
+
+    // Đồng bộ lại state cho toàn bộ phòng
+    broadcastState("changeVolume");
+    showToast(`🔊 Âm lượng Soundboard: ${num}%`);
+}
+
+function setSoundboardVolume(val) {
+    const num = Math.max(0, Math.min(100, Number(val)));
+    onSoundboardVolumeInput(num);
+    onSoundboardVolumeChange(num);
+}
+
+function toggleMuteSoundboard() {
+    const current = Number(gameState.soundVolume !== undefined ? gameState.soundVolume : 100);
+    if (current > 0) {
+        previousSoundboardVolume = current;
+        setSoundboardVolume(0);
+    } else {
+        const restore = previousSoundboardVolume > 0 ? previousSoundboardVolume : 100;
+        setSoundboardVolume(restore);
+    }
+}
+
 function renderAll() {
     renderQuestion();
     renderPanels();
     renderBuzzerUI();
+    updateSoundboardVolumeUI(gameState.soundVolume !== undefined ? gameState.soundVolume : 100);
 }
 
 
 /* =====================================================
    INITIALIZE
 ===================================================== */
+try {
+    const savedVol = localStorage.getItem("attack25_sound_volume");
+    if (savedVol !== null && !isNaN(Number(savedVol))) {
+        gameState.soundVolume = Number(savedVol);
+    }
+} catch (e) {}
+
 renderAll();
 activateRoomFromController();
 broadcastState("sync");

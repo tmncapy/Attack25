@@ -715,6 +715,30 @@ function toggleAudio() {
 
 document.getElementById('btnAudioToggle')?.addEventListener('click', toggleAudio);
 
+let currentVolume = 1.0;
+
+try {
+    const savedVol = localStorage.getItem("attack25_sound_volume");
+    if (savedVol !== null && !isNaN(Number(savedVol))) {
+        currentVolume = Math.max(0, Math.min(1, Number(savedVol) / 100));
+    }
+} catch (e) {}
+
+function setProjectorVolume(volPercent) {
+    const p = Math.max(0, Math.min(100, Number(volPercent)));
+    currentVolume = p / 100;
+    try {
+        localStorage.setItem("attack25_sound_volume", String(p));
+    } catch (e) {}
+    if (window.activeAudios && Array.isArray(window.activeAudios)) {
+        window.activeAudios.forEach(audio => {
+            try {
+                audio.volume = currentVolume;
+            } catch (e) {}
+        });
+    }
+}
+
 function stopAllSounds() {
     if (window.activeAudios && Array.isArray(window.activeAudios)) {
         window.activeAudios.forEach(audio => {
@@ -755,7 +779,7 @@ function playSound(type) {
     if (audioSrc) {
         try {
             const audio = new Audio(audioSrc);
-            audio.volume = 1.0;
+            audio.volume = currentVolume;
             window.activeAudios = window.activeAudios || [];
             window.activeAudios.push(audio);
             audio.addEventListener('ended', () => {
@@ -774,9 +798,13 @@ function playSound(type) {
 }
 
 function playSynthTone(type) {
+    if (currentVolume <= 0) return;
     try {
         const ctx = getAudioContext();
         const now = ctx.currentTime;
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(currentVolume, now);
+        masterGain.connect(ctx.destination);
 
         if (type === 'buzzer' || type === 'buzzer_red' || type === 'red') {
             // RED: Deep, powerful punch tone
@@ -788,7 +816,7 @@ function playSynthTone(type) {
             gain.gain.setValueAtTime(0.4, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(masterGain);
             osc.start(now);
             osc.stop(now + 0.4);
         } else if (type === 'buzzer_green' || type === 'green') {
@@ -801,7 +829,7 @@ function playSynthTone(type) {
             gain.gain.setValueAtTime(0.4, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(masterGain);
             osc.start(now);
             osc.stop(now + 0.4);
         } else if (type === 'buzzer_white' || type === 'white') {
@@ -814,7 +842,7 @@ function playSynthTone(type) {
             gain.gain.setValueAtTime(0.45, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(masterGain);
             osc.start(now);
             osc.stop(now + 0.4);
         } else if (type === 'buzzer_blue' || type === 'blue') {
@@ -827,7 +855,7 @@ function playSynthTone(type) {
             gain.gain.setValueAtTime(0.38, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(masterGain);
             osc.start(now);
             osc.stop(now + 0.4);
         } else if (type === 'correct') {
@@ -839,7 +867,7 @@ function playSynthTone(type) {
                 gain.gain.setValueAtTime(0.2, now + i * 0.08);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
                 osc.connect(gain);
-                gain.connect(ctx.destination);
+                gain.connect(masterGain);
                 osc.start(now + i * 0.08);
                 osc.stop(now + i * 0.08 + 0.35);
             });
@@ -852,7 +880,7 @@ function playSynthTone(type) {
                 gain.gain.setValueAtTime(0.25, now);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
                 osc.connect(gain);
-                gain.connect(ctx.destination);
+                gain.connect(masterGain);
                 osc.start(now);
                 osc.stop(now + 0.45);
             });
@@ -865,7 +893,7 @@ function playSynthTone(type) {
             gain.gain.setValueAtTime(0.18, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(masterGain);
             osc.start(now);
             osc.stop(now + 0.25);
         }
@@ -1115,6 +1143,11 @@ function applyGameState(state) {
     if (state.video) {
         updateProjectorVideo(state.video);
     }
+
+    // 5. Cập nhật Âm lượng Soundboard (0 - 100%)
+    if (state.soundVolume !== undefined) {
+        setProjectorVolume(state.soundVolume);
+    }
 }
 
 
@@ -1239,6 +1272,13 @@ if (window.Attack25Sync) {
         applyGameState(state);
     });
     Attack25Sync.onSound((sound) => {
+        if (typeof sound === 'string' && sound.startsWith('volume:')) {
+            const vol = parseFloat(sound.replace('volume:', ''));
+            if (!isNaN(vol)) {
+                setProjectorVolume(vol * 100);
+            }
+            return;
+        }
         playSound(sound);
     });
     Attack25Sync.onConnectionChange((conn) => {
