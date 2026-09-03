@@ -637,12 +637,37 @@ const colorWavMap = {
     'buzz_blue': 'blue.wav'
 };
 
+function stopAllSounds() {
+    if (window.activeAudios && Array.isArray(window.activeAudios)) {
+        window.activeAudios.forEach(audio => {
+            try {
+                audio.pause();
+                audio.currentTime = 0;
+            } catch (e) {}
+        });
+        window.activeAudios = [];
+    }
+}
+
 function playSound(type) {
-    const wavFile = colorWavMap[type];
+    if (type === 'stop') {
+        stopAllSounds();
+        return;
+    }
+    let wavFile = colorWavMap[type];
+    if (!wavFile && (type.endsWith('.mp3') || type.endsWith('.wav'))) {
+        wavFile = type;
+    }
     if (wavFile) {
         try {
             const audio = new Audio(wavFile);
             audio.volume = 1.0;
+            window.activeAudios = window.activeAudios || [];
+            window.activeAudios.push(audio);
+            audio.addEventListener('ended', () => {
+                const idx = window.activeAudios.indexOf(audio);
+                if (idx > -1) window.activeAudios.splice(idx, 1);
+            });
             const playPromise = audio.play();
             if (playPromise !== undefined) {
                 playPromise.catch(() => playSynthTone(type));

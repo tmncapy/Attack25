@@ -1285,6 +1285,66 @@ body * {
             <!-- SYSTEM CONTROLS -->
             <section class="card">
                 <div class="card-header">
+                    <div class="card-title">🎵 BẢNG ĐIỀU KHIỂN SFX</div>
+                </div>
+                <div class="card-body" style="gap: 8px;">
+                    <!-- SECTION 1: LOCAL CUSTOM SFX -->
+                    <div style="background: #111827; padding: 10px; border-radius: 6px; border: 1.5px solid #374151;">
+                        <div style="font-size: 11px; font-weight: bold; margin-bottom: 6px; color: #f59f00; display: flex; align-items: center; gap: 4px;">
+                            <span>💻</span> SFX TỰ CHỌN TỪ MÁY CỤC BỘ
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label class="button button-gray" style="height: 28px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #374151; border-color: #4b5563;">
+                                📁 Chọn file âm thanh từ máy...
+                                <input type="file" id="localSfxFile" accept="audio/*" style="display: none;" onchange="handleLocalSfxSelected(event)">
+                            </label>
+                            <div id="localSfxStatus" style="font-size: 10px; color: #9ca3af; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                Chưa chọn file nào
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                                <button class="button button-green" id="btnPlayLocalSfx" onclick="playLocalSfx()" disabled style="height: 26px; font-size: 11px; opacity: 0.5;">▶️ Phát</button>
+                                <button class="button button-red" id="btnStopLocalSfx" onclick="stopLocalSfx()" disabled style="height: 26px; font-size: 11px; opacity: 0.5;">⏹️ Dừng</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: SAMPLE SFX BOARD -->
+                    <div style="background: #111827; padding: 10px; border-radius: 6px; border: 1.5px solid #374151;">
+                        <div style="font-size: 11px; font-weight: bold; margin-bottom: 6px; color: #10b981; display: flex; align-items: center; justify-content: space-between;">
+                            <span>🎼 BẢNG SFX MẪU (THƯ MỤC SFX)</span>
+                            <button class="button button-red" onclick="triggerBroadcastSound('stop')" style="height: 18px; font-size: 9px; padding: 0 6px;">⏹️ Dừng Tất Cả</button>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 4px;">
+                            <button class="button button-red" onclick="triggerBroadcastSound('SFX/red.wav')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Chuông Đỏ">🔔 Chuông Đỏ</button>
+                            <button class="button button-green" onclick="triggerBroadcastSound('SFX/green.wav')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Chuông Xanh Lá">🔔 Chuông Xanh</button>
+                            <button class="button button-white" onclick="triggerBroadcastSound('SFX/white.wav')" style="height: 24px; font-size: 10px; padding: 0 4px; color: #000;" title="Chuông Trắng">🔔 Chuông Trắng</button>
+                            <button class="button button-blue" onclick="triggerBroadcastSound('SFX/blue.wav')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Chuông Xanh Dương">🔔 Chuông Lam</button>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <button class="button button-orange" onclick="triggerBroadcastSound('SFX/pqa25-signal.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Âm thanh Tín hiệu câu hỏi">🔊 Tín hiệu câu hỏi</button>
+                            <button class="button button-orange" onclick="triggerBroadcastSound('SFX/pqa25-time.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Âm thanh Suy nghĩ 5 giây">⏰ Suy nghĩ 5s</button>
+                            <button class="button button-red" onclick="triggerBroadcastSound('SFX/pqa25-wrong.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Âm thanh Sai / Khóa chuông">❌ Sai / Khóa chuông</button>
+                            <button class="button button-gold" onclick="triggerBroadcastSound('SFX/pqa25-attackchance.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px; color: #000;" title="Attack Chance">⚡ Attack Chance!</button>
+                            
+                            <div style="border-top: 1px solid #374151; margin: 4px 0; padding-top: 4px; font-size: 9px; color: #9ca3af; font-weight: bold; text-align: center;">CHUNG KẾT (FINAL RUN)</div>
+                            
+                            <button class="button button-orange" onclick="triggerBroadcastSound('SFX/pqa25-finaltime.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Thời gian chung kết 1">⏱️ Final Time 1</button>
+                            <button class="button button-orange" onclick="triggerBroadcastSound('SFX/pqa25-finaltime2.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Thời gian chung kết 2">⏱️ Final Time 2</button>
+                            <button class="button button-red" onclick="triggerBroadcastSound('SFX/pqa25-finalfail.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Chung kết Thất bại">💥 Final Thất bại</button>
+                            
+                            <div style="border-top: 1px solid #374151; margin: 4px 0; padding-top: 4px; font-size: 9px; color: #9ca3af; font-weight: bold; text-align: center;">NHẠC NỀN (BGM)</div>
+                            
+                            <button class="button button-blue" onclick="triggerBroadcastSound('SFX/PQA25-Theme.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px; background: #4f46e5; border-color: #6366f1;" title="Nhạc chủ đề PQA25">🎵 Nhạc Chủ Đề</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SYSTEM CONTROLS -->
+            <section class="card">
+                <div class="card-header">
                     <div class="card-title">⚙️ HỆ THỐNG</div>
                 </div>
 
@@ -1606,12 +1666,37 @@ function getAudioContext() {
     return audioCtx;
 }
 
+function stopAllSounds() {
+    if (window.activeAudios && Array.isArray(window.activeAudios)) {
+        window.activeAudios.forEach(audio => {
+            try {
+                audio.pause();
+                audio.currentTime = 0;
+            } catch (e) {}
+        });
+        window.activeAudios = [];
+    }
+}
+
 function playSound(type) {
-    const wavFile = colorWavMap[type];
+    if (type === 'stop') {
+        stopAllSounds();
+        return;
+    }
+    let wavFile = colorWavMap[type];
+    if (!wavFile && (type.endsWith('.mp3') || type.endsWith('.wav'))) {
+        wavFile = type;
+    }
     if (wavFile) {
         try {
             const audio = new Audio(wavFile);
             audio.volume = 1.0;
+            window.activeAudios = window.activeAudios || [];
+            window.activeAudios.push(audio);
+            audio.addEventListener('ended', () => {
+                const idx = window.activeAudios.indexOf(audio);
+                if (idx > -1) window.activeAudios.splice(idx, 1);
+            });
             const playPromise = audio.play();
             if (playPromise !== undefined) {
                 playPromise.catch(() => playSynthTone(type));
@@ -2765,6 +2850,69 @@ function copyRoomInfoToClipboard() {
     } else {
         showToast('📋 Đã sao chép thông tin phòng!');
     }
+}
+
+let localSfxAudio = null;
+
+function handleLocalSfxSelected(event) {
+    const file = event.target.files[0];
+    if (file) {
+        if (localSfxAudio) {
+            try {
+                localSfxAudio.pause();
+            } catch (e) {}
+        }
+        const fileUrl = URL.createObjectURL(file);
+        localSfxAudio = new Audio(fileUrl);
+        localSfxAudio.volume = 1.0;
+        
+        // Track locally to stop all if needed
+        window.activeAudios = window.activeAudios || [];
+        window.activeAudios.push(localSfxAudio);
+        localSfxAudio.addEventListener('ended', () => {
+            const idx = window.activeAudios.indexOf(localSfxAudio);
+            if (idx > -1) window.activeAudios.splice(idx, 1);
+        });
+
+        document.getElementById('localSfxStatus').textContent = `📂 ${file.name}`;
+        
+        // Enable buttons
+        const btnPlay = document.getElementById('btnPlayLocalSfx');
+        const btnStop = document.getElementById('btnStopLocalSfx');
+        if (btnPlay) {
+            btnPlay.disabled = false;
+            btnPlay.style.opacity = "1";
+        }
+        if (btnStop) {
+            btnStop.disabled = false;
+            btnStop.style.opacity = "1";
+        }
+    }
+}
+
+function playLocalSfx() {
+    if (localSfxAudio) {
+        localSfxAudio.currentTime = 0;
+        localSfxAudio.play().catch(err => {
+            showToast("⚠️ Không thể phát file: " + err.message);
+        });
+        showToast("▶️ Đang phát SFX tự chọn cục bộ");
+    }
+}
+
+function stopLocalSfx() {
+    if (localSfxAudio) {
+        localSfxAudio.pause();
+        localSfxAudio.currentTime = 0;
+        showToast("⏹️ Đã dừng SFX tự chọn cục bộ");
+    }
+}
+
+function triggerBroadcastSound(soundPath) {
+    // 1. Play locally on the controller
+    playSound(soundPath);
+    // 2. Broadcast to other screens (Host, Projector, etc.)
+    broadcastState("playSound", soundPath);
 }
 
 function renderAll() {
