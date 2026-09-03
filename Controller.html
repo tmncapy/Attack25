@@ -989,7 +989,11 @@ body * {
             <section class="card">
                 <div class="card-header">
                     <div class="card-title">🎯 BẢNG 25 Ô</div>
-                    <div style="display:flex; align-items:center; gap:6px;">
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: #a1a1aa; user-select: none; margin-right: 6px;">
+                            <input type="checkbox" id="chkAutoOthello" checked style="cursor: pointer; width: 14px; height: 14px; accent-color: #f59f00;">
+                            <span>Luật Othello tự động</span>
+                        </label>
                         <span class="card-badge" id="selectedPanelText">Chưa chọn ô</span>
                         <button class="button button-gray" id="btnQuickDeselect" style="height:22px; padding:0 6px; font-size:10px;" onclick="clearSelection()" title="Hủy chọn ô hiện tại">Bỏ chọn</button>
                     </div>
@@ -2205,6 +2209,57 @@ function recalculateScoresFromBoard() {
     updatePreviewScores();
 }
 
+function applyOthelloFlips(placedIdx, color) {
+    if (!color) return [];
+    
+    const directions = [
+        [-1, -1], [-1, 0], [-1, 1],
+        [ 0, -1],          [ 0, 1],
+        [ 1, -1], [ 1, 0], [ 1, 1]
+    ];
+    
+    const r = Math.floor(placedIdx / 5);
+    const c = placedIdx % 5;
+    const toFlip = [];
+    
+    directions.forEach(([dr, dc]) => {
+        let curr_r = r + dr;
+        let curr_c = c + dc;
+        const path = [];
+        let foundSame = false;
+        
+        while (curr_r >= 0 && curr_r < 5 && curr_c >= 0 && curr_c < 5) {
+            const otherIdx = curr_r * 5 + curr_c;
+            const otherColor = gameState.panels[otherIdx].color;
+            if (!otherColor) {
+                break;
+            }
+            if (otherColor === color) {
+                foundSame = true;
+                break;
+            }
+            path.push(otherIdx);
+            curr_r += dr;
+            curr_c += dc;
+        }
+        
+        if (foundSame && path.length > 0) {
+            toFlip.push(...path);
+        }
+    });
+    
+    if (toFlip.length > 0) {
+        // Unique elements to flip
+        const uniqueToFlip = [...new Set(toFlip)];
+        uniqueToFlip.forEach(fIdx => {
+            gameState.panels[fIdx].color = color;
+        });
+        return uniqueToFlip.map(idx => idx + 1).sort((a, b) => a - b);
+    }
+    
+    return [];
+}
+
 function setPanelColor(color) {
     if (gameState.selectedPanel === null) {
         showToast("Hãy chọn một ô trên bảng trước.");
@@ -2215,11 +2270,21 @@ function setPanelColor(color) {
     const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
     if (panel) {
         panel.color = color;
+        let othelloMsg = "";
+        
+        const autoOthelloChecked = document.getElementById("chkAutoOthello")?.checked;
+        if (color && autoOthelloChecked) {
+            const flipped = applyOthelloFlips(selectedNum - 1, color);
+            if (flipped.length > 0) {
+                othelloMsg = `. Tự động lật các ô: ${flipped.join(", ")}`;
+            }
+        }
+        
         recalculateScoresFromBoard();
         renderPanels();
         broadcastState("setColor");
         const cText = color ? color.toUpperCase() : 'MẶC ĐỊNH';
-        showToast(`Đã gán ô ${panel.number} -> ${cText}`);
+        showToast(`Đã gán ô ${panel.number} -> ${cText}${othelloMsg}`);
     }
 }
 
