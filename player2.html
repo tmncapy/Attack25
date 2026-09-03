@@ -316,16 +316,8 @@ function getAudioContext() {
 }
 
 function playBuzzChime() {
-    try {
-        const audio = new Audio('green.wav');
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(() => playSynthTone());
-        }
-        return;
-    } catch (e) {
-        playSynthTone();
-    }
+    // Chỉ phát âm thanh trên Projector, không phát cho người chơi
+    return;
 }
 
 function playSynthTone() {

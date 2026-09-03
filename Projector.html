@@ -499,79 +499,8 @@ img {
     to { transform: scale(1.04); opacity: 1; filter: brightness(1.35); }
 }
 
-/* Big Top Screen Buzzer Banner */
-.screen-buzzer-alert {
-    position: absolute;
-    left: 50%;
-    top: 12px;
-    transform: translateX(-50%) translateY(-60px);
-    z-index: 100;
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-    border: 2px solid #f59f00;
-    color: #fff;
-    padding: 8px 30px;
-    border-radius: 30px;
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 22px;
-    letter-spacing: 1px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 0 35px rgba(245, 159, 0, 0.85);
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    pointer-events: none;
-}
-
-.screen-buzzer-alert.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-}
-
-.screen-buzzer-alert.state-armed {
-    border-color: #2fb344;
-    box-shadow: 0 0 25px rgba(47, 179, 68, 0.7);
-    font-size: 18px;
-}
-
-.screen-buzzer-alert.state-buzzed {
-    border-color: #ffd43b;
-    background: linear-gradient(135deg, #7c2d12, #451a03);
-    animation: alertFlash 0.7s infinite alternate;
-}
-
-.screen-buzzer-alert.state-buzzed-red {
-    border-color: #ff6b6b;
-    background: linear-gradient(135deg, #841010, #380707);
-    box-shadow: 0 0 45px #e03131;
-}
-
-.screen-buzzer-alert.state-buzzed-green {
-    border-color: #69db7c;
-    background: linear-gradient(135deg, #135222, #07260e);
-    box-shadow: 0 0 45px #2fb344;
-}
-
-.screen-buzzer-alert.state-buzzed-white {
-    border-color: #ffffff;
-    background: linear-gradient(135deg, #475569, #1e293b);
-    box-shadow: 0 0 45px #ffffff;
-    color: #fff;
-}
-
-.screen-buzzer-alert.state-buzzed-blue {
-    border-color: #74c0fc;
-    background: linear-gradient(135deg, #113d78, #071933);
-    box-shadow: 0 0 45px #2f80ed;
-}
-
-@keyframes alertFlash {
-    from { filter: brightness(1); }
-    to { filter: brightness(1.3); box-shadow: 0 0 45px #ffd43b; }
-}
-
 /* FLOATING HUD TOOLBAR & AUDIO BANNER HIDDEN */
-.projector-hud, .audio-banner {
+.projector-hud, .audio-banner, .screen-buzzer-alert {
     display: none !important;
 }
 
@@ -643,12 +572,6 @@ img {
         <div class="player-name player-2" id="player2">PLAYER 2</div>
         <div class="player-name player-3" id="player3">PLAYER 3</div>
         <div class="player-name player-4" id="player4">PLAYER 4</div>
-
-        <!-- TOP BUZZER ALERT BANNER -->
-        <div class="screen-buzzer-alert" id="screenBuzzerAlert">
-            <span id="alertIcon">🔔</span>
-            <span id="alertText">SẴN SÀNG BẤM CHUÔNG!</span>
-        </div>
 
     </div>
 </div>
@@ -748,18 +671,19 @@ let audioCtx = null;
 let isMuted = false;
 
 const colorWavMap = {
-    'red': 'red.wav',
-    'green': 'green.wav',
-    'white': 'white.wav',
-    'blue': 'blue.wav',
-    'buzzer_red': 'red.wav',
-    'buzzer_green': 'green.wav',
-    'buzzer_white': 'white.wav',
-    'buzzer_blue': 'blue.wav',
-    'buzz_red': 'red.wav',
-    'buzz_green': 'green.wav',
-    'buzz_white': 'white.wav',
-    'buzz_blue': 'blue.wav'
+    'red': 'SFX/red.wav',
+    'green': 'SFX/green.wav',
+    'white': 'SFX/white.wav',
+    'blue': 'SFX/blue.wav',
+    'buzzer_red': 'SFX/red.wav',
+    'buzzer_green': 'SFX/green.wav',
+    'buzzer_white': 'SFX/white.wav',
+    'buzzer_blue': 'SFX/blue.wav',
+    'buzz_red': 'SFX/red.wav',
+    'buzz_green': 'SFX/green.wav',
+    'buzz_white': 'SFX/white.wav',
+    'buzz_blue': 'SFX/blue.wav',
+    'wrong': 'SFX/pqa25-wrong.mp3'
 };
 
 function getAudioContext() {
@@ -804,21 +728,21 @@ function stopAllSounds() {
 }
 
 function playSound(type) {
-    if (isMuted || (window.self !== window.top) || window.location.search.includes('preview=1')) return;
+    if (!type || isMuted) return;
 
     if (type === 'stop') {
         stopAllSounds();
         return;
     }
 
-    let wavFile = colorWavMap[type];
-    if (!wavFile && (type.endsWith('.mp3') || type.endsWith('.wav'))) {
-        wavFile = type;
+    let audioSrc = colorWavMap[type];
+    if (!audioSrc && (type.startsWith('data:audio') || type.startsWith('blob:') || type.endsWith('.mp3') || type.endsWith('.wav'))) {
+        audioSrc = type;
     }
 
-    if (wavFile) {
+    if (audioSrc) {
         try {
-            const audio = new Audio(wavFile);
+            const audio = new Audio(audioSrc);
             audio.volume = 1.0;
             window.activeAudios = window.activeAudios || [];
             window.activeAudios.push(audio);
@@ -1192,10 +1116,6 @@ function applyGameState(state) {
    CẬP NHẬT GIAO DIỆN BUZZER VÀ HIGHLIGHT SCOREBOARD TRÊN PROJECTOR
 ===================================================== */
 function updateBuzzerDisplay(buzzer, players) {
-    const banner = document.getElementById("screenBuzzerAlert");
-    const icon = document.getElementById("alertIcon");
-    const text = document.getElementById("alertText");
-
     const playerIndexMap = { red: 1, green: 2, white: 3, blue: 4 };
 
     // Reset all spotlights, scoreboard highlights, and name glows
@@ -1216,12 +1136,9 @@ function updateBuzzerDisplay(buzzer, players) {
     });
 
     if (buzzer.status === 'armed') {
-        banner.className = "screen-buzzer-alert show state-armed";
-        icon.textContent = "🔔";
-        text.textContent = "SẴN SÀNG BẤM CHUÔNG GIÀNH QUYỀN!";
+        // Armed state without banner
     } else if (buzzer.status === 'buzzed' && buzzer.winner) {
         const winnerColor = buzzer.winner;
-        const winnerName = players && players[winnerColor] ? players[winnerColor].name : winnerColor.toUpperCase();
         const cap = winnerColor.charAt(0).toUpperCase() + winnerColor.slice(1);
 
         // 1. Bật Spotlight ánh sáng màu tương ứng
@@ -1239,13 +1156,6 @@ function updateBuzzerDisplay(buzzer, players) {
         if (nameEl) {
             nameEl.classList.add("buzzed-highlight");
         }
-
-        // 4. Banner thông báo với màu đội bấm
-        banner.className = `screen-buzzer-alert show state-buzzed state-buzzed-${winnerColor}`;
-        icon.textContent = "⚡";
-        text.textContent = `${winnerName.toUpperCase()} GIÀNH QUYỀN TRẢ LỜI!`;
-    } else {
-        banner.className = "screen-buzzer-alert";
     }
 }
 

@@ -650,35 +650,8 @@ function stopAllSounds() {
 }
 
 function playSound(type) {
-    if (type === 'stop') {
-        stopAllSounds();
-        return;
-    }
-    let wavFile = colorWavMap[type];
-    if (!wavFile && (type.endsWith('.mp3') || type.endsWith('.wav'))) {
-        wavFile = type;
-    }
-    if (wavFile) {
-        try {
-            const audio = new Audio(wavFile);
-            audio.volume = 1.0;
-            window.activeAudios = window.activeAudios || [];
-            window.activeAudios.push(audio);
-            audio.addEventListener('ended', () => {
-                const idx = window.activeAudios.indexOf(audio);
-                if (idx > -1) window.activeAudios.splice(idx, 1);
-            });
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => playSynthTone(type));
-            }
-            return;
-        } catch (e) {
-            playSynthTone(type);
-            return;
-        }
-    }
-    playSynthTone(type);
+    // Chỉ phát âm thanh trên Projector, không phát cho Host hay bất kỳ role nào khác
+    return;
 }
 
 function playSynthTone(type) {

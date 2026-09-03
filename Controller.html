@@ -1382,63 +1382,8 @@ function getAudioCtx() {
 }
 
 function playSound(type) {
-    try {
-        const actx = getAudioCtx();
-        if (!actx) return;
-        const now = actx.currentTime;
-
-        if (type === 'buzzer') {
-            const osc = actx.createOscillator();
-            const gain = actx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(880, now);
-            osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
-            gain.gain.setValueAtTime(0.35, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-            osc.connect(gain);
-            gain.connect(actx.destination);
-            osc.start(now);
-            osc.stop(now + 0.4);
-        } else if (type === 'correct') {
-            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
-                const osc = actx.createOscillator();
-                const gain = actx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.2, now + i * 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
-                osc.connect(gain);
-                gain.connect(actx.destination);
-                osc.start(now + i * 0.08);
-                osc.stop(now + i * 0.08 + 0.35);
-            });
-        } else if (type === 'wrong') {
-            [180, 140].forEach(freq => {
-                const osc = actx.createOscillator();
-                const gain = actx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.25, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
-                osc.connect(gain);
-                gain.connect(actx.destination);
-                osc.start(now);
-                osc.stop(now + 0.45);
-            });
-        } else if (type === 'arm') {
-            const osc = actx.createOscillator();
-            const gain = actx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, now);
-            osc.frequency.setValueAtTime(880, now + 0.08);
-            gain.gain.setValueAtTime(0.18, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            osc.connect(gain);
-            gain.connect(actx.destination);
-            osc.start(now);
-            osc.stop(now + 0.25);
-        }
-    } catch (err) {}
+    // Chỉ phát âm thanh trên Projector, không phát cho Controller hay bất kỳ role nào khác
+    return;
 }
 
 
@@ -1679,35 +1624,8 @@ function stopAllSounds() {
 }
 
 function playSound(type) {
-    if (type === 'stop') {
-        stopAllSounds();
-        return;
-    }
-    let wavFile = colorWavMap[type];
-    if (!wavFile && (type.endsWith('.mp3') || type.endsWith('.wav'))) {
-        wavFile = type;
-    }
-    if (wavFile) {
-        try {
-            const audio = new Audio(wavFile);
-            audio.volume = 1.0;
-            window.activeAudios = window.activeAudios || [];
-            window.activeAudios.push(audio);
-            audio.addEventListener('ended', () => {
-                const idx = window.activeAudios.indexOf(audio);
-                if (idx > -1) window.activeAudios.splice(idx, 1);
-            });
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => playSynthTone(type));
-            }
-            return;
-        } catch (e) {
-            playSynthTone(type);
-            return;
-        }
-    }
-    playSynthTone(type);
+    // Âm thanh chỉ phát bên Projector, không phát cho Controller hay bất kỳ role nào khác
+    return;
 }
 
 function playSynthTone(type) {
@@ -2852,67 +2770,71 @@ function copyRoomInfoToClipboard() {
     }
 }
 
-let localSfxAudio = null;
+let localSfxDataUrl = null;
 
 function handleLocalSfxSelected(event) {
     const file = event.target.files[0];
     if (file) {
-        if (localSfxAudio) {
-            try {
-                localSfxAudio.pause();
-            } catch (e) {}
-        }
-        const fileUrl = URL.createObjectURL(file);
-        localSfxAudio = new Audio(fileUrl);
-        localSfxAudio.volume = 1.0;
-        
-        // Track locally to stop all if needed
-        window.activeAudios = window.activeAudios || [];
-        window.activeAudios.push(localSfxAudio);
-        localSfxAudio.addEventListener('ended', () => {
-            const idx = window.activeAudios.indexOf(localSfxAudio);
-            if (idx > -1) window.activeAudios.splice(idx, 1);
-        });
-
-        document.getElementById('localSfxStatus').textContent = `📂 ${file.name}`;
-        
-        // Enable buttons
-        const btnPlay = document.getElementById('btnPlayLocalSfx');
-        const btnStop = document.getElementById('btnStopLocalSfx');
-        if (btnPlay) {
-            btnPlay.disabled = false;
-            btnPlay.style.opacity = "1";
-        }
-        if (btnStop) {
-            btnStop.disabled = false;
-            btnStop.style.opacity = "1";
-        }
+        document.getElementById('localSfxStatus').textContent = `⏳ Đang đọc file: ${file.name}...`;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            localSfxDataUrl = e.target.result;
+            document.getElementById('localSfxStatus').textContent = `📂 ${file.name}`;
+            
+            const btnPlay = document.getElementById('btnPlayLocalSfx');
+            const btnStop = document.getElementById('btnStopLocalSfx');
+            if (btnPlay) {
+                btnPlay.disabled = false;
+                btnPlay.style.opacity = "1";
+            }
+            if (btnStop) {
+                btnStop.disabled = false;
+                btnStop.style.opacity = "1";
+            }
+            showToast(`✅ Đã nạp file "${file.name}"`);
+        };
+        reader.onerror = function() {
+            document.getElementById('localSfxStatus').textContent = `⚠️ Lỗi nạp file!`;
+            showToast("⚠️ Không thể đọc file âm thanh!");
+        };
+        reader.readAsDataURL(file);
     }
 }
 
 function playLocalSfx() {
-    if (localSfxAudio) {
-        localSfxAudio.currentTime = 0;
-        localSfxAudio.play().catch(err => {
-            showToast("⚠️ Không thể phát file: " + err.message);
-        });
-        showToast("▶️ Đang phát SFX tự chọn cục bộ");
+    if (localSfxDataUrl) {
+        if (window.Attack25Sync && typeof Attack25Sync.broadcastSound === 'function') {
+            Attack25Sync.broadcastSound(localSfxDataUrl);
+        } else {
+            broadcastState("playSound", localSfxDataUrl);
+        }
+        showToast("▶️ Đang phát SFX trên Projector");
+    } else {
+        showToast("⚠️ Vui lòng chọn file âm thanh trước!");
     }
 }
 
 function stopLocalSfx() {
-    if (localSfxAudio) {
-        localSfxAudio.pause();
-        localSfxAudio.currentTime = 0;
-        showToast("⏹️ Đã dừng SFX tự chọn cục bộ");
+    if (window.Attack25Sync && typeof Attack25Sync.broadcastSound === 'function') {
+        Attack25Sync.broadcastSound('stop');
+    } else {
+        broadcastState("playSound", 'stop');
     }
+    showToast("⏹️ Đã dừng âm thanh trên Projector");
 }
 
 function triggerBroadcastSound(soundPath) {
-    // 1. Play locally on the controller
-    playSound(soundPath);
-    // 2. Broadcast to other screens (Host, Projector, etc.)
-    broadcastState("playSound", soundPath);
+    // Phát và chỉ phát bên projector, không phát cho bất cứ role khác
+    if (window.Attack25Sync && typeof Attack25Sync.broadcastSound === 'function') {
+        Attack25Sync.broadcastSound(soundPath);
+    } else {
+        broadcastState("playSound", soundPath);
+    }
+    if (soundPath === 'stop') {
+        showToast("⏹️ Đã gửi lệnh dừng âm thanh sang Projector");
+    } else {
+        showToast("🎵 Đã gửi lệnh phát âm thanh sang Projector");
+    }
 }
 
 function renderAll() {

@@ -330,6 +330,14 @@
             }
         },
 
+        broadcastSound: function (sound) {
+            send({
+                type: "sound",
+                sound: sound,
+                roomId: currentRoomId
+            });
+        },
+
         broadcastQuestions: function (questions) {
             saveQuestionsLocal(questions);
 
