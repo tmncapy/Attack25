@@ -627,9 +627,18 @@ img {
             <img src="board.png" alt="">
         </div>
 
-        <!-- LAYER 2.5: STREAMABLE VIDEO CONTAINER UNDER BOARD -->
+        <!-- LAYER 2.5: SPECIAL ROUND MEDIA CONTAINER UNDER BOARD (LOCAL VIDEO / SLIDESHOW 20S / STREAMABLE) -->
         <div class="video-container" id="projectorVideoContainer">
-            <iframe id="projectorVideoIframe" src="" frameborder="0" width="100%" height="100%" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+            <iframe id="projectorVideoIframe" src="" frameborder="0" width="100%" height="100%" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="display:none;"></iframe>
+            <video id="projectorLocalVideo" playsinline webkit-playsinline loop style="width: 100%; height: 100%; object-fit: contain; background: #000; display: none;"></video>
+            <div id="projectorSlideContainer" style="width: 100%; height: 100%; position: relative; background: #000; display: none; overflow: hidden;">
+                <img id="projectorSlideImg" src="" alt="Slide" style="width: 100%; height: 100%; object-fit: contain; transition: opacity 0.15s ease-in-out;" />
+                <div id="projectorSlideTimerBadge" style="position: absolute; bottom: 10px; right: 10px; background: rgba(15, 23, 42, 0.9); color: #f59f00; font-family: monospace; font-size: 15px; font-weight: bold; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(245, 159, 0, 0.5); display: flex; align-items: center; gap: 6px; z-index: 10; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
+                    <span>⏱️</span>
+                    <span id="projectorSlideTimerText">20.0s</span>
+                </div>
+                <div id="projectorSlideProgressBar" style="position: absolute; bottom: 0; left: 0; height: 5px; width: 0%; background: #f59f00; z-index: 11; pointer-events: none; transition: width 0.08s linear;"></div>
+            </div>
         </div>
 
         <!-- LAYER 3: BẢNG 5 x 5 -->
@@ -673,12 +682,21 @@ img {
         <div class="player-name player-3" id="player3">PLAYER 3</div>
         <div class="player-name player-4" id="player4">PLAYER 4</div>
 
-        <!-- LAYER 5: FULL-WINDOW QUESTION MEDIA OVERLAY (IMAGE / VIDEO) -->
+        <!-- LAYER 5: FULL-WINDOW QUESTION MEDIA OVERLAY (IMAGE / VIDEO / SLIDESHOW) -->
         <div class="projector-media-overlay" id="projectorMediaOverlay" style="display: none;">
             <div class="overlay-media-container" id="overlayMediaContainer">
                 <img id="overlayImg" src="" alt="Media câu hỏi" style="display: none;">
                 <video id="overlayVid" controls playsinline style="display: none;"></video>
                 <iframe id="overlayFrame" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="display: none;"></iframe>
+                <!-- MULTI-IMAGE SLIDESHOW (20S) FULL-WINDOW OVERLAY -->
+                <div id="overlaySlideContainer" style="width: 100%; height: 100%; position: relative; background: #000; display: none; overflow: hidden; border-radius: 8px;">
+                    <img id="overlaySlideImg" src="" alt="Slide" style="width: 100%; height: 100%; object-fit: contain; transition: opacity 0.15s ease-in-out;" />
+                    <div id="overlaySlideTimerBadge" style="position: absolute; bottom: 12px; right: 12px; background: rgba(15, 23, 42, 0.92); color: #f59f00; font-family: monospace; font-size: 16px; font-weight: bold; padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(245, 159, 0, 0.5); display: flex; align-items: center; gap: 8px; z-index: 10; pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,0.7);">
+                        <span>⏱️</span>
+                        <span id="overlaySlideTimerText">20.0s</span>
+                    </div>
+                    <div id="overlaySlideProgressBar" style="position: absolute; bottom: 0; left: 0; height: 6px; width: 0%; background: #f59f00; z-index: 11; pointer-events: none; transition: width 0.08s linear;"></div>
+                </div>
             </div>
             <!-- CAPTION BANNER -->
             <div class="overlay-caption-bar" id="overlayCaptionBar">
@@ -1128,50 +1146,190 @@ function sendIframeCommand(cmd) {
 }
 
 let lastPlayToken = null;
+let activeSlideshowIntervals = new Map();
+
+function runSlideshow(containerId, imgId, timerTextId, progressBarId, slideshowData) {
+    const container = document.getElementById(containerId);
+    const img = document.getElementById(imgId);
+    const timerText = document.getElementById(timerTextId);
+    const progressBar = document.getElementById(progressBarId);
+
+    if (!container || !img) return;
+
+    if (activeSlideshowIntervals.has(containerId)) {
+        cancelAnimationFrame(activeSlideshowIntervals.get(containerId));
+        activeSlideshowIntervals.delete(containerId);
+    }
+
+    if (!slideshowData || !slideshowData.images || slideshowData.images.length === 0) {
+        container.style.display = "none";
+        return;
+    }
+
+    container.style.display = "block";
+    const images = slideshowData.images;
+    const totalDuration = Number(slideshowData.totalDuration) || 20;
+    const timePerImage = totalDuration / images.length;
+    const isPlaying = !!slideshowData.playing;
+    const isLoop = slideshowData.loop !== false;
+    const startTime = slideshowData.startTime || Date.now();
+
+    function renderFrame() {
+        if (!isPlaying) {
+            const curIdx = Math.max(0, Math.min(images.length - 1, slideshowData.currentImageIndex || 0));
+            const curUrl = typeof images[curIdx] === 'string' ? images[curIdx] : (images[curIdx]?.url || '');
+            if (img.getAttribute("data-src") !== curUrl && curUrl) {
+                img.src = curUrl;
+                img.setAttribute("data-src", curUrl);
+            }
+            if (timerText) timerText.textContent = `${totalDuration.toFixed(1)}s`;
+            if (progressBar) progressBar.style.width = "0%";
+            return;
+        }
+
+        const elapsed = (Date.now() - startTime) / 1000;
+        if (!isLoop && elapsed >= totalDuration) {
+            const lastIdx = images.length - 1;
+            const lastUrl = typeof images[lastIdx] === 'string' ? images[lastIdx] : (images[lastIdx]?.url || '');
+            if (img.getAttribute("data-src") !== lastUrl && lastUrl) {
+                img.src = lastUrl;
+                img.setAttribute("data-src", lastUrl);
+            }
+            if (timerText) timerText.textContent = "HẾT 20S";
+            if (progressBar) progressBar.style.width = "100%";
+            return;
+        }
+
+        const loopElapsed = elapsed % totalDuration;
+        const remaining = Math.max(0, totalDuration - loopElapsed);
+        const idx = Math.min(images.length - 1, Math.floor(loopElapsed / timePerImage));
+        const activeUrl = typeof images[idx] === 'string' ? images[idx] : (images[idx]?.url || '');
+
+        if (img.getAttribute("data-src") !== activeUrl && activeUrl) {
+            img.src = activeUrl;
+            img.setAttribute("data-src", activeUrl);
+        }
+
+        if (timerText) {
+            timerText.textContent = `${remaining.toFixed(1)}s`;
+        }
+        if (progressBar) {
+            const pct = (loopElapsed / totalDuration) * 100;
+            progressBar.style.width = `${pct}%`;
+        }
+
+        const animId = requestAnimationFrame(renderFrame);
+        activeSlideshowIntervals.set(containerId, animId);
+    }
+
+    renderFrame();
+}
+
+function stopSlideshow(containerId) {
+    if (activeSlideshowIntervals.has(containerId)) {
+        cancelAnimationFrame(activeSlideshowIntervals.get(containerId));
+        activeSlideshowIntervals.delete(containerId);
+    }
+}
 
 function updateProjectorVideo(videoState) {
     if (!videoState) return;
     const container = document.getElementById("projectorVideoContainer");
     const iframe = document.getElementById("projectorVideoIframe");
-    if (!container || !iframe) return;
+    const localVid = document.getElementById("projectorLocalVideo");
+    const slideContainer = document.getElementById("projectorSlideContainer");
+
+    if (!container) return;
 
     currentVideoState = Object.assign({}, videoState);
-
-    let targetSrc = videoState.embedUrl || '';
-    if (targetSrc) {
-        let params = [];
-        if (videoState.playing) params.push('autoplay=1');
-        params.push('loop=0');
-        params.push('muted=0');
-        targetSrc += (targetSrc.includes('?') ? '&' : '?') + params.join('&');
-    }
 
     const isNewPlayToken = videoState.playToken && videoState.playToken !== lastPlayToken;
     if (isNewPlayToken) {
         lastPlayToken = videoState.playToken;
     }
 
-    if (videoState.visible && targetSrc) {
-        container.style.display = "block";
-        const currentDataSrc = iframe.getAttribute("data-src");
-        if (currentDataSrc !== targetSrc || isNewPlayToken) {
-            iframe.src = targetSrc;
-            iframe.setAttribute("data-src", targetSrc);
-        }
-    } else {
+    if (!videoState.visible) {
         container.style.display = "none";
-        if (iframe.src && iframe.src !== 'about:blank') {
+        if (iframe && iframe.src && iframe.src !== 'about:blank') {
             iframe.src = "about:blank";
             iframe.removeAttribute("data-src");
+            iframe.style.display = "none";
         }
+        if (localVid) {
+            localVid.pause();
+            localVid.src = "";
+            localVid.removeAttribute("data-src");
+            localVid.style.display = "none";
+        }
+        stopSlideshow("projectorSlideContainer");
+        if (slideContainer) slideContainer.style.display = "none";
+        stopKeepAliveLoop();
+        return;
     }
 
-    if (videoState.visible && videoState.playing) {
-        sendIframeCommand('play');
-        startKeepAliveLoop();
+    // Visible = true
+    container.style.display = "block";
+
+    const mode = videoState.mode || (videoState.images && videoState.images.length > 0 ? 'slideshow' : (videoState.url && videoState.url.match(/\.(mp4|webm)|data:video|\/uploads\//i) && !videoState.url.includes('streamable') ? 'local_video' : 'streamable'));
+
+    if (mode === 'slideshow') {
+        // Mode 1: 20-second image slideshow
+        if (iframe) { iframe.style.display = "none"; iframe.src = "about:blank"; }
+        if (localVid) { localVid.style.display = "none"; localVid.pause(); }
+        runSlideshow("projectorSlideContainer", "projectorSlideImg", "projectorSlideTimerText", "projectorSlideProgressBar", videoState);
+    } else if (mode === 'local_video') {
+        // Mode 2: Local uploaded video (MP4/WebM)
+        stopSlideshow("projectorSlideContainer");
+        if (slideContainer) slideContainer.style.display = "none";
+        if (iframe) { iframe.style.display = "none"; iframe.src = "about:blank"; }
+
+        if (localVid) {
+            localVid.style.display = "block";
+            const targetUrl = videoState.url || '';
+            if (localVid.getAttribute("data-src") !== targetUrl || isNewPlayToken) {
+                localVid.src = targetUrl;
+                localVid.setAttribute("data-src", targetUrl);
+                localVid.currentTime = 0;
+                localVid.load();
+            }
+            localVid.volume = currentVolume !== undefined ? currentVolume : 1.0;
+            localVid.loop = videoState.loop !== false;
+
+            if (videoState.playing) {
+                localVid.play().catch(e => console.log('Local video autoplay:', e));
+            } else {
+                localVid.pause();
+            }
+        }
     } else {
-        sendIframeCommand('pause');
-        stopKeepAliveLoop();
+        // Mode 3: Streamable or Web URL iframe
+        stopSlideshow("projectorSlideContainer");
+        if (slideContainer) slideContainer.style.display = "none";
+        if (localVid) { localVid.style.display = "none"; localVid.pause(); }
+
+        if (iframe) {
+            iframe.style.display = "block";
+            let targetSrc = videoState.embedUrl || videoState.url || '';
+            if (targetSrc) {
+                let params = [];
+                if (videoState.playing) params.push('autoplay=1');
+                params.push('loop=0');
+                params.push('muted=0');
+                targetSrc += (targetSrc.includes('?') ? '&' : '?') + params.join('&');
+            }
+            const currentDataSrc = iframe.getAttribute("data-src");
+            if (currentDataSrc !== targetSrc || isNewPlayToken) {
+                iframe.src = targetSrc;
+                iframe.setAttribute("data-src", targetSrc);
+            }
+            if (videoState.playing) {
+                sendIframeCommand('play');
+                startKeepAliveLoop();
+            } else {
+                sendIframeCommand('pause');
+                stopKeepAliveLoop();
+            }
+        }
     }
 }
 
@@ -1218,12 +1376,13 @@ function updateProjectorQuestionMedia(mediaState) {
     const img = document.getElementById("overlayImg");
     const vid = document.getElementById("overlayVid");
     const frame = document.getElementById("overlayFrame");
+    const slideBox = document.getElementById("overlaySlideContainer");
     const badge = document.getElementById("overlayBadge");
     const qText = document.getElementById("overlayQText");
 
     if (!overlay) return;
 
-    if (!mediaState || !mediaState.visible || !mediaState.url) {
+    if (!mediaState || !mediaState.visible || (!mediaState.url && (!mediaState.images || mediaState.images.length === 0))) {
         overlay.style.display = "none";
         if (vid) {
             vid.pause();
@@ -1239,6 +1398,8 @@ function updateProjectorQuestionMedia(mediaState) {
             img.src = "";
             img.style.display = "none";
         }
+        stopSlideshow("overlaySlideContainer");
+        if (slideBox) slideBox.style.display = "none";
         return;
     }
 
@@ -1247,15 +1408,22 @@ function updateProjectorQuestionMedia(mediaState) {
     if (badge) badge.textContent = `CÂU HỎI ${mediaState.questionStt || ''}`;
     if (qText) qText.textContent = mediaState.questionText || '';
 
-    const rawUrl = mediaState.url;
-    const type = mediaState.type || (rawUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image');
+    const rawUrl = mediaState.url || '';
+    const type = mediaState.type || (mediaState.images && mediaState.images.length > 0 ? 'slideshow' : (rawUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image'));
 
     const isNewToken = mediaState.playToken && mediaState.playToken !== lastMediaPlayToken;
     if (isNewToken) {
         lastMediaPlayToken = mediaState.playToken;
     }
 
-    if (type === 'image') {
+    if (type === 'slideshow') {
+        if (vid) { vid.pause(); vid.src = ''; vid.style.display = 'none'; }
+        if (frame) { frame.src = 'about:blank'; frame.removeAttribute('data-src'); frame.style.display = 'none'; }
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        runSlideshow("overlaySlideContainer", "overlaySlideImg", "overlaySlideTimerText", "overlaySlideProgressBar", mediaState);
+    } else if (type === 'image') {
+        stopSlideshow("overlaySlideContainer");
+        if (slideBox) slideBox.style.display = "none";
         if (vid) { vid.pause(); vid.src = ''; vid.style.display = 'none'; }
         if (frame) { frame.src = 'about:blank'; frame.removeAttribute('data-src'); frame.style.display = 'none'; }
         if (img) {
@@ -1265,6 +1433,8 @@ function updateProjectorQuestionMedia(mediaState) {
             }
         }
     } else if (type === 'video') {
+        stopSlideshow("overlaySlideContainer");
+        if (slideBox) slideBox.style.display = "none";
         if (img) { img.src = ''; img.style.display = 'none'; }
 
         const embedUrl = parseMediaEmbedUrl(rawUrl);

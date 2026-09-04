@@ -1,6 +1,7 @@
 import express from 'express';
 import http from 'http';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { WebSocketServer, WebSocket } from 'ws';
 
@@ -10,8 +11,45 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+
+// Ensure uploads folder exists and serve it statically
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
+
+// Upload media endpoint for local videos and slideshow images
+app.post('/api/upload-media', (req, res) => {
+  try {
+    const { fileName, dataUrl } = req.body;
+    if (!dataUrl || !fileName) {
+      return res.status(400).json({ error: 'Missing fileName or dataUrl' });
+    }
+    const matches = dataUrl.match(/^data:([A-Za-z0-9-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      return res.status(400).json({ error: 'Invalid data URL format' });
+    }
+    const buffer = Buffer.from(matches[2], 'base64');
+    const ext = path.extname(fileName) || '.bin';
+    const baseName = path.basename(fileName, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeFileName = `${Date.now()}_${baseName}${ext}`;
+    const filePath = path.join(uploadsDir, safeFileName);
+    fs.writeFileSync(filePath, buffer);
+
+    return res.json({
+      success: true,
+      url: `/uploads/${safeFileName}`,
+      fileName: fileName,
+      size: buffer.length
+    });
+  } catch (err) {
+    console.error('Error in /api/upload-media:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 // Enable CORS for all local and remote origins
 app.use((req, res, next) => {
@@ -83,12 +121,31 @@ function createInitialGameState() {
       lockedPlayers: []
     },
     video: {
+      mode: 'local_video',
       url: '',
       embedUrl: '',
+      videoName: '',
+      images: [],
+      totalDuration: 20,
       playing: false,
       visible: false,
-      playToken: null
-    }
+      startTime: null,
+      playToken: null,
+      loop: true
+    },
+    questionMedia: {
+      visible: false,
+      type: 'none',
+      url: '',
+      images: [],
+      totalDuration: 20,
+      questionText: '',
+      questionStt: 1,
+      answer: '',
+      playing: true,
+      playToken: 0
+    },
+    soundVolume: 100
   };
 }
 

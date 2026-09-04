@@ -1454,8 +1454,103 @@ body * {
 
 .format-picker-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
+}
+
+.modal-slide-card {
+    position: relative;
+    width: 72px;
+    height: 52px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #000;
+    border: 1.5px solid #334155;
+    flex-shrink: 0;
+}
+.modal-slide-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.modal-slide-card .slide-num {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    background: rgba(0,0,0,0.75);
+    color: #f59f00;
+    font-size: 9px;
+    font-weight: bold;
+    padding: 1px 3px;
+    border-radius: 2px;
+}
+.modal-slide-card .slide-del {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(239, 68, 68, 0.85);
+    color: #fff;
+    font-size: 8px;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+.modal-slide-card .slide-del:hover {
+    background: #ef4444;
+}
+
+.special-slide-card {
+    position: relative;
+    width: 68px;
+    height: 48px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #000;
+    border: 1.5px solid #334155;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+.special-slide-card.active-slide {
+    border-color: #f59f00 !important;
+    box-shadow: 0 0 8px #f59f00 !important;
+    transform: scale(1.05);
+}
+.special-slide-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.special-slide-card .special-slide-idx {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    background: rgba(0,0,0,0.8);
+    color: #38bdf8;
+    font-size: 8px;
+    font-weight: bold;
+    padding: 1px 3px;
+    border-radius: 2px;
+}
+.special-slide-card .special-slide-del {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(239, 68, 68, 0.85);
+    color: #fff;
+    font-size: 8px;
+    width: 13px;
+    height: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
 }
 
 .format-option-card {
@@ -1683,32 +1778,133 @@ body * {
                         </div>
                     </div>
 
-                    <!-- STREAMABLE VIDEO CONTROLLER -->
-                    <div class="video-control-box" style="margin-top: 10px; padding: 10px; background: #111620; border: 1px solid #374357; border-radius: 6px;">
-                        <div style="font-size: 12px; font-weight: bold; color: #f3f5f8; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
-                            <span>🎬 STREAMABLE VIDEO BẢNG SỐ</span>
-                            <span id="videoStatusBadge" class="card-badge" style="background:#1e2636; color:#94a3b8;">ĐÃ ẨN</span>
+                    <!-- SPECIAL ROUND MEDIA CONTROLLER (VÒNG THI ĐẶC BIỆT) -->
+                    <div class="video-control-box" id="specialRoundBox" style="margin-top: 10px; padding: 10px 12px; background: #111620; border: 1.5px solid #374357; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+                        <div style="font-size: 12px; font-weight: bold; color: #f3f5f8; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                            <span style="display:flex; align-items:center; gap:6px; color: #f59f00;">
+                                <span>🌟</span>
+                                <span>CÂU HỎI VÒNG ĐẶC BIỆT (MEDIA ẨN DƯỚI BẢNG SỐ)</span>
+                            </span>
+                            <div style="display:flex; align-items:center; gap: 6px;">
+                                <span id="specialRoundTimeBadge" class="card-badge" style="background:#1e2636; color:#f59f00; font-family: monospace; font-size: 11px;">⏱️ 20.0s</span>
+                                <span id="videoStatusBadge" class="card-badge" style="background:#1e2636; color:#94a3b8;">ĐÃ ẨN</span>
+                            </div>
                         </div>
 
-                        <!-- INPUT & UPDATE LINK -->
-                        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                            <input type="text" id="streamableUrlInput" placeholder="Nhập share link Streamable (VD: https://streamable.com/xyz)..." 
-                                style="flex: 1; padding: 6px 8px; border-radius: 5px; border: 1px solid var(--border); background: #18202d; color: #fff; font-size: 12px; outline: none;" />
-                            <button class="button button-blue" style="padding: 0 10px; font-size: 11px; flex-shrink: 0;" onclick="updateVideoUrl()">
-                                Cập nhật link
+                        <!-- MODE SWITCHER (3 TABS) -->
+                        <div style="display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 4px; margin-bottom: 8px; background: #0b0f17; padding: 3px; border-radius: 6px; border: 1px solid #232d3f;">
+                            <button type="button" id="btnModeLocalVideo" onclick="setSpecialRoundMode('local_video')" class="button" style="padding: 5px 2px; font-size: 10px; background: #1e293b; color: #f1f5f9; border: 1px solid #334155;">
+                                🎬 Video cục bộ
+                            </button>
+                            <button type="button" id="btnModeSlideshow" onclick="setSpecialRoundMode('slideshow')" class="button" style="padding: 5px 2px; font-size: 10px; background: transparent; color: #94a3b8; border: none;">
+                                🖼️ Chuỗi ảnh (20s)
+                            </button>
+                            <button type="button" id="btnModeStreamable" onclick="setSpecialRoundMode('streamable')" class="button" style="padding: 5px 2px; font-size: 10px; background: transparent; color: #94a3b8; border: none;">
+                                🔗 Link Streamable/Web
                             </button>
                         </div>
 
-                        <!-- 3 ACTION BUTTONS -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
-                            <button class="button button-orange" id="btnShowVideo" style="font-size: 11px; padding: 6px 2px;" onclick="showVideo()">
-                                👁️ Hiện video
+                        <!-- PANEL 1: LOCAL VIDEO UPLOAD -->
+                        <div id="secLocalVideo" style="display: block; margin-bottom: 8px;">
+                            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                                <button class="button button-orange" type="button" onclick="document.getElementById('specialVideoFileInput').click()" style="font-size: 11px; padding: 5px 10px;">
+                                    📁 Tải video từ máy tính (MP4 / WebM)...
+                                </button>
+                                <input type="file" id="specialVideoFileInput" accept="video/mp4, video/webm, video/*" style="display:none" onchange="handleSpecialVideoUpload(this.files[0])">
+                                <span style="font-size: 10px; color: #94a3b8;">(Tải trực tiếp, không cần link Streamable)</span>
+                            </div>
+                            <div id="specialVideoInfoBox" style="display: none; margin-top: 6px; padding: 6px 8px; background: #18202d; border-radius: 5px; border: 1px solid #2f3e53; align-items: center; justify-content: space-between;">
+                                <span id="specialVideoFileName" style="font-size: 11px; color: #38bdf8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px;">video.mp4</span>
+                                <button class="button button-red" type="button" onclick="removeSpecialVideo()" style="font-size: 9px; padding: 2px 6px;">🗑️ Xóa</button>
+                            </div>
+                        </div>
+
+                        <!-- PANEL 2: SLIDESHOW 20S (CHIẾU LẦN LƯỢT TỪNG ẢNH TRONG 20S) -->
+                        <div id="secSlideshow" style="display: none; margin-bottom: 8px;">
+                            <div style="display: flex; gap: 6px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 6px;">
+                                <div style="display: flex; gap: 6px; align-items: center;">
+                                    <button class="button button-green" type="button" onclick="document.getElementById('specialSlidesFileInput').click()" style="font-size: 11px; padding: 5px 10px;">
+                                        📁 Tải nhiều ảnh cùng lúc...
+                                    </button>
+                                    <input type="file" id="specialSlidesFileInput" accept="image/*" multiple style="display:none" onchange="handleSpecialSlidesUpload(this.files)">
+                                    <button class="button button-gray" type="button" onclick="clearSpecialSlides()" style="font-size: 10px; padding: 5px 8px;" id="btnClearSlides">
+                                        🗑️ Xóa hết ảnh
+                                    </button>
+                                </div>
+                                <span style="font-size: 10px; color: #a1a1aa;">Chiếu tuần tự tổng 20s</span>
+                            </div>
+
+                            <!-- SLIDESHOW DURATION & TIMING INFO -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; background: #0f172a; padding: 5px 8px; border-radius: 5px; border: 1px solid #1e293b; margin-bottom: 6px; font-size: 11px;">
+                                <div>
+                                    <span style="color: #94a3b8;">Tổng thời gian:</span> 
+                                    <strong style="color: #f59f00;">20s</strong>
+                                    <span style="color: #64748b; margin: 0 4px;">|</span>
+                                    <span style="color: #94a3b8;">Số ảnh:</span> 
+                                    <strong id="specialSlidesCount" style="color: #38bdf8;">0 ảnh</strong>
+                                </div>
+                                <div>
+                                    <span style="color: #94a3b8;">Mỗi ảnh:</span> 
+                                    <strong id="specialSlidePerTime" style="color: #34d399;">-- s</strong>
+                                </div>
+                            </div>
+
+                            <!-- SLIDES THUMBNAILS HORIZONTAL SCROLL LIST -->
+                            <div id="specialSlidesList" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px; min-height: 54px; align-items: center; border-radius: 5px; background: #0b0f17; border: 1px dashed #232d3f;">
+                                <div style="width: 100%; text-align: center; color: #64748b; font-size: 10px; padding: 8px 0;">
+                                    Chưa có ảnh nào. Hãy bấm "Tải nhiều ảnh" để thêm ảnh vào chuỗi 20s.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PANEL 3: STREAMABLE / WEB URL -->
+                        <div id="secStreamable" style="display: none; margin-bottom: 8px;">
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" id="streamableUrlInput" placeholder="Nhập share link Streamable (VD: https://streamable.com/xyz)..." 
+                                    style="flex: 1; padding: 6px 8px; border-radius: 5px; border: 1px solid var(--border); background: #18202d; color: #fff; font-size: 11px; outline: none;" />
+                                <button class="button button-blue" style="padding: 0 10px; font-size: 11px; flex-shrink: 0;" onclick="updateVideoUrl()">
+                                    Cập nhật link
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- LIVE 20S PROGRESS BAR -->
+                        <div style="margin-bottom: 8px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; margin-bottom: 3px;">
+                                <span id="specialProgressLabel">Tiến trình vòng đặc biệt:</span>
+                                <span id="specialCountdownLabel" style="font-family: monospace; color: #f59f00; font-weight: bold;">0.0s / 20.0s</span>
+                            </div>
+                            <div style="height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; position: relative;">
+                                <div id="specialProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #f59f00, #fbbf24); transition: width 0.08s linear;"></div>
+                            </div>
+                        </div>
+
+                        <!-- PLAYBACK & DISPLAY ACTIONS -->
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 6px;">
+                            <button class="button button-orange" id="btnShowVideo" style="font-size: 10px; padding: 6px 2px;" onclick="showSpecialRoundMedia()" title="Hiển thị khung hình dưới ô số ở trạng thái tạm dừng">
+                                👁️ Hiện media
                             </button>
-                            <button class="button button-green" id="btnPlayVideo" style="font-size: 11px; padding: 6px 2px;" onclick="playVideo()">
-                                ▶️ Phát video
+                            <button class="button button-green" id="btnPlayVideo" style="font-size: 10px; padding: 6px 2px;" onclick="playSpecialRoundMedia()" title="Bắt đầu chạy video hoặc chuỗi ảnh 20 giây">
+                                ▶️ Phát (20s)
                             </button>
-                            <button class="button button-gray" id="btnHideVideo" style="font-size: 11px; padding: 6px 2px;" onclick="hideVideo()">
-                                🙈 Ẩn video
+                            <button class="button button-yellow" id="btnPauseVideo" style="font-size: 10px; padding: 6px 2px; color:#111;" onclick="pauseSpecialRoundMedia()" title="Tạm dừng">
+                                ⏸️ Tạm dừng
+                            </button>
+                            <button class="button button-blue" id="btnResetVideo" style="font-size: 10px; padding: 6px 2px;" onclick="resetSpecialRoundMedia()" title="Quay lại từ 0s / ảnh đầu tiên">
+                                🔄 Reset 20s
+                            </button>
+                            <button class="button button-gray" id="btnHideVideo" style="font-size: 10px; padding: 6px 2px;" onclick="hideSpecialRoundMedia()" title="Ẩn media khỏi bảng số">
+                                🙈 Ẩn media
+                            </button>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 4px; border-top: 1px solid #1f293d; font-size: 10px; color: #94a3b8; flex-wrap: wrap; gap: 4px;">
+                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none;">
+                                <input type="checkbox" id="chkSpecialLoop" checked onchange="toggleSpecialRoundLoop(this.checked)" style="cursor: pointer; width: 13px; height: 13px; accent-color: #f59f00;">
+                                <span>Tự động lặp lại khi hết 20s</span>
+                            </label>
+                            <button class="button button-blue" type="button" onclick="projectSpecialMediaFull()" style="font-size: 10px; padding: 3px 8px;">
+                                🔲 Chiếu Full cửa sổ Projector
                             </button>
                         </div>
                     </div>
@@ -2123,6 +2319,7 @@ body * {
                     <span class="db-stat-tag">📝 Văn bản: <strong id="dbTextCount">24</strong></span>
                     <span class="db-stat-tag">🖼️ Hình ảnh: <strong id="dbImageCount">2</strong></span>
                     <span class="db-stat-tag">🎬 Video: <strong id="dbVideoCount">1</strong></span>
+                    <span class="db-stat-tag">🎞️ Chuỗi ảnh: <strong id="dbSlideshowCount">0</strong></span>
                 </div>
             </div>
             <div class="db-actions-row">
@@ -2162,6 +2359,7 @@ body * {
                 <button class="db-filter-btn" data-filter="text" onclick="filterDatabase('text')">📝 Văn bản (<span id="filterTextCount">24</span>)</button>
                 <button class="db-filter-btn" data-filter="image" onclick="filterDatabase('image')">🖼️ Hình ảnh (<span id="filterImageCount">2</span>)</button>
                 <button class="db-filter-btn" data-filter="video" onclick="filterDatabase('video')">🎬 Video (<span id="filterVideoCount">1</span>)</button>
+                <button class="db-filter-btn" data-filter="slideshow" onclick="filterDatabase('slideshow')">🎞️ Chuỗi ảnh (<span id="filterSlideshowCount">0</span>)</button>
             </div>
         </div>
 
@@ -2224,6 +2422,11 @@ body * {
                             <span class="icon">🎬</span>
                             <span class="name">VIDEO</span>
                             <span class="desc">Video MP4 / link</span>
+                        </div>
+                        <div class="format-option-card" id="formatOptSlideshow" onclick="selectModalFormat('slideshow')">
+                            <span class="icon">🎞️</span>
+                            <span class="name">CHUỖI ẢNH (20s)</span>
+                            <span class="desc">Chiếu tuần tự 20s</span>
                         </div>
                     </div>
                 </div>
@@ -2291,6 +2494,36 @@ body * {
                     <button class="button button-red" type="button" onclick="removeModalMedia()">
                         🗑️ Xóa video
                     </button>
+                </div>
+            </div>
+
+            <!-- SLIDESHOW MEDIA SECTION -->
+            <div id="modalSlideshowSection" class="media-upload-container" style="display: none;">
+                <div class="form-label" style="color: #38bdf8;">🎞️ ĐÍNH KÈM CHUỖI ẢNH (CHIẾU LẦN LƯỢT TỔNG 20 GIÂY):</div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <button class="button button-blue" type="button" onclick="document.getElementById('modalSlidesFileInput').click()">
+                        📁 Tải nhiều ảnh cùng lúc...
+                    </button>
+                    <input type="file" id="modalSlidesFileInput" accept="image/*" multiple style="display:none" onchange="handleModalSlidesUpload(this.files)">
+                    <button class="button button-red" type="button" onclick="clearModalSlides()">
+                        🗑️ Xóa hết ảnh
+                    </button>
+                    <span style="color: #94a3b8; font-size: 10px;">(Hệ thống tự động chia đều thời lượng trong 20s)</span>
+                </div>
+                <!-- Slideshow timing summary -->
+                <div style="display: flex; align-items: center; justify-content: space-between; background: #0f172a; padding: 6px 10px; border-radius: 5px; border: 1px solid #1e293b; font-size: 11px; margin-top: 4px;">
+                    <div>
+                        <span style="color: #94a3b8;">Tổng thời lượng:</span> <strong style="color: #f59f00;">20s</strong>
+                        <span style="color: #64748b; margin: 0 6px;">|</span>
+                        <span style="color: #94a3b8;">Số ảnh:</span> <strong id="modalSlidesCount" style="color: #38bdf8;">0 ảnh</strong>
+                    </div>
+                    <div>
+                        <span style="color: #94a3b8;">Mỗi ảnh chiếu:</span> <strong id="modalSlidePerTime" style="color: #34d399;">-- s</strong>
+                    </div>
+                </div>
+                <!-- Slides thumbnails carousel -->
+                <div id="modalSlidesList" style="display: flex; gap: 6px; overflow-x: auto; padding: 6px; min-height: 60px; border-radius: 5px; background: #0b0f17; border: 1px dashed #334155; align-items: center; margin-top: 4px;">
+                    <div style="width: 100%; text-align: center; color: #64748b; font-size: 11px;">Chưa chọn ảnh nào. Bấm "Tải nhiều ảnh" để thêm ảnh vào chuỗi 20s.</div>
                 </div>
             </div>
 
@@ -2402,15 +2635,25 @@ const defaultState = {
         lockedPlayers: []
     },
     video: {
+        mode: 'local_video',
         url: '',
         embedUrl: '',
+        videoName: '',
+        images: [],
+        totalDuration: 20,
         visible: false,
-        playing: false
+        playing: false,
+        startTime: null,
+        playToken: null,
+        loop: true,
+        currentImageIndex: 0
     },
     questionMedia: {
         visible: false,
         type: 'none',
         url: '',
+        images: [],
+        totalDuration: 20,
         questionText: '',
         questionStt: 1,
         answer: '',
@@ -2432,19 +2675,42 @@ function ensureValidPanels(state) {
         state.soundVolume = 100;
     }
     if (!state.video) {
-        state.video = { url: '', embedUrl: '', visible: false, playing: false };
+        state.video = {
+            mode: 'local_video',
+            url: '',
+            embedUrl: '',
+            videoName: '',
+            images: [],
+            totalDuration: 20,
+            visible: false,
+            playing: false,
+            startTime: null,
+            playToken: null,
+            loop: true,
+            currentImageIndex: 0
+        };
+    } else {
+        if (!state.video.mode) state.video.mode = 'local_video';
+        if (!Array.isArray(state.video.images)) state.video.images = [];
+        if (state.video.totalDuration === undefined) state.video.totalDuration = 20;
+        if (state.video.loop === undefined) state.video.loop = true;
     }
     if (!state.questionMedia) {
         state.questionMedia = {
             visible: false,
             type: 'none',
             url: '',
+            images: [],
+            totalDuration: 20,
             questionText: '',
             questionStt: 1,
             answer: '',
             playing: true,
             playToken: 0
         };
+    } else {
+        if (!Array.isArray(state.questionMedia.images)) state.questionMedia.images = [];
+        if (state.questionMedia.totalDuration === undefined) state.questionMedia.totalDuration = 20;
     }
     if (!state.hiddenColors) {
         state.hiddenColors = { red: false, green: false, white: false, blue: false };
@@ -2659,14 +2925,29 @@ function renderQuestion() {
     // Format badge in teleprompter header
     const formatBadge = document.getElementById('qFormatBadge');
     if (formatBadge) {
-        if (qType === 'image') {
+        if (qType === 'slideshow' || (q.images && q.images.length > 0)) {
+            formatBadge.className = 'db-format-pill';
+            formatBadge.style.background = '#0c4a6e';
+            formatBadge.style.color = '#38bdf8';
+            formatBadge.style.border = '1px solid #0284c7';
+            formatBadge.innerHTML = '🎞️ CHUỖI ẢNH (20s)';
+        } else if (qType === 'image') {
             formatBadge.className = 'db-format-pill db-format-image';
+            formatBadge.style.background = '';
+            formatBadge.style.color = '';
+            formatBadge.style.border = '';
             formatBadge.innerHTML = '🖼️ HÌNH ẢNH';
         } else if (qType === 'video') {
             formatBadge.className = 'db-format-pill db-format-video';
+            formatBadge.style.background = '';
+            formatBadge.style.color = '';
+            formatBadge.style.border = '';
             formatBadge.innerHTML = '🎬 VIDEO';
         } else {
             formatBadge.className = 'db-format-pill db-format-text';
+            formatBadge.style.background = '';
+            formatBadge.style.color = '';
+            formatBadge.style.border = '';
             formatBadge.innerHTML = '📝 VĂN BẢN';
         }
     }
@@ -2674,7 +2955,7 @@ function renderQuestion() {
     // Question Media Box in Host Teleprompter (Full-screen Projector trigger)
     const mediaBox = document.getElementById('currentQuestionMediaBox');
     if (mediaBox) {
-        const hasMedia = (qType === 'image' || qType === 'video' || !!q.mediaUrl);
+        const hasMedia = (qType === 'image' || qType === 'video' || qType === 'slideshow' || (q.images && q.images.length > 0) || !!q.mediaUrl);
         if (hasMedia) {
             mediaBox.style.display = 'block';
             const thumbImg = document.getElementById('qmThumbImg');
@@ -2682,7 +2963,15 @@ function renderQuestion() {
             const mediaDesc = document.getElementById('qmMediaDesc');
             const statusBadge = document.getElementById('qmStatusBadge');
 
-            if (qType === 'image') {
+            if (qType === 'slideshow' || (q.images && q.images.length > 0)) {
+                if (thumbImg) {
+                    thumbImg.style.display = 'block';
+                    const firstImg = q.images && q.images[0] ? (typeof q.images[0] === 'string' ? q.images[0] : q.images[0].url) : (q.mediaUrl || '');
+                    thumbImg.src = firstImg;
+                }
+                if (thumbVid) thumbVid.style.display = 'none';
+                if (mediaDesc) mediaDesc.textContent = `Chuỗi ${q.images ? q.images.length : 0} ảnh (Chiếu 20s)`;
+            } else if (qType === 'image') {
                 if (thumbImg) {
                     thumbImg.style.display = 'block';
                     thumbImg.src = q.mediaUrl || '';
@@ -2722,8 +3011,8 @@ function renderQuestion() {
             const opt = document.createElement('option');
             opt.value = idx;
             const itemStt = item.stt || (idx + 1);
-            const itemType = item.type || (item.mediaUrl ? 'media' : 'text');
-            const typeIcon = itemType === 'image' ? '🖼️ ' : (itemType === 'video' ? '🎬 ' : '');
+            const itemType = item.type || ((item.images && item.images.length > 0) ? 'slideshow' : (item.mediaUrl ? 'media' : 'text'));
+            const typeIcon = itemType === 'image' ? '🖼️ ' : (itemType === 'video' ? '🎬 ' : (itemType === 'slideshow' ? '🎞️ ' : ''));
             const shortQ = item.question ? item.question.substring(0, 42) + (item.question.length > 42 ? '...' : '') : '';
             opt.textContent = `${typeIcon}Câu ${itemStt}: ${shortQ}`;
             opt.selected = idx === currentQuestionIndex;
@@ -2740,7 +3029,6 @@ function prevQuestion() {
     if (currentQuestionIndex > 0) {
         currentQuestionIndex--;
         gameState.currentQuestionIndex = currentQuestionIndex;
-        // Sync full media if already visible
         syncActiveMediaOnQuestionChange();
         renderQuestion();
         resetBuzzer();
@@ -2772,7 +3060,7 @@ function jumpToQuestion(idx) {
 function syncActiveMediaOnQuestionChange() {
     if (gameState.questionMedia && gameState.questionMedia.visible) {
         const nextQ = questionsList[currentQuestionIndex];
-        if (nextQ && (nextQ.mediaUrl || nextQ.type === 'image' || nextQ.type === 'video')) {
+        if (nextQ && (nextQ.mediaUrl || nextQ.type === 'image' || nextQ.type === 'video' || nextQ.type === 'slideshow' || (nextQ.images && nextQ.images.length > 0))) {
             showCurrentQuestionMedia(currentQuestionIndex);
         } else {
             hideQuestionMedia();
@@ -2808,9 +3096,11 @@ function showCurrentQuestionMedia(qIndex) {
     const q = questionsList[idx];
     if (!q) return;
 
-    const qType = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
-    if (!q.mediaUrl && qType === 'text') {
-        showToast("⚠️ Câu hỏi này không có file ảnh hoặc video. Bấm Sửa để đính kèm media!");
+    let qType = q.type || (q.images && q.images.length > 0 ? 'slideshow' : (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text'));
+    if (q.images && q.images.length > 0) qType = 'slideshow';
+
+    if (!q.mediaUrl && qType === 'text' && (!q.images || q.images.length === 0)) {
+        showToast("⚠️ Câu hỏi này không có file ảnh, video hoặc chuỗi ảnh. Bấm Sửa để đính kèm!");
         openEditQuestionModal(idx);
         return;
     }
@@ -2818,14 +3108,19 @@ function showCurrentQuestionMedia(qIndex) {
     currentQuestionIndex = idx;
     gameState.currentQuestionIndex = idx;
 
+    const firstImg = q.images && q.images[0] ? (typeof q.images[0] === 'string' ? q.images[0] : q.images[0].url) : (q.mediaUrl || '');
+
     gameState.questionMedia = {
         visible: true,
         type: qType,
-        url: q.mediaUrl,
+        url: firstImg,
+        images: q.images || [],
+        totalDuration: q.totalDuration || 20,
         questionText: q.question,
         questionStt: q.stt || (idx + 1),
         answer: q.answer,
         playing: true,
+        startTime: Date.now(),
         playToken: Date.now()
     };
 
@@ -2891,10 +3186,12 @@ function renderDatabaseTable() {
     let textCount = 0;
     let imageCount = 0;
     let videoCount = 0;
+    let slideshowCount = 0;
 
     questionsList.forEach(q => {
-        const t = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
-        if (t === 'image') imageCount++;
+        const t = q.type || (q.images && q.images.length > 0 ? 'slideshow' : (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text'));
+        if (t === 'slideshow' || (q.images && q.images.length > 0)) slideshowCount++;
+        else if (t === 'image') imageCount++;
         else if (t === 'video') videoCount++;
         else textCount++;
     });
@@ -2910,6 +3207,8 @@ function renderDatabaseTable() {
     if (dbImg) dbImg.textContent = imageCount;
     const dbVid = document.getElementById('dbVideoCount');
     if (dbVid) dbVid.textContent = videoCount;
+    const dbSlide = document.getElementById('dbSlideshowCount');
+    if (dbSlide) dbSlide.textContent = slideshowCount;
 
     const fAll = document.getElementById('filterAllCount');
     if (fAll) fAll.textContent = totalCount;
@@ -2919,6 +3218,8 @@ function renderDatabaseTable() {
     if (fImg) fImg.textContent = imageCount;
     const fVid = document.getElementById('filterVideoCount');
     if (fVid) fVid.textContent = videoCount;
+    const fSlide = document.getElementById('filterSlideshowCount');
+    if (fSlide) fSlide.textContent = slideshowCount;
 
     tbody.innerHTML = '';
 
@@ -2929,9 +3230,12 @@ function renderDatabaseTable() {
 
     const filtered = questionsList.map((q, idx) => ({ q, idx })).filter(item => {
         const q = item.q;
-        const t = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
+        const t = q.type || (q.images && q.images.length > 0 ? 'slideshow' : (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text'));
 
-        if (dbFilter !== 'all' && t !== dbFilter) return false;
+        if (dbFilter !== 'all') {
+            if (dbFilter === 'slideshow' && t !== 'slideshow' && (!q.images || q.images.length === 0)) return false;
+            if (dbFilter !== 'slideshow' && t !== dbFilter) return false;
+        }
 
         if (dbSearch) {
             const sttStr = String(q.stt || (item.idx + 1));
@@ -2952,7 +3256,7 @@ function renderDatabaseTable() {
     filtered.forEach(item => {
         const { q, idx } = item;
         const stt = q.stt || (idx + 1);
-        const t = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
+        const t = q.type || (q.images && q.images.length > 0 ? 'slideshow' : (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text'));
         const isActiveCurrent = (idx === currentQuestionIndex);
         const isCurrentlyFull = gameState.questionMedia && gameState.questionMedia.visible && (gameState.questionMedia.questionStt === stt || (gameState.questionMedia.url && gameState.questionMedia.url === q.mediaUrl));
 
@@ -2961,7 +3265,10 @@ function renderDatabaseTable() {
 
         // Format pill
         let formatHtml = '';
-        if (t === 'image') {
+        if (t === 'slideshow' || (q.images && q.images.length > 0)) {
+            const imgCount = q.images ? q.images.length : 0;
+            formatHtml = `<span class="db-format-pill" style="background:#0c4a6e; color:#38bdf8; border:1px solid #0284c7;">🎞️ ẢNH 20S (${imgCount})</span>`;
+        } else if (t === 'image') {
             formatHtml = `<span class="db-format-pill db-format-image">🖼️ ẢNH</span>`;
         } else if (t === 'video') {
             formatHtml = `<span class="db-format-pill db-format-video">🎬 VIDEO</span>`;
@@ -2971,7 +3278,15 @@ function renderDatabaseTable() {
 
         // Media thumbnail
         let mediaThumbHtml = '';
-        if (t === 'image' && q.mediaUrl) {
+        if ((t === 'slideshow' || (q.images && q.images.length > 0))) {
+            const firstImg = q.images && q.images[0] ? (typeof q.images[0] === 'string' ? q.images[0] : q.images[0].url) : (q.mediaUrl || '');
+            const count = q.images ? q.images.length : 0;
+            mediaThumbHtml = `
+                <div style="position: relative; cursor: pointer; display: inline-block;" onclick="showCurrentQuestionMedia(${idx})" title="Bấm để chiếu chuỗi ảnh 20s trên Projector">
+                    <img src="${firstImg}" class="db-thumb" alt="Slide">
+                    <span style="position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.85); color: #38bdf8; font-size: 9px; font-weight: bold; padding: 1px 3px; border-radius: 3px; border: 1px solid #0284c7;">${count} ảnh</span>
+                </div>`;
+        } else if (t === 'image' && q.mediaUrl) {
             mediaThumbHtml = `<img src="${q.mediaUrl}" class="db-thumb" alt="Thumb" title="Bấm để chiếu Full trên Projector" onclick="showCurrentQuestionMedia(${idx})">`;
         } else if (t === 'video' && q.mediaUrl) {
             mediaThumbHtml = `<div class="db-thumb-video" title="Bấm để phát Full trên Projector" onclick="showCurrentQuestionMedia(${idx})">🎬</div>`;
@@ -2979,15 +3294,25 @@ function renderDatabaseTable() {
 
         // Projection button
         let projectionBtnHtml = '';
-        if (t === 'image' || t === 'video' || q.mediaUrl) {
+        const hasMedia = (t === 'image' || t === 'video' || t === 'slideshow' || (q.images && q.images.length > 0) || q.mediaUrl);
+        if (hasMedia) {
             if (isCurrentlyFull) {
                 projectionBtnHtml = `<button class="button button-red" style="font-size: 10px; padding: 4px 8px; width: 100%; font-weight: bold;" onclick="hideQuestionMedia()">🟢 ĐANG CHIẾU FULL (ẨN)</button>`;
+            } else if (t === 'slideshow' || (q.images && q.images.length > 0)) {
+                projectionBtnHtml = `<button class="button button-blue" style="font-size: 10px; padding: 4px 8px; width: 100%; font-weight: bold;" onclick="showCurrentQuestionMedia(${idx})">🎞️ Chiếu 20s</button>`;
             } else {
                 projectionBtnHtml = `<button class="button button-green" style="font-size: 10px; padding: 4px 8px; width: 100%; font-weight: bold;" onclick="showCurrentQuestionMedia(${idx})">👁️ Chiếu Full</button>`;
             }
         } else {
             projectionBtnHtml = `<button class="button button-gray" style="font-size: 10px; padding: 3px 6px; opacity: 0.7;" onclick="openEditQuestionModal(${idx})" title="Gắn ảnh hoặc video cho câu hỏi này">➕ Gắn Media</button>`;
         }
+
+        // Special Round set button
+        const canBeSpecial = (t === 'slideshow' || t === 'video' || (q.images && q.images.length > 0) || (q.mediaUrl && q.mediaUrl.match(/\.(mp4|webm)|streamable/i)));
+        const specialBtnHtml = canBeSpecial ? `
+            <button class="button button-orange" style="font-size: 10px; padding: 3px 6px;" onclick="setQuestionAsSpecialRoundMedia(${idx})" title="Đặt nội dung này làm Video / Chuỗi ảnh của Vòng thi đặc biệt">
+                🌟 Vòng ĐB
+            </button>` : '';
 
         tr.innerHTML = `
             <td style="text-align: center; font-weight: bold; font-size: 12px; color: #f59f00;">
@@ -3010,10 +3335,11 @@ function renderDatabaseTable() {
             <td style="color: #4ade80; font-weight: bold;">${escapeHtml(q.answer || '-')}</td>
             <td style="text-align: center;">${projectionBtnHtml}</td>
             <td style="text-align: center;">
-                <div style="display: flex; justify-content: center; gap: 4px;">
+                <div style="display: flex; justify-content: center; gap: 4px; flex-wrap: wrap;">
                     <button class="button ${isActiveCurrent ? 'button-green' : 'button-blue'}" style="font-size: 10px; padding: 3px 6px;" onclick="jumpToQuestion(${idx}); switchAppTab('game');" title="Chọn câu hỏi này và quay lại bàn đấu">
                         🎯 Chọn
                     </button>
+                    ${specialBtnHtml}
                     <button class="button button-blue" style="font-size: 10px; padding: 3px 6px;" onclick="openEditQuestionModal(${idx})" title="Chỉnh sửa">
                         ✏️ Sửa
                     </button>
@@ -3091,39 +3417,91 @@ function saveAndBroadcastQuestions() {
 
 
 /* =====================================================
+   TRANSFER MEDIA TO SPECIAL ROUND CONTROLLER
+===================================================== */
+function setQuestionAsSpecialRoundMedia(idx) {
+    const q = questionsList[idx];
+    if (!q) return;
+
+    const t = q.type || (q.images && q.images.length > 0 ? 'slideshow' : (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text'));
+
+    if (t === 'slideshow' || (q.images && q.images.length > 0)) {
+        gameState.video.mode = 'slideshow';
+        gameState.video.images = JSON.parse(JSON.stringify(q.images || []));
+        gameState.video.totalDuration = q.totalDuration || 20;
+        gameState.video.videoName = `Chuỗi ${gameState.video.images.length} ảnh (20s)`;
+        renderSpecialRoundUI();
+        broadcastState("updateVideo");
+        switchAppTab('game');
+        showToast(`🌟 Đã đặt chuỗi ${gameState.video.images.length} ảnh câu #${q.stt || (idx + 1)} vào Vòng thi đặc biệt!`);
+    } else if (t === 'video' && q.mediaUrl) {
+        if (q.mediaUrl.includes('streamable')) {
+            gameState.video.mode = 'streamable';
+            gameState.video.url = q.mediaUrl;
+            gameState.video.embedUrl = parseStreamableUrl(q.mediaUrl);
+            gameState.video.videoName = q.mediaName || 'Streamable Clip';
+        } else {
+            gameState.video.mode = 'local_video';
+            gameState.video.url = q.mediaUrl;
+            gameState.video.embedUrl = q.mediaUrl;
+            gameState.video.videoName = q.mediaName || 'video_vong_dac_biet.mp4';
+        }
+        renderSpecialRoundUI();
+        broadcastState("updateVideo");
+        switchAppTab('game');
+        showToast(`🌟 Đã đặt video câu #${q.stt || (idx + 1)} vào Vòng thi đặc biệt!`);
+    } else {
+        showToast("⚠️ Câu hỏi này không phải định dạng Video hoặc Chuỗi ảnh!");
+    }
+}
+
+
+/* =====================================================
    QUESTION MODAL EDITOR (ADD / EDIT & MEDIA UPLOADER)
 ===================================================== */
 let modalMediaData = {
-    type: 'text', // 'text', 'image', 'video'
+    type: 'text', // 'text', 'image', 'video', 'slideshow'
     url: '',
-    name: ''
+    name: '',
+    images: []
 };
 
 function selectModalFormat(format) {
     modalMediaData.type = format;
-    ['formatOptText', 'formatOptImage', 'formatOptVideo'].forEach(id => {
+    ['formatOptText', 'formatOptImage', 'formatOptVideo', 'formatOptSlideshow'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('selected');
     });
 
     const imgSection = document.getElementById('modalImageSection');
     const vidSection = document.getElementById('modalVideoSection');
+    const slideSection = document.getElementById('modalSlideshowSection');
 
     if (format === 'image') {
         const opt = document.getElementById('formatOptImage');
         if (opt) opt.classList.add('selected');
         if (imgSection) imgSection.style.display = 'flex';
         if (vidSection) vidSection.style.display = 'none';
+        if (slideSection) slideSection.style.display = 'none';
     } else if (format === 'video') {
         const opt = document.getElementById('formatOptVideo');
         if (opt) opt.classList.add('selected');
         if (imgSection) imgSection.style.display = 'none';
         if (vidSection) vidSection.style.display = 'flex';
+        if (slideSection) slideSection.style.display = 'none';
+    } else if (format === 'slideshow') {
+        const opt = document.getElementById('formatOptSlideshow');
+        if (opt) opt.classList.add('selected');
+        if (imgSection) imgSection.style.display = 'none';
+        if (vidSection) vidSection.style.display = 'none';
+        if (slideSection) slideSection.style.display = 'flex';
+        renderModalSlidesList();
     } else {
         const opt = document.getElementById('formatOptText');
         if (opt) opt.classList.add('selected');
         if (imgSection) imgSection.style.display = 'none';
         if (vidSection) vidSection.style.display = 'none';
+        if (slideSection) slideSection.style.display = 'none';
     }
 }
 
@@ -3133,7 +3511,7 @@ function openAddQuestionModal() {
     document.getElementById('modalStt').value = questionsList.length + 1;
     document.getElementById('modalQuestionText').value = '';
     document.getElementById('modalAnswer').value = '';
-    modalMediaData = { type: 'text', url: '', name: '' };
+    modalMediaData = { type: 'text', url: '', name: '', images: [] };
     selectModalFormat('text');
     resetModalMediaPreviews();
     document.getElementById('questionModal').style.display = 'flex';
@@ -3149,11 +3527,12 @@ function openEditQuestionModal(idx) {
     document.getElementById('modalQuestionText').value = q.question || '';
     document.getElementById('modalAnswer').value = q.answer || '';
 
-    const qType = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
+    const qType = q.type || (q.images && q.images.length > 0 ? 'slideshow' : (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text'));
     modalMediaData = {
         type: qType,
         url: q.mediaUrl || '',
-        name: q.mediaName || ''
+        name: q.mediaName || '',
+        images: Array.isArray(q.images) ? JSON.parse(JSON.stringify(q.images)) : []
     };
 
     selectModalFormat(qType);
@@ -3165,6 +3544,8 @@ function openEditQuestionModal(idx) {
     } else if (qType === 'video' && q.mediaUrl) {
         document.getElementById('modalVideoUrlInput').value = q.mediaUrl.startsWith('data:') ? '' : q.mediaUrl;
         showModalVideoPreview(q.mediaUrl, q.mediaName || 'Video đính kèm');
+    } else if (qType === 'slideshow') {
+        renderModalSlidesList();
     }
 
     document.getElementById('questionModal').style.display = 'flex';
@@ -3203,6 +3584,8 @@ function resetModalMediaPreviews() {
     }
     const vidInput = document.getElementById('modalVideoUrlInput');
     if (vidInput) vidInput.value = '';
+
+    renderModalSlidesList();
 }
 
 function handleModalImageUpload(file) {
@@ -3285,9 +3668,78 @@ function showModalVideoPreview(url, name) {
     }
 }
 
+/* Modal Slideshow Handlers */
+async function handleModalSlidesUpload(files) {
+    if (!files || files.length === 0) return;
+    if (!modalMediaData.images) modalMediaData.images = [];
+
+    showToast(`⏳ Đang tải ${files.length} ảnh vào chuỗi...`);
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        try {
+            const url = await uploadMediaFileToServer(file);
+            modalMediaData.images.push({ url, name: file.name });
+        } catch (e) {
+            const dataUrl = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = ev => res(ev.target.result);
+                r.readAsDataURL(file);
+            });
+            modalMediaData.images.push({ url: dataUrl, name: file.name });
+        }
+    }
+    renderModalSlidesList();
+    showToast(`✅ Đã thêm ${files.length} ảnh vào câu hỏi!`);
+}
+
+function renderModalSlidesList() {
+    const container = document.getElementById('modalSlidesList');
+    const countSpan = document.getElementById('modalSlidesCount');
+    const perTimeSpan = document.getElementById('modalSlidePerTime');
+    if (!container) return;
+
+    const list = modalMediaData.images || [];
+    if (countSpan) countSpan.textContent = list.length;
+    if (perTimeSpan) {
+        const perSec = list.length > 0 ? (20 / list.length).toFixed(1) : 0;
+        perTimeSpan.textContent = perSec;
+    }
+
+    container.innerHTML = '';
+    if (list.length === 0) {
+        container.innerHTML = `<span style="font-size: 11px; color: #64748b; padding: 6px;">Chưa có ảnh nào được chọn.</span>`;
+        return;
+    }
+
+    list.forEach((img, idx) => {
+        const imgUrl = typeof img === 'string' ? img : img.url;
+        const chip = document.createElement('div');
+        chip.style.cssText = "position: relative; width: 50px; height: 50px; border-radius: 6px; overflow: hidden; border: 1px solid #38bdf8; flex-shrink: 0; background: #000;";
+        chip.innerHTML = `
+            <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Slide ${idx+1}">
+            <span style="position: absolute; bottom: 0; left: 0; background: rgba(0,0,0,0.7); color: #fff; font-size: 9px; padding: 0 3px;">#${idx+1}</span>
+            <button type="button" onclick="removeModalSlide(${idx})" style="position: absolute; top: 0; right: 0; background: rgba(239,68,68,0.9); color: #fff; border: none; font-size: 10px; width: 16px; height: 16px; line-height: 14px; text-align: center; cursor: pointer; border-radius: 0 0 0 4px;" title="Xóa ảnh này">✕</button>
+        `;
+        container.appendChild(chip);
+    });
+}
+
+function removeModalSlide(idx) {
+    if (!modalMediaData.images) return;
+    modalMediaData.images.splice(idx, 1);
+    renderModalSlidesList();
+}
+
+function clearModalSlides() {
+    modalMediaData.images = [];
+    renderModalSlidesList();
+    showToast("Đã xóa tất cả ảnh trong chuỗi.");
+}
+
 function removeModalMedia() {
     modalMediaData.url = '';
     modalMediaData.name = '';
+    modalMediaData.images = [];
     resetModalMediaPreviews();
     showToast("Đã gỡ media.");
 }
@@ -3303,13 +3755,33 @@ function saveQuestionModal(autoShowFull) {
         return;
     }
 
+    let qType = modalMediaData.type;
+    let finalMediaUrl = '';
+    let finalMediaName = '';
+    let finalImages = [];
+
+    if (qType === 'slideshow') {
+        finalImages = modalMediaData.images || [];
+        if (finalImages.length === 0) {
+            showToast("⚠️ Vui lòng tải ít nhất 1 hình ảnh cho chuỗi ảnh (20s)!");
+            return;
+        }
+        finalMediaUrl = typeof finalImages[0] === 'string' ? finalImages[0] : finalImages[0].url;
+        finalMediaName = `Chuỗi ${finalImages.length} ảnh (20s)`;
+    } else if (qType !== 'text') {
+        finalMediaUrl = modalMediaData.url;
+        finalMediaName = modalMediaData.name;
+    }
+
     const questionObj = {
         stt: stt,
-        type: modalMediaData.type,
+        type: qType,
         question: questionText,
         answer: answerText,
-        mediaUrl: (modalMediaData.type !== 'text' ? modalMediaData.url : ''),
-        mediaName: (modalMediaData.type !== 'text' ? modalMediaData.name : '')
+        mediaUrl: finalMediaUrl,
+        mediaName: finalMediaName,
+        images: finalImages,
+        totalDuration: 20
     };
 
     let targetIndex = editIdx;
@@ -4004,6 +4476,119 @@ function parseStreamableUrl(input) {
     return str;
 }
 
+/* =====================================================
+   SPECIAL ROUND CONTROLLER (VÒNG THI ĐẶC BIỆT)
+   - Video cục bộ (Upload trực tiếp MP4/WebM)
+   - Chuỗi ảnh 20 giây (Chiếu tuần tự chia đều trong 20s)
+   - Link Streamable / Web
+===================================================== */
+let specialCountdownInterval = null;
+
+function setSpecialRoundMode(mode) {
+    if (!gameState.video) {
+        gameState.video = { mode: 'local_video', url: '', embedUrl: '', videoName: '', images: [], totalDuration: 20, visible: false, playing: false, loop: true, currentImageIndex: 0 };
+    }
+    gameState.video.mode = mode;
+    renderSpecialRoundUI();
+    broadcastState("updateSpecialRoundMode");
+}
+
+async function uploadMediaFileToServer(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const dataUrl = e.target.result;
+            try {
+                const res = await fetch('/api/upload-media', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fileName: file.name,
+                        dataUrl: dataUrl
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.url) {
+                        resolve({ url: data.url, name: file.name, dataUrl });
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.warn("Upload to server failed, using local dataUrl:", err);
+            }
+            // Fallback to dataUrl if server error or offline
+            resolve({ url: dataUrl, name: file.name, dataUrl });
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function handleSpecialVideoUpload(file) {
+    if (!file) return;
+    showToast(`⏳ Đang tải video "${file.name}"...`);
+    const result = await uploadMediaFileToServer(file);
+    gameState.video.mode = 'local_video';
+    gameState.video.url = result.url;
+    gameState.video.embedUrl = result.url;
+    gameState.video.videoName = file.name;
+    renderSpecialRoundUI();
+    broadcastState("updateVideo");
+    showToast(`✅ Đã tải video "${file.name}" thành công!`);
+}
+
+function removeSpecialVideo() {
+    if (!gameState.video) return;
+    gameState.video.url = '';
+    gameState.video.embedUrl = '';
+    gameState.video.videoName = '';
+    const fileInput = document.getElementById('specialVideoFileInput');
+    if (fileInput) fileInput.value = '';
+    renderSpecialRoundUI();
+    broadcastState("updateVideo");
+    showToast("Đã xóa video cục bộ.");
+}
+
+async function handleSpecialSlidesUpload(files) {
+    if (!files || files.length === 0) return;
+    showToast(`⏳ Đang xử lý ${files.length} ảnh cho chuỗi 20s...`);
+    if (!gameState.video.images) gameState.video.images = [];
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const res = await uploadMediaFileToServer(file);
+        gameState.video.images.push({
+            url: res.url,
+            name: file.name
+        });
+    }
+
+    gameState.video.mode = 'slideshow';
+    gameState.video.totalDuration = 20;
+    renderSpecialRoundUI();
+    broadcastState("updateVideo");
+    const per = (20 / gameState.video.images.length).toFixed(1);
+    showToast(`✅ Đã thêm ${files.length} ảnh vào chuỗi 20s! Mỗi ảnh chiếu ${per}s`);
+}
+
+function removeSpecialSlide(idx) {
+    if (!gameState.video.images || idx < 0 || idx >= gameState.video.images.length) return;
+    gameState.video.images.splice(idx, 1);
+    renderSpecialRoundUI();
+    broadcastState("updateVideo");
+    showToast("Đã xóa 1 ảnh khỏi chuỗi.");
+}
+
+function clearSpecialSlides() {
+    if (!gameState.video.images || gameState.video.images.length === 0) return;
+    gameState.video.images = [];
+    const fileInput = document.getElementById('specialSlidesFileInput');
+    if (fileInput) fileInput.value = '';
+    renderSpecialRoundUI();
+    broadcastState("updateVideo");
+    showToast("Đã xóa toàn bộ ảnh trong chuỗi 20s.");
+}
+
 function updateVideoUrl() {
     const inputEl = document.getElementById("streamableUrlInput");
     if (!inputEl) return;
@@ -4017,75 +4602,271 @@ function updateVideoUrl() {
         showToast("Link Streamable không hợp lệ!");
         return;
     }
+    gameState.video.mode = 'streamable';
     gameState.video.url = rawUrl.trim();
     gameState.video.embedUrl = embedUrl;
-    renderVideoUI();
+    renderSpecialRoundUI();
     broadcastState("updateVideo");
     showToast("✅ Đã cập nhật link Streamable!");
 }
 
-function showVideo() {
-    if (!gameState.video || !gameState.video.embedUrl) {
-        showToast("⚠️ Chưa có link Streamable! Vui lòng nhập link và bấm 'Cập nhật link'.");
-        return;
-    }
+function showSpecialRoundMedia() {
+    if (!validateHasSpecialMedia()) return;
     gameState.video.visible = true;
     gameState.video.playing = false;
-    renderVideoUI();
+    renderSpecialRoundUI();
     broadcastState("showVideo");
-    showToast("👁️ Khung hình video đã hiển thị dưới bảng số (Tạm dừng)");
+    showToast("👁️ Media Vòng đặc biệt đã hiện dưới bảng số (Tạm dừng)");
 }
 
-function playVideo() {
-    if (!gameState.video || !gameState.video.embedUrl) {
-        showToast("⚠️ Chưa có link Streamable! Vui lòng nhập link và bấm 'Cập nhật link'.");
-        return;
-    }
+function playSpecialRoundMedia() {
+    if (!validateHasSpecialMedia()) return;
     gameState.video.visible = true;
     gameState.video.playing = true;
+    gameState.video.startTime = Date.now();
     gameState.video.playToken = Date.now();
-    renderVideoUI();
+    renderSpecialRoundUI();
     broadcastState("playVideo");
-    showToast("▶️ Đang phát video Streamable!");
+    startSpecialRoundProgressLoop();
+    showToast("▶️ Đang phát media Vòng đặc biệt (20 giây)!");
 }
 
-function hideVideo() {
+function pauseSpecialRoundMedia() {
+    gameState.video.playing = false;
+    renderSpecialRoundUI();
+    broadcastState("pauseVideo");
+    showToast("⏸️ Đã tạm dừng media Vòng đặc biệt.");
+}
+
+function resetSpecialRoundMedia() {
+    gameState.video.startTime = Date.now();
+    gameState.video.playToken = Date.now();
+    renderSpecialRoundUI();
+    broadcastState("resetVideo");
+    showToast("🔄 Đã reset về 0s / ảnh đầu tiên!");
+}
+
+function hideSpecialRoundMedia() {
     if (!gameState.video) {
-        gameState.video = { url: '', embedUrl: '', visible: false, playing: false };
+        gameState.video = { mode: 'local_video', url: '', embedUrl: '', videoName: '', images: [], totalDuration: 20, visible: false, playing: false, loop: true, currentImageIndex: 0 };
     }
     gameState.video.visible = false;
     gameState.video.playing = false;
-    renderVideoUI();
+    renderSpecialRoundUI();
     broadcastState("hideVideo");
-    showToast("🙈 Đã ẩn video khỏi bảng số");
+    showToast("🙈 Đã ẩn media Vòng đặc biệt khỏi bảng số");
 }
 
-function renderVideoUI() {
-    if (!gameState.video) {
-        gameState.video = { url: '', embedUrl: '', visible: false, playing: false };
+function toggleSpecialRoundLoop(isLoop) {
+    if (!gameState.video) return;
+    gameState.video.loop = !!isLoop;
+    broadcastState("updateVideo");
+    showToast(isLoop ? "🔁 Bật chế độ tự động lặp lại khi hết 20s" : "⏹️ Tắt tự động lặp lại");
+}
+
+function validateHasSpecialMedia() {
+    const mode = gameState.video ? gameState.video.mode : 'local_video';
+    if (mode === 'slideshow') {
+        if (!gameState.video.images || gameState.video.images.length === 0) {
+            showToast("⚠️ Chuỗi ảnh đang rỗng! Hãy bấm 'Tải nhiều ảnh' trước.");
+            return false;
+        }
+        return true;
     }
-    const inputEl = document.getElementById("streamableUrlInput");
-    if (inputEl && document.activeElement !== inputEl) {
-        inputEl.value = gameState.video.url || '';
+    if (!gameState.video || !gameState.video.url) {
+        showToast(mode === 'local_video' ? "⚠️ Chưa tải video cục bộ! Bấm 'Tải video từ máy tính'." : "⚠️ Chưa nhập link video!");
+        return false;
+    }
+    return true;
+}
+
+function projectSpecialMediaFull() {
+    if (!validateHasSpecialMedia()) return;
+    const mode = gameState.video.mode || 'local_video';
+    gameState.questionMedia = {
+        visible: true,
+        type: mode === 'slideshow' ? 'slideshow' : 'video',
+        url: gameState.video.url || (gameState.video.images && gameState.video.images[0] ? (typeof gameState.video.images[0] === 'string' ? gameState.video.images[0] : gameState.video.images[0].url) : ''),
+        images: gameState.video.images || [],
+        totalDuration: gameState.video.totalDuration || 20,
+        questionText: 'CÂU HỎI VÒNG THI ĐẶC BIỆT',
+        questionStt: 'ĐẶC BIỆT',
+        answer: 'Vòng thi đặc biệt',
+        playing: true,
+        startTime: Date.now(),
+        playToken: Date.now()
+    };
+    broadcastState("showQuestionMedia");
+    updateTopbarMediaStatus();
+    renderDatabaseTable();
+    showToast("🔲 Đang chiếu Full màn hình Vòng thi đặc biệt lên Projector!");
+}
+
+function startSpecialRoundProgressLoop() {
+    if (specialCountdownInterval) clearInterval(specialCountdownInterval);
+    specialCountdownInterval = setInterval(() => {
+        if (!gameState.video || !gameState.video.playing || !gameState.video.visible) {
+            clearInterval(specialCountdownInterval);
+            specialCountdownInterval = null;
+            return;
+        }
+        updateSpecialProgressBarUI();
+    }, 100);
+}
+
+function updateSpecialProgressBarUI() {
+    const pBar = document.getElementById("specialProgressBar");
+    const countLabel = document.getElementById("specialCountdownLabel");
+    if (!pBar || !countLabel) return;
+
+    if (!gameState.video.playing || !gameState.video.startTime) {
+        pBar.style.width = '0%';
+        countLabel.textContent = '0.0s / 20.0s';
+        return;
     }
 
+    const totalDur = gameState.video.totalDuration || 20;
+    const elapsed = (Date.now() - gameState.video.startTime) / 1000;
+    let currentSec = elapsed;
+    if (gameState.video.loop) {
+        currentSec = elapsed % totalDur;
+    } else {
+        if (currentSec > totalDur) currentSec = totalDur;
+    }
+
+    const pct = Math.min(100, Math.max(0, (currentSec / totalDur) * 100));
+    pBar.style.width = `${pct}%`;
+    countLabel.textContent = `${currentSec.toFixed(1)}s / ${totalDur.toFixed(1)}s`;
+
+    // Highlight active slide if in slideshow mode
+    if (gameState.video.mode === 'slideshow' && gameState.video.images && gameState.video.images.length > 0) {
+        const timePerImage = totalDur / gameState.video.images.length;
+        const activeIdx = Math.min(gameState.video.images.length - 1, Math.floor(currentSec / timePerImage));
+        document.querySelectorAll(".special-slide-card").forEach((card, idx) => {
+            card.classList.toggle("active-slide", idx === activeIdx);
+        });
+    }
+}
+
+function renderSpecialRoundUI() {
+    ensureValidPanels(gameState);
+    const mode = gameState.video.mode || 'local_video';
+
+    // Update Mode Buttons
+    const btnLocal = document.getElementById("btnModeLocalVideo");
+    const btnSlide = document.getElementById("btnModeSlideshow");
+    const btnStream = document.getElementById("btnModeStreamable");
+    if (btnLocal) {
+        btnLocal.style.background = mode === 'local_video' ? '#1e3a8a' : 'transparent';
+        btnLocal.style.color = mode === 'local_video' ? '#38bdf8' : '#94a3b8';
+        btnLocal.style.border = mode === 'local_video' ? '1px solid #38bdf8' : 'none';
+    }
+    if (btnSlide) {
+        btnSlide.style.background = mode === 'slideshow' ? '#1e3a8a' : 'transparent';
+        btnSlide.style.color = mode === 'slideshow' ? '#38bdf8' : '#94a3b8';
+        btnSlide.style.border = mode === 'slideshow' ? '1px solid #38bdf8' : 'none';
+    }
+    if (btnStream) {
+        btnStream.style.background = mode === 'streamable' ? '#1e3a8a' : 'transparent';
+        btnStream.style.color = mode === 'streamable' ? '#38bdf8' : '#94a3b8';
+        btnStream.style.border = mode === 'streamable' ? '1px solid #38bdf8' : 'none';
+    }
+
+    // Toggle panels
+    const secLocal = document.getElementById("secLocalVideo");
+    const secSlide = document.getElementById("secSlideshow");
+    const secStream = document.getElementById("secStreamable");
+    if (secLocal) secLocal.style.display = mode === 'local_video' ? 'block' : 'none';
+    if (secSlide) secSlide.style.display = mode === 'slideshow' ? 'block' : 'none';
+    if (secStream) secStream.style.display = mode === 'streamable' ? 'block' : 'none';
+
+    // Local video info
+    const vidInfoBox = document.getElementById("specialVideoInfoBox");
+    const vidFileName = document.getElementById("specialVideoFileName");
+    if (vidInfoBox && vidFileName) {
+        if (gameState.video.url && mode === 'local_video') {
+            vidInfoBox.style.display = 'flex';
+            vidFileName.textContent = gameState.video.videoName || 'video_cuc_bo.mp4';
+        } else {
+            vidInfoBox.style.display = 'none';
+        }
+    }
+
+    // Streamable input
+    const streamInput = document.getElementById("streamableUrlInput");
+    if (streamInput && document.activeElement !== streamInput) {
+        streamInput.value = (mode === 'streamable' ? (gameState.video.url || '') : '');
+    }
+
+    // Slideshow info & thumbnail list
+    const slidesCount = document.getElementById("specialSlidesCount");
+    const slidePerTime = document.getElementById("specialSlidePerTime");
+    const slidesList = document.getElementById("specialSlidesList");
+    const imgArr = gameState.video.images || [];
+
+    if (slidesCount) slidesCount.textContent = `${imgArr.length} ảnh`;
+    if (slidePerTime) {
+        slidePerTime.textContent = imgArr.length > 0 ? `${(20 / imgArr.length).toFixed(1)}s` : '-- s';
+    }
+    if (slidesList) {
+        if (imgArr.length === 0) {
+            slidesList.innerHTML = `<div style="width: 100%; text-align: center; color: #64748b; font-size: 10px; padding: 8px 0;">Chưa có ảnh nào. Hãy bấm "Tải nhiều ảnh" để thêm ảnh vào chuỗi 20s.</div>`;
+        } else {
+            slidesList.innerHTML = '';
+            imgArr.forEach((imgObj, idx) => {
+                const card = document.createElement("div");
+                card.className = "special-slide-card";
+                const src = typeof imgObj === 'string' ? imgObj : imgObj.url;
+                const name = typeof imgObj === 'string' ? `Ảnh ${idx+1}` : (imgObj.name || `Ảnh ${idx+1}`);
+                card.title = `${name} (Chiếu vị trí ${idx + 1})`;
+                card.innerHTML = `
+                    <span class="special-slide-idx">#${idx + 1}</span>
+                    <button type="button" class="special-slide-del" onclick="removeSpecialSlide(${idx})" title="Xóa ảnh này">✕</button>
+                    <img src="${src}" alt="Slide">
+                `;
+                slidesList.appendChild(card);
+            });
+        }
+    }
+
+    // Loop checkbox
+    const chkLoop = document.getElementById("chkSpecialLoop");
+    if (chkLoop) {
+        chkLoop.checked = gameState.video.loop !== false;
+    }
+
+    // Status Badge
     const badge = document.getElementById("videoStatusBadge");
     if (badge) {
         if (!gameState.video.visible) {
-            badge.textContent = "ĐÃ ẨN";
+            badge.textContent = "ĐÃ ẨN";
             badge.style.background = "#1e2636";
             badge.style.color = "#94a3b8";
         } else if (gameState.video.playing) {
-            badge.textContent = "ĐANG PHÁT";
+            badge.textContent = "ĐANG PHÁT (20s)";
             badge.style.background = "#142a1a";
             badge.style.color = "#4ade80";
         } else {
-            badge.textContent = "ĐANG HIỂN THỊ (PAUSE)";
+            badge.textContent = "TẠM DỪNG";
             badge.style.background = "#352814";
             badge.style.color = "#ffd43b";
         }
     }
+
+    // Update progress
+    updateSpecialProgressBarUI();
+    if (gameState.video.playing) {
+        startSpecialRoundProgressLoop();
+    }
 }
+
+// Backward-compatible alias
+function renderVideoUI() {
+    renderSpecialRoundUI();
+}
+function showVideo() { showSpecialRoundMedia(); }
+function playVideo() { playSpecialRoundMedia(); }
+function hideVideo() { hideSpecialRoundMedia(); }
 
 function toggleHideColor(color) {
     if (!gameState.hiddenColors) {
