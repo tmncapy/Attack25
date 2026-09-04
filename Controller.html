@@ -922,6 +922,628 @@ body * {
     box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
 }
 
+/* =====================================================
+   TOP NAVIGATION BAR & TABS
+===================================================== */
+.app-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 4px 10px;
+    flex-shrink: 0;
+    gap: 8px;
+    height: 38px;
+    box-sizing: border-box;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.app-brand-badge {
+    font-family: 'UTM Impact', Impact, sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    color: #f59f00;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.app-brand-badge small {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 9px;
+    color: #9ca3af;
+    background: #1f2937;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid #374151;
+}
+
+.topbar-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.topbar-tab {
+    background: #1f2937;
+    color: #9ca3af;
+    border: 1px solid #374151;
+    border-radius: 5px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.topbar-tab:hover {
+    background: #374151 !important;
+    color: #fff !important;
+}
+
+.topbar-tab.active {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+}
+
+.tab-badge {
+    background: rgba(0, 0, 0, 0.4);
+    color: #38bdf8;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-family: monospace;
+}
+
+.topbar-tab.active .tab-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.topbar-media-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    color: #34d399;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    animation: mediaPulse 1.5s infinite;
+}
+
+@keyframes mediaPulse {
+    0%, 100% { border-color: rgba(16, 185, 129, 0.5); }
+    50% { border-color: rgba(16, 185, 129, 0.9); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+}
+
+.topbar-media-hide-btn {
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 9px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.topbar-media-hide-btn:hover {
+    background: #b91c1c !important;
+}
+
+.topbar-link-btn {
+    background: #1e293b;
+    color: #38bdf8;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.topbar-link-btn:hover {
+    background: #334155 !important;
+    color: #fff !important;
+}
+
+/* =====================================================
+   DATABASE TAB CONTAINER & TABLE
+===================================================== */
+.database-view {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 50px);
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.db-header {
+    background: #111827;
+    border-bottom: 1px solid #1f2937;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.db-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.db-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.db-stats-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.db-stat-tag {
+    background: #1f2937;
+    color: #9ca3af;
+    border: 1px solid #374151;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 10px;
+}
+
+.db-stat-tag strong {
+    color: #38bdf8;
+}
+
+.db-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.db-toolbar {
+    background: #182234;
+    border-bottom: 1px solid #1e293b;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.db-search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 200px;
+    max-width: 380px;
+}
+
+.db-search-input {
+    width: 100%;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    color: #fff;
+    padding: 5px 8px;
+    font-size: 11px;
+    outline: none;
+}
+
+.db-search-input:focus {
+    border-color: #38bdf8;
+}
+
+.db-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.db-filter-btn {
+    background: #0f172a;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.db-filter-btn:hover {
+    background: #1e293b !important;
+    color: #fff !important;
+}
+
+.db-filter-btn.active {
+    background: #0284c7 !important;
+    color: #fff !important;
+    border-color: #38bdf8 !important;
+}
+
+.db-table-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.db-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    text-align: left;
+}
+
+.db-table th {
+    background: #111827;
+    color: #9ca3af;
+    padding: 8px 10px;
+    border-bottom: 1px solid #374151;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+}
+
+.db-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #1e293b;
+    vertical-align: middle;
+    color: #e2e8f0;
+}
+
+.db-table tr:hover {
+    background: #1e293b;
+}
+
+.db-table tr.active-q-row {
+    background: rgba(37, 99, 235, 0.18);
+    border-left: 3px solid #3b82f6;
+}
+
+.db-format-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.db-format-text {
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+}
+
+.db-format-image {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.db-format-video {
+    background: rgba(245, 159, 0, 0.15);
+    color: #f59f00;
+    border: 1px solid rgba(245, 159, 0, 0.4);
+}
+
+.db-thumb {
+    width: 38px;
+    height: 38px;
+    border-radius: 4px;
+    object-fit: cover;
+    border: 1px solid #475569;
+    background: #000;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.db-thumb-video {
+    width: 38px;
+    height: 38px;
+    border-radius: 4px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.db-media-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* =====================================================
+   FULL-WINDOW QUESTION MEDIA BROADCAST BOX (IN COL 1)
+===================================================== */
+.question-media-box {
+    margin-top: 6px;
+    padding: 8px 10px;
+    background: #0f172a;
+    border: 1.5px solid #2563eb;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.2);
+}
+
+.qm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.qm-title {
+    font-size: 11px;
+    font-weight: bold;
+    color: #60a5fa;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.qm-preview-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    background: #182234;
+    padding: 5px 8px;
+    border-radius: 5px;
+    border: 1px solid #1e293b;
+}
+
+.qm-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    object-fit: contain;
+    background: #000;
+    border: 1px solid #334155;
+    flex-shrink: 0;
+}
+
+.qm-actions {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 0.8fr;
+    gap: 5px;
+}
+
+/* =====================================================
+   QUESTION EDIT / ADD MODAL
+===================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: #111827;
+    border: 1.5px solid #374151;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 620px;
+    max-height: 92vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0f172a;
+}
+
+.modal-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.modal-close-btn:hover {
+    background: #ef4444 !important;
+    color: #fff !important;
+}
+
+.modal-body {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-label {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: bold;
+}
+
+.form-input, .form-textarea {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 5px;
+    color: #fff;
+    padding: 7px 9px;
+    font-size: 12px;
+    outline: none;
+    font-family: inherit;
+}
+
+.form-input:focus, .form-textarea:focus {
+    border-color: #38bdf8;
+}
+
+.format-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.format-option-card {
+    background: #1e293b;
+    border: 1.5px solid #334155;
+    border-radius: 6px;
+    padding: 8px 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.format-option-card:hover {
+    background: #334155 !important;
+    color: #fff !important;
+}
+
+.format-option-card.selected {
+    background: #1e3a8a !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.format-option-card .icon {
+    font-size: 20px;
+}
+
+.format-option-card .name {
+    font-size: 11px;
+    font-weight: bold;
+    color: #f1f5f9;
+}
+
+.format-option-card .desc {
+    font-size: 9px;
+    color: #94a3b8;
+}
+
+.media-upload-container {
+    background: #0f172a;
+    border: 1.5px dashed #334155;
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.media-preview-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #1e293b;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+}
+
+.media-preview-img {
+    max-width: 140px;
+    max-height: 90px;
+    border-radius: 4px;
+    object-fit: contain;
+    background: #000;
+    border: 1px solid #475569;
+}
+
+.media-preview-video {
+    max-width: 160px;
+    max-height: 90px;
+    border-radius: 4px;
+    background: #000;
+}
+
+.modal-footer {
+    padding: 10px 14px;
+    border-top: 1px solid #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    background: #0f172a;
+}
+
 </style>
 </head>
 
@@ -929,8 +1551,35 @@ body * {
 
 <div class="app">
 
+    <!-- TOP NAVIGATION BAR -->
+    <header class="app-topbar">
+        <div class="topbar-left">
+            <span class="app-brand-badge">ATTACK 25 <small>CONTROL</small></span>
+            <div class="topbar-tabs">
+                <button class="topbar-tab active" id="tabBtnGame" onclick="switchAppTab('game')">
+                    <span>🎯</span> BÀN ĐIỀU KHIỂN TRẬN ĐẤU
+                </button>
+                <button class="topbar-tab" id="tabBtnDatabase" onclick="switchAppTab('database')">
+                    <span>📚</span> DATABASE CÂU HỎI <span class="tab-badge" id="tabBadgeCount">27</span>
+                </button>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <!-- Projector Media Broadcast Status & Quick Hide -->
+            <div class="topbar-media-status" id="topbarMediaStatus" style="display:none;">
+                <span class="pulse-dot"></span>
+                <span id="topbarMediaLabel">Đang chiếu Full câu 1</span>
+                <button class="topbar-media-hide-btn" onclick="hideQuestionMedia()">Ẩn Media</button>
+            </div>
+            <span class="room-pill" id="controllerRoomPill" style="padding:3px 8px; font-size:10px; background:#1f2937; border-radius:4px; color:#38bdf8; border:1px solid #374151;">PHÒNG: ATTACK25</span>
+            <a href="Projector.html" target="_blank" class="topbar-link-btn" title="Mở trang Projector ở tab mới">
+                🖥️ Mở Projector
+            </a>
+        </div>
+    </header>
+
     <!-- 3-COLUMN WORKSPACE -->
-    <main class="workspace-grid">
+    <main class="workspace-grid" id="gameWorkspace">
 
         <!-- COLUMN 1: QUESTION TELEPROMPTER & EXCEL IMPORT -->
         <div class="column">
@@ -939,15 +1588,28 @@ body * {
             <section class="card">
                 <div class="card-header">
                     <div class="card-title">📖 ĐỀ &amp; ĐÁP ÁN (MÁY HOST)</div>
-                    <span class="card-badge" id="qBadgeStatus">CÂU 1</span>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span class="db-format-pill db-format-text" id="qFormatBadge">📝 VĂN BẢN</span>
+                        <span class="card-badge" id="qBadgeStatus">CÂU 1</span>
+                    </div>
                 </div>
 
                 <div class="card-body">
                     <!-- MAIN TELEPROMPTER DISPLAY -->
                     <div class="question-teleprompter">
-                        <div class="q-meta-row">
-                            <span class="q-number-tag" id="qNumberTag">CÂU HỎI 1</span>
-                            <span class="q-count-tag" id="qCountTag">1 / 27 câu</span>
+                        <div class="q-meta-row" style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="q-number-tag" id="qNumberTag">CÂU HỎI 1</span>
+                                <span class="q-count-tag" id="qCountTag">1 / 27 câu</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <button class="button button-gray" style="padding: 2px 6px; font-size: 10px; font-weight: bold;" onclick="openEditModalForCurrentQuestion()" title="Chỉnh sửa format/media cho câu hỏi này">
+                                    ✏️ Sửa câu
+                                </button>
+                                <button class="button button-blue" style="padding: 2px 6px; font-size: 10px; font-weight: bold;" onclick="switchAppTab('database')" title="Xem toàn bộ database câu hỏi">
+                                    📚 Database
+                                </button>
+                            </div>
                         </div>
 
                         <!-- QUESTION TEXT -->
@@ -959,6 +1621,33 @@ body * {
                         <div class="q-answer-box">
                             <span class="q-answer-label">ĐÁP ÁN:</span>
                             <span class="q-answer-val" id="qAnswerVal">-</span>
+                        </div>
+
+                        <!-- FULL-WINDOW QUESTION MEDIA CONTROLLER (IMAGE / VIDEO) -->
+                        <div class="question-media-box" id="currentQuestionMediaBox" style="display: none;">
+                            <div class="qm-header">
+                                <span class="qm-title" id="qmTitle">📺 MEDIA CÂU HỎI (PROJECTOR FULL CỬA SỔ)</span>
+                                <span class="card-badge" id="qmStatusBadge" style="background:#1e293b; color:#94a3b8;">ĐÃ ẨN</span>
+                            </div>
+                            <div class="qm-preview-row">
+                                <img id="qmThumbImg" class="qm-thumb" src="" alt="Thumbnail" style="display:none;" onclick="showCurrentQuestionMedia()">
+                                <div id="qmThumbVid" class="qm-thumb" style="display:none; align-items:center; justify-content:center; background:#0f172a; color:#f59f00; font-size:22px; cursor:pointer;" onclick="showCurrentQuestionMedia()">🎬</div>
+                                <div style="flex: 1; overflow: hidden;">
+                                    <div id="qmMediaDesc" style="font-size: 11px; color: #fff; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Media đính kèm</div>
+                                    <div id="qmMediaHint" style="font-size: 9px; color: #94a3b8;">Bấm "Hiện Full" để phóng to toàn màn hình Projector</div>
+                                </div>
+                            </div>
+                            <div class="qm-actions">
+                                <button class="button button-green" id="qmBtnShow" onclick="showCurrentQuestionMedia()">
+                                    👁️ Hiện Full
+                                </button>
+                                <button class="button button-red" id="qmBtnHide" onclick="hideQuestionMedia()">
+                                    🙈 Ẩn
+                                </button>
+                                <button class="button button-blue" onclick="openEditModalForCurrentQuestion()">
+                                    ✏️ Đổi
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -1421,10 +2110,202 @@ body * {
 
     </main>
 
+    <!-- DATABASE TAB VIEW (FULL SCREEN) -->
+    <div class="database-view" id="questionsDatabaseView" style="display: none;">
+        <!-- DB HEADER -->
+        <div class="db-header">
+            <div class="db-title-row">
+                <div class="db-title">
+                    <span>📚</span> NGÂN HÀNG &amp; QUẢN LÝ CÂU HỎI
+                </div>
+                <div class="db-stats-tags">
+                    <span class="db-stat-tag">Tổng số: <strong id="dbTotalCount">27</strong></span>
+                    <span class="db-stat-tag">📝 Văn bản: <strong id="dbTextCount">24</strong></span>
+                    <span class="db-stat-tag">🖼️ Hình ảnh: <strong id="dbImageCount">2</strong></span>
+                    <span class="db-stat-tag">🎬 Video: <strong id="dbVideoCount">1</strong></span>
+                </div>
+            </div>
+            <div class="db-actions-row">
+                <button class="button button-blue" onclick="openAddQuestionModal()">
+                    <span>➕</span> Thêm câu hỏi
+                </button>
+                <button class="button button-green" onclick="document.getElementById('excelFileInput').click()">
+                    <span>📊</span> Nhập Excel / CSV
+                </button>
+                <button class="button button-orange" onclick="exportQuestionsToExcel()">
+                    <span>💾</span> Xuất Excel
+                </button>
+                <button class="button button-gray" onclick="exportQuestionsJSON()">
+                    <span>💾</span> Xuất JSON
+                </button>
+                <button class="button button-gray" onclick="document.getElementById('jsonFileInput').click()">
+                    <span>📥</span> Nhập JSON
+                </button>
+                <input type="file" id="jsonFileInput" accept=".json" style="display:none" onchange="importQuestionsJSON(this.files[0])">
+                <button class="button button-gray" onclick="resetToSampleQuestions()">
+                    <span>🔄</span> Mẫu 27 câu
+                </button>
+                <button class="button button-red" onclick="clearAllQuestions()">
+                    <span>🗑️</span> Xóa tất cả
+                </button>
+            </div>
+        </div>
+
+        <!-- DB SEARCH & FILTER TOOLBAR -->
+        <div class="db-toolbar">
+            <div class="db-search-box">
+                <span style="font-size: 13px;">🔍</span>
+                <input type="text" id="dbSearchInput" class="db-search-input" placeholder="Tìm kiếm nội dung câu hỏi, đáp án, số thứ tự..." oninput="handleDbSearch(this.value)">
+            </div>
+            <div class="db-filter-group">
+                <button class="db-filter-btn active" data-filter="all" onclick="filterDatabase('all')">Tất cả (<span id="filterAllCount">27</span>)</button>
+                <button class="db-filter-btn" data-filter="text" onclick="filterDatabase('text')">📝 Văn bản (<span id="filterTextCount">24</span>)</button>
+                <button class="db-filter-btn" data-filter="image" onclick="filterDatabase('image')">🖼️ Hình ảnh (<span id="filterImageCount">2</span>)</button>
+                <button class="db-filter-btn" data-filter="video" onclick="filterDatabase('video')">🎬 Video (<span id="filterVideoCount">1</span>)</button>
+            </div>
+        </div>
+
+        <!-- DB TABLE SCROLL CONTAINER -->
+        <div class="db-table-scroll">
+            <table class="db-table">
+                <thead>
+                    <tr>
+                        <th style="width: 55px; text-align: center;">STT</th>
+                        <th style="width: 105px; text-align: center;">ĐỊNH DẠNG</th>
+                        <th style="min-width: 280px;">NỘI DUNG CÂU HỎI &amp; FILE MEDIA</th>
+                        <th style="min-width: 140px;">ĐÁP ÁN</th>
+                        <th style="width: 155px; text-align: center;">CHIẾU FULL PROJECTOR</th>
+                        <th style="width: 135px; text-align: center;">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody id="dbTableBody">
+                    <!-- Dynamic rows rendered by renderDatabaseTable() -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- QUESTION EDITOR MODAL -->
+<div class="modal-overlay" id="questionModal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title" id="modalTitle">
+                <span>✏️</span> Chỉnh sửa câu hỏi
+            </div>
+            <button class="modal-close-btn" onclick="closeQuestionModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="modalEditIndex" value="-1">
+
+            <div style="display: grid; grid-template-columns: 110px 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label class="form-label">SỐ THỨ TỰ (STT):</label>
+                    <input type="number" id="modalStt" class="form-input" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CHỌN ĐỊNH DẠNG CÂU HỎI:</label>
+                    <div class="format-picker-grid">
+                        <div class="format-option-card selected" id="formatOptText" onclick="selectModalFormat('text')">
+                            <span class="icon">📝</span>
+                            <span class="name">VĂN BẢN</span>
+                            <span class="desc">Chỉ chữ &amp; đáp án</span>
+                        </div>
+                        <div class="format-option-card" id="formatOptImage" onclick="selectModalFormat('image')">
+                            <span class="icon">🖼️</span>
+                            <span class="name">HÌNH ẢNH</span>
+                            <span class="desc">Ảnh tải lên / link</span>
+                        </div>
+                        <div class="format-option-card" id="formatOptVideo" onclick="selectModalFormat('video')">
+                            <span class="icon">🎬</span>
+                            <span class="name">VIDEO</span>
+                            <span class="desc">Video MP4 / link</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">NỘI DUNG CÂU HỎI:</label>
+                <textarea id="modalQuestionText" class="form-textarea" rows="3" placeholder="Nhập nội dung câu hỏi..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">ĐÁP ÁN:</label>
+                <input type="text" id="modalAnswer" class="form-input" placeholder="Nhập đáp án chính xác...">
+            </div>
+
+            <!-- IMAGE MEDIA SECTION -->
+            <div id="modalImageSection" class="media-upload-container" style="display: none;">
+                <div class="form-label" style="color: #34d399;">🖼️ ĐÍNH KÈM HÌNH ẢNH (HIỆN FULL CỬA SỔ PROJECTOR):</div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <button class="button button-green" type="button" onclick="document.getElementById('modalImageFileInput').click()">
+                        📁 Chọn file ảnh từ máy tính...
+                    </button>
+                    <input type="file" id="modalImageFileInput" accept="image/*" style="display:none" onchange="handleModalImageUpload(this.files[0])">
+                    <span style="color: #94a3b8; font-size: 10px;">(Hỗ trợ PNG, JPG, WEBP, GIF, SVG)</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">HOẶC NHẬP / DÁN URL ẢNH TRỰC TUYẾN:</label>
+                    <input type="text" id="modalImageUrlInput" class="form-input" placeholder="https://example.com/image.png" oninput="handleModalImageUrlInput(this.value)">
+                </div>
+                <!-- Image Preview -->
+                <div id="modalImagePreviewBox" class="media-preview-box" style="display: none;">
+                    <img id="modalImagePreview" class="media-preview-img" src="" alt="Xem trước">
+                    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; overflow: hidden;">
+                        <span id="modalImageInfo" style="color: #f1f5f9; font-size: 11px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Tên file: image.png</span>
+                        <span style="color: #34d399; font-size: 10px;">✓ Sẵn sàng chiếu Full trên Projector</span>
+                    </div>
+                    <button class="button button-red" type="button" onclick="removeModalMedia()">
+                        🗑️ Xóa ảnh
+                    </button>
+                </div>
+            </div>
+
+            <!-- VIDEO MEDIA SECTION -->
+            <div id="modalVideoSection" class="media-upload-container" style="display: none;">
+                <div class="form-label" style="color: #f59f00;">🎬 ĐÍNH KÈM VIDEO (HIỆN FULL CỬA SỔ PROJECTOR):</div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <button class="button button-orange" type="button" onclick="document.getElementById('modalVideoFileInput').click()">
+                        📁 Chọn file video từ máy tính...
+                    </button>
+                    <input type="file" id="modalVideoFileInput" accept="video/mp4, video/webm, video/*" style="display:none" onchange="handleModalVideoUpload(this.files[0])">
+                    <span style="color: #94a3b8; font-size: 10px;">(Hỗ trợ MP4, WebM)</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">HOẶC LINK STREAMABLE / YOUTUBE / VIDEO URL:</label>
+                    <input type="text" id="modalVideoUrlInput" class="form-input" placeholder="https://streamable.com/xyz hoặc https://youtube.com/watch?v=..." oninput="handleModalVideoUrlInput(this.value)">
+                </div>
+                <!-- Video Preview -->
+                <div id="modalVideoPreviewBox" class="media-preview-box" style="display: none;">
+                    <video id="modalVideoPreview" class="media-preview-video" controls playsinline src=""></video>
+                    <iframe id="modalFramePreview" style="display:none; width: 160px; height: 90px; border:none; border-radius:4px;" src=""></iframe>
+                    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; overflow: hidden;">
+                        <span id="modalVideoInfo" style="color: #f1f5f9; font-size: 11px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Video link / file</span>
+                        <span style="color: #f59f00; font-size: 10px;">✓ Sẵn sàng phát Full trên Projector</span>
+                    </div>
+                    <button class="button button-red" type="button" onclick="removeModalMedia()">
+                        🗑️ Xóa video
+                    </button>
+                </div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button class="button button-gray" onclick="closeQuestionModal()">Hủy</button>
+            <button class="button button-blue" onclick="saveQuestionModal(false)">
+                💾 Lưu câu hỏi
+            </button>
+            <button class="button button-green" onclick="saveQuestionModal(true)">
+                👁️ Lưu &amp; Chiếu Full ngay lên Projector
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
 
@@ -1442,36 +2323,36 @@ function playSound(type) {
 
 
 /* =====================================================
-   DEFAULT QUESTION BANK (SEEDED FROM USER EXCEL)
+   DEFAULT QUESTION BANK (SEEDED FROM USER EXCEL & MEDIA)
 ===================================================== */
 const DEFAULT_QUESTIONS = [
-    { stt: 1, question: "Trong tác phẩm Lão Hạc của Nam Cao, Lão Hạc nuôi con vật gì?", answer: "Con chó" },
-    { stt: 2, question: "Quần thể chùa Tam Chúc thuộc tỉnh nào của Việt Nam?", answer: "Hà Nam" },
-    { stt: 3, question: "Khi bị chảy máu cam, máu có màu gì?", answer: "Màu đỏ" },
-    { stt: 4, question: "Cá mập sinh sản bằng cách đẻ trứng hay đẻ con?", answer: "Đẻ con" },
-    { stt: 5, question: "Con khỉ đầu chó hay con chó đầu khỉ có thật?", answer: "Khỉ đầu chó" },
-    { stt: 6, question: "Cầu Mỹ Thuận bắc qua sông Tiền, nối liền hai tỉnh nào?", answer: "Tiền Giang – Vĩnh Long" },
-    { stt: 7, question: "Biển số xe mang ký hiệu 60 hiện nay thuộc tỉnh nào?", answer: "Đồng Nai" },
-    { stt: 8, question: "Trong truyện cổ tích Sọ Dừa, Sọ Dừa có bao nhiêu anh em?", answer: "Không có anh em" },
-    { stt: 9, question: "Nhân vật chính trong tác phẩm Tắt đèn của Ngô Tất Tố là ai?", answer: "Chị Dậu" },
-    { stt: 10, question: "Trong hệ thập phân của toán học, 30 + 70 – 50 bằng bao nhiêu?", answer: "50" },
-    { stt: 11, question: "Cột cờ Lũng Cú thuộc tỉnh nào của Việt Nam?", answer: "Hà Giang" },
-    { stt: 12, question: "Việt Nam đã từng đăng cai tổ chức SEA Games mấy lần?", answer: "2 lần" },
-    { stt: 13, question: "Nghề mộc sử dụng nguyên liệu chính là gì?", answer: "Gỗ" },
-    { stt: 14, question: "“Anh Hai là người thích nêm mắm dặm muối nhất” – anh Hai làm nghề gì?", answer: "Đầu bếp" },
-    { stt: 15, question: "Trong tranh Đông Hồ Em bé ôm gà, em bé trong tranh là bé trai hay bé gái?", answer: "Bé trai" },
-    { stt: 16, question: "Tên gọi chính thức của Thái Lan là gì?", answer: "Vương quốc Thái Lan" },
-    { stt: 17, question: "Hoàn chỉnh thành ngữ: “Án binh bất …”", answer: "Động" },
-    { stt: 18, question: "Trong truyện Ăn khế trả vàng, loài chim nào xuất hiện?", answer: "Chim phượng hoàng" },
-    { stt: 19, question: "Quốc kỳ nước nào có hình lá phong đỏ?", answer: "Canada" },
-    { stt: 20, question: "Sân vận động Lạch Tray thuộc thành phố nào?", answer: "Hải Phòng" },
-    { stt: 21, question: "Con sông dài nhất châu Á là sông nào?", answer: "Trường Giang" },
-    { stt: 22, question: "Vân tay của cặp sinh đôi có hoàn toàn giống nhau không?", answer: "Không" },
-    { stt: 23, question: "Trong các loài: chim cánh cụt, gấu hải cẩu, cá – loài nào đẻ trứng?", answer: "Chim cánh cụt" },
-    { stt: 24, question: "Kim la bàn luôn chỉ về hai hướng nào?", answer: "Bắc – Nam" },
-    { stt: 25, question: "Tắm biển tại nơi có hai dòng hải lưu nóng – lạnh dễ gây hiện tượng gì?", answer: "Chuột rút" },
-    { stt: 26, question: "Bánh xèo truyền thống làm từ bột gạo hay bột bắp?", answer: "Bột gạo" },
-    { stt: 27, question: "Cá Dory trong phim Đi tìm Nemo mắc bệnh gì?", answer: "Mất trí nhớ ngắn hạn" }
+    { stt: 1, type: "text", question: "Trong tác phẩm Lão Hạc của Nam Cao, Lão Hạc nuôi con vật gì?", answer: "Con chó" },
+    { stt: 2, type: "text", question: "Quần thể chùa Tam Chúc thuộc tỉnh nào của Việt Nam?", answer: "Hà Nam" },
+    { stt: 3, type: "text", question: "Khi bị chảy máu cam, máu có màu gì?", answer: "Màu đỏ" },
+    { stt: 4, type: "text", question: "Cá mập sinh sản bằng cách đẻ trứng hay đẻ con?", answer: "Đẻ con" },
+    { stt: 5, type: "text", question: "Con khỉ đầu chó hay con chó đầu khỉ có thật?", answer: "Khỉ đầu chó" },
+    { stt: 6, type: "text", question: "Cầu Mỹ Thuận bắc qua sông Tiền, nối liền hai tỉnh nào?", answer: "Tiền Giang – Vĩnh Long" },
+    { stt: 7, type: "text", question: "Biển số xe mang ký hiệu 60 hiện nay thuộc tỉnh nào?", answer: "Đồng Nai" },
+    { stt: 8, type: "text", question: "Trong truyện cổ tích Sọ Dừa, Sọ Dừa có bao nhiêu anh em?", answer: "Không có anh em" },
+    { stt: 9, type: "text", question: "Nhân vật chính trong tác phẩm Tắt đèn của Ngô Tất Tố là ai?", answer: "Chị Dậu" },
+    { stt: 10, type: "text", question: "Trong hệ thập phân của toán học, 30 + 70 – 50 bằng bao nhiêu?", answer: "50" },
+    { stt: 11, type: "text", question: "Cột cờ Lũng Cú thuộc tỉnh nào của Việt Nam?", answer: "Hà Giang" },
+    { stt: 12, type: "text", question: "Việt Nam đã từng đăng cai tổ chức SEA Games mấy lần?", answer: "2 lần" },
+    { stt: 13, type: "text", question: "Nghề mộc sử dụng nguyên liệu chính là gì?", answer: "Gỗ" },
+    { stt: 14, type: "text", question: "“Anh Hai là người thích nêm mắm dặm muối nhất” – anh Hai làm nghề gì?", answer: "Đầu bếp" },
+    { stt: 15, type: "image", question: "Trong bức tranh dân gian Đông Hồ 'Em bé ôm gà' sau đây, em bé trong tranh là bé trai hay bé gái?", answer: "Bé trai", mediaUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Dong_Ho_folk_painting_-_Be_om_ga.jpg/440px-Dong_Ho_folk_painting_-_Be_om_ga.jpg", mediaName: "dong_ho_em_be_om_ga.jpg" },
+    { stt: 16, type: "text", question: "Tên gọi chính thức của Thái Lan là gì?", answer: "Vương quốc Thái Lan" },
+    { stt: 17, type: "text", question: "Hoàn chỉnh thành ngữ: “Án binh bất …”", answer: "Động" },
+    { stt: 18, type: "text", question: "Trong truyện Ăn khế trả vàng, loài chim nào xuất hiện?", answer: "Chim phượng hoàng" },
+    { stt: 19, type: "image", question: "Hãy quan sát hình ảnh lá cờ sau đây và cho biết đây là quốc kỳ của quốc gia nào?", answer: "Canada", mediaUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Flag_of_Canada_%28Pantone%29.svg/512px-Flag_of_Canada_%28Pantone%29.svg.png", mediaName: "quoc_ky_canada.png" },
+    { stt: 20, type: "text", question: "Sân vận động Lạch Tray thuộc thành phố nào?", answer: "Hải Phòng" },
+    { stt: 21, type: "text", question: "Con sông dài nhất châu Á là sông nào?", answer: "Trường Giang" },
+    { stt: 22, type: "text", question: "Vân tay của cặp sinh đôi có hoàn toàn giống nhau không?", answer: "Không" },
+    { stt: 23, type: "text", question: "Trong các loài: chim cánh cụt, gấu hải cẩu, cá – loài nào đẻ trứng?", answer: "Chim cánh cụt" },
+    { stt: 24, type: "text", question: "Kim la bàn luôn chỉ về hai hướng nào?", answer: "Bắc – Nam" },
+    { stt: 25, type: "text", question: "Tắm biển tại nơi có hai dòng hải lưu nóng – lạnh dễ gây hiện tượng gì?", answer: "Chuột rút" },
+    { stt: 26, type: "text", question: "Bánh xèo truyền thống làm từ bột gạo hay bột bắp?", answer: "Bột gạo" },
+    { stt: 27, type: "video", question: "Hãy quan sát đoạn clip sau đây và cho biết loài cá nhân vật chính trong phim Đi tìm Nemo tên là gì?", answer: "Cá Nemo / Cá hề (Clownfish)", mediaUrl: "https://streamable.com/e/mo9y9", mediaName: "clip_nemo_clownfish.mp4" }
 ];
 
 let questionsList = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
@@ -1483,7 +2364,14 @@ try {
     if (savedQ) {
         const parsed = JSON.parse(savedQ);
         if (Array.isArray(parsed) && parsed.length > 0) {
-            questionsList = parsed;
+            questionsList = parsed.map((item, idx) => ({
+                stt: item.stt || (idx + 1),
+                type: item.type || (item.mediaUrl ? (item.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text'),
+                question: item.question || '',
+                answer: item.answer || '',
+                mediaUrl: item.mediaUrl || '',
+                mediaName: item.mediaName || ''
+            }));
         }
     }
 } catch (e) {}
@@ -1519,6 +2407,16 @@ const defaultState = {
         visible: false,
         playing: false
     },
+    questionMedia: {
+        visible: false,
+        type: 'none',
+        url: '',
+        questionText: '',
+        questionStt: 1,
+        answer: '',
+        playing: true,
+        playToken: 0
+    },
     hiddenColors: {
         red: false,
         green: false,
@@ -1535,6 +2433,18 @@ function ensureValidPanels(state) {
     }
     if (!state.video) {
         state.video = { url: '', embedUrl: '', visible: false, playing: false };
+    }
+    if (!state.questionMedia) {
+        state.questionMedia = {
+            visible: false,
+            type: 'none',
+            url: '',
+            questionText: '',
+            questionStt: 1,
+            answer: '',
+            playing: true,
+            playToken: 0
+        };
     }
     if (!state.hiddenColors) {
         state.hiddenColors = { red: false, green: false, white: false, blue: false };
@@ -1604,6 +2514,7 @@ if (window.Attack25Sync) {
         if (questions && questions.length > 0) {
             questionsList = questions;
             renderQuestion();
+            renderDatabaseTable();
         }
     });
 
@@ -1689,6 +2600,37 @@ function playSynthTone(type) {
 /* =====================================================
    QUESTION MANAGEMENT & TELEPROMPTER LOGIC
 ===================================================== */
+/* =====================================================
+   APP TAB NAVIGATION (GAME CONTROL VS QUESTION DATABASE)
+===================================================== */
+let currentAppTab = 'game';
+
+function switchAppTab(tab) {
+    currentAppTab = tab;
+    const tabBtnGame = document.getElementById('tabBtnGame');
+    const tabBtnDatabase = document.getElementById('tabBtnDatabase');
+    const gameWorkspace = document.getElementById('gameWorkspace');
+    const questionsDatabaseView = document.getElementById('questionsDatabaseView');
+
+    if (tab === 'database') {
+        if (tabBtnDatabase) tabBtnDatabase.classList.add('active');
+        if (tabBtnGame) tabBtnGame.classList.remove('active');
+        if (gameWorkspace) gameWorkspace.style.display = 'none';
+        if (questionsDatabaseView) questionsDatabaseView.style.display = 'flex';
+        renderDatabaseTable();
+    } else {
+        if (tabBtnGame) tabBtnGame.classList.add('active');
+        if (tabBtnDatabase) tabBtnDatabase.classList.remove('active');
+        if (questionsDatabaseView) questionsDatabaseView.style.display = 'none';
+        if (gameWorkspace) gameWorkspace.style.display = 'grid';
+        renderQuestion();
+    }
+}
+
+
+/* =====================================================
+   QUESTION MANAGEMENT & TELEPROMPTER LOGIC
+===================================================== */
 function renderQuestion() {
     if (!questionsList || questionsList.length === 0) {
         document.getElementById('qNumberTag').textContent = 'CHƯA CÓ CÂU HỎI';
@@ -1696,6 +2638,8 @@ function renderQuestion() {
         document.getElementById('qTextBox').textContent = 'Hãy nhập file Excel hoặc dán câu hỏi vào hệ thống.';
         document.getElementById('qAnswerVal').textContent = '-';
         document.getElementById('qBadgeStatus').textContent = '0 CÂU';
+        const mediaBox = document.getElementById('currentQuestionMediaBox');
+        if (mediaBox) mediaBox.style.display = 'none';
         return;
     }
 
@@ -1704,6 +2648,7 @@ function renderQuestion() {
 
     const q = questionsList[currentQuestionIndex];
     const stt = q.stt || (currentQuestionIndex + 1);
+    const qType = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
 
     document.getElementById('qNumberTag').textContent = `CÂU HỎI ${stt}`;
     document.getElementById('qCountTag').textContent = `${currentQuestionIndex + 1} / ${questionsList.length} câu`;
@@ -1711,24 +2656,92 @@ function renderQuestion() {
     document.getElementById('qAnswerVal').textContent = q.answer || 'Chưa có đáp án';
     document.getElementById('qBadgeStatus').textContent = `CÂU ${stt}`;
 
+    // Format badge in teleprompter header
+    const formatBadge = document.getElementById('qFormatBadge');
+    if (formatBadge) {
+        if (qType === 'image') {
+            formatBadge.className = 'db-format-pill db-format-image';
+            formatBadge.innerHTML = '🖼️ HÌNH ẢNH';
+        } else if (qType === 'video') {
+            formatBadge.className = 'db-format-pill db-format-video';
+            formatBadge.innerHTML = '🎬 VIDEO';
+        } else {
+            formatBadge.className = 'db-format-pill db-format-text';
+            formatBadge.innerHTML = '📝 VĂN BẢN';
+        }
+    }
+
+    // Question Media Box in Host Teleprompter (Full-screen Projector trigger)
+    const mediaBox = document.getElementById('currentQuestionMediaBox');
+    if (mediaBox) {
+        const hasMedia = (qType === 'image' || qType === 'video' || !!q.mediaUrl);
+        if (hasMedia) {
+            mediaBox.style.display = 'block';
+            const thumbImg = document.getElementById('qmThumbImg');
+            const thumbVid = document.getElementById('qmThumbVid');
+            const mediaDesc = document.getElementById('qmMediaDesc');
+            const statusBadge = document.getElementById('qmStatusBadge');
+
+            if (qType === 'image') {
+                if (thumbImg) {
+                    thumbImg.style.display = 'block';
+                    thumbImg.src = q.mediaUrl || '';
+                }
+                if (thumbVid) thumbVid.style.display = 'none';
+                if (mediaDesc) mediaDesc.textContent = `Hình ảnh: ${q.mediaName || 'File ảnh đính kèm'}`;
+            } else {
+                if (thumbImg) thumbImg.style.display = 'none';
+                if (thumbVid) thumbVid.style.display = 'flex';
+                if (mediaDesc) mediaDesc.textContent = `Video: ${q.mediaName || (q.mediaUrl && q.mediaUrl.includes('streamable') ? 'Streamable' : 'Clip đính kèm')}`;
+            }
+
+            const isShowingOnProjector = gameState.questionMedia && gameState.questionMedia.visible && (gameState.questionMedia.questionStt === stt || gameState.questionMedia.url === q.mediaUrl);
+            if (statusBadge) {
+                if (isShowingOnProjector) {
+                    statusBadge.textContent = 'ĐANG CHIẾU FULL 🟢';
+                    statusBadge.style.background = '#166534';
+                    statusBadge.style.color = '#4ade80';
+                } else {
+                    statusBadge.textContent = 'ĐÃ ẨN';
+                    statusBadge.style.background = '#1e293b';
+                    statusBadge.style.color = '#94a3b8';
+                }
+            }
+        } else {
+            mediaBox.style.display = 'none';
+        }
+    }
+
+    updateTopbarMediaStatus();
+
     // Update Dropdown
     const select = document.getElementById('qSelectDropdown');
-    select.innerHTML = '';
-    questionsList.forEach((item, idx) => {
-        const opt = document.createElement('option');
-        opt.value = idx;
-        const itemStt = item.stt || (idx + 1);
-        const shortQ = item.question ? item.question.substring(0, 45) + (item.question.length > 45 ? '...' : '') : '';
-        opt.textContent = `Câu ${itemStt}: ${shortQ}`;
-        opt.selected = idx === currentQuestionIndex;
-        select.appendChild(opt);
-    });
+    if (select) {
+        select.innerHTML = '';
+        questionsList.forEach((item, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            const itemStt = item.stt || (idx + 1);
+            const itemType = item.type || (item.mediaUrl ? 'media' : 'text');
+            const typeIcon = itemType === 'image' ? '🖼️ ' : (itemType === 'video' ? '🎬 ' : '');
+            const shortQ = item.question ? item.question.substring(0, 42) + (item.question.length > 42 ? '...' : '') : '';
+            opt.textContent = `${typeIcon}Câu ${itemStt}: ${shortQ}`;
+            opt.selected = idx === currentQuestionIndex;
+            select.appendChild(opt);
+        });
+    }
+
+    // Update tab badges
+    const tabBadge = document.getElementById('tabBadgeCount');
+    if (tabBadge) tabBadge.textContent = questionsList.length;
 }
 
 function prevQuestion() {
     if (currentQuestionIndex > 0) {
         currentQuestionIndex--;
         gameState.currentQuestionIndex = currentQuestionIndex;
+        // Sync full media if already visible
+        syncActiveMediaOnQuestionChange();
         renderQuestion();
         resetBuzzer();
     } else {
@@ -1740,6 +2753,7 @@ function nextQuestion() {
     if (currentQuestionIndex < questionsList.length - 1) {
         currentQuestionIndex++;
         gameState.currentQuestionIndex = currentQuestionIndex;
+        syncActiveMediaOnQuestionChange();
         renderQuestion();
         resetBuzzer();
     } else {
@@ -1750,8 +2764,20 @@ function nextQuestion() {
 function jumpToQuestion(idx) {
     currentQuestionIndex = parseInt(idx, 10);
     gameState.currentQuestionIndex = currentQuestionIndex;
+    syncActiveMediaOnQuestionChange();
     renderQuestion();
     resetBuzzer();
+}
+
+function syncActiveMediaOnQuestionChange() {
+    if (gameState.questionMedia && gameState.questionMedia.visible) {
+        const nextQ = questionsList[currentQuestionIndex];
+        if (nextQ && (nextQ.mediaUrl || nextQ.type === 'image' || nextQ.type === 'video')) {
+            showCurrentQuestionMedia(currentQuestionIndex);
+        } else {
+            hideQuestionMedia();
+        }
+    }
 }
 
 function randomQuestion() {
@@ -1762,6 +2788,7 @@ function randomQuestion() {
     }
     currentQuestionIndex = nextIdx;
     gameState.currentQuestionIndex = currentQuestionIndex;
+    syncActiveMediaOnQuestionChange();
     renderQuestion();
     resetBuzzer();
     showToast(`Đã chọn ngẫu nhiên câu số ${questionsList[currentQuestionIndex].stt || (currentQuestionIndex + 1)}`);
@@ -1774,7 +2801,539 @@ function armCurrentQuestion() {
 
 
 /* =====================================================
-   EXCEL IMPORT LOGIC (SHEETJS & CSV)
+   FULL-WINDOW QUESTION MEDIA BROADCAST (PROJECTOR)
+===================================================== */
+function showCurrentQuestionMedia(qIndex) {
+    const idx = (qIndex !== undefined && qIndex !== null) ? qIndex : currentQuestionIndex;
+    const q = questionsList[idx];
+    if (!q) return;
+
+    const qType = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
+    if (!q.mediaUrl && qType === 'text') {
+        showToast("⚠️ Câu hỏi này không có file ảnh hoặc video. Bấm Sửa để đính kèm media!");
+        openEditQuestionModal(idx);
+        return;
+    }
+
+    currentQuestionIndex = idx;
+    gameState.currentQuestionIndex = idx;
+
+    gameState.questionMedia = {
+        visible: true,
+        type: qType,
+        url: q.mediaUrl,
+        questionText: q.question,
+        questionStt: q.stt || (idx + 1),
+        answer: q.answer,
+        playing: true,
+        playToken: Date.now()
+    };
+
+    renderQuestion();
+    renderDatabaseTable();
+    updateTopbarMediaStatus();
+    broadcastState("showQuestionMedia");
+    showToast(`👁️ ĐANG CHIẾU FULL CỬA SỔ câu #${q.stt || (idx + 1)} lên Projector!`);
+}
+
+function hideQuestionMedia() {
+    if (!gameState.questionMedia) {
+        gameState.questionMedia = { visible: false, type: 'none', url: '', questionText: '', questionStt: 1, answer: '', playing: false, playToken: 0 };
+    }
+    gameState.questionMedia.visible = false;
+    gameState.questionMedia.playing = false;
+
+    renderQuestion();
+    renderDatabaseTable();
+    updateTopbarMediaStatus();
+    broadcastState("hideQuestionMedia");
+    showToast("🙈 Đã ẩn trình chiếu media khỏi Projector.");
+}
+
+function updateTopbarMediaStatus() {
+    const bar = document.getElementById('topbarMediaStatus');
+    const label = document.getElementById('topbarMediaLabel');
+    if (!bar || !label) return;
+
+    if (gameState.questionMedia && gameState.questionMedia.visible && (gameState.questionMedia.url || gameState.questionMedia.type !== 'none')) {
+        bar.style.display = 'flex';
+        label.textContent = `Đang chiếu Full câu #${gameState.questionMedia.questionStt || ''}`;
+    } else {
+        bar.style.display = 'none';
+    }
+}
+
+
+/* =====================================================
+   QUESTION DATABASE VIEW & MANAGEMENT
+===================================================== */
+let dbFilter = 'all';
+let dbSearch = '';
+
+function filterDatabase(type) {
+    dbFilter = type;
+    document.querySelectorAll('.db-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-filter') === type);
+    });
+    renderDatabaseTable();
+}
+
+function handleDbSearch(val) {
+    dbSearch = (val || '').trim().toLowerCase();
+    renderDatabaseTable();
+}
+
+function renderDatabaseTable() {
+    const tbody = document.getElementById('dbTableBody');
+    if (!tbody) return;
+
+    const totalCount = questionsList.length;
+    let textCount = 0;
+    let imageCount = 0;
+    let videoCount = 0;
+
+    questionsList.forEach(q => {
+        const t = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
+        if (t === 'image') imageCount++;
+        else if (t === 'video') videoCount++;
+        else textCount++;
+    });
+
+    // Update badges
+    const tabBadge = document.getElementById('tabBadgeCount');
+    if (tabBadge) tabBadge.textContent = totalCount;
+    const dbTotal = document.getElementById('dbTotalCount');
+    if (dbTotal) dbTotal.textContent = totalCount;
+    const dbTxt = document.getElementById('dbTextCount');
+    if (dbTxt) dbTxt.textContent = textCount;
+    const dbImg = document.getElementById('dbImageCount');
+    if (dbImg) dbImg.textContent = imageCount;
+    const dbVid = document.getElementById('dbVideoCount');
+    if (dbVid) dbVid.textContent = videoCount;
+
+    const fAll = document.getElementById('filterAllCount');
+    if (fAll) fAll.textContent = totalCount;
+    const fTxt = document.getElementById('filterTextCount');
+    if (fTxt) fTxt.textContent = textCount;
+    const fImg = document.getElementById('filterImageCount');
+    if (fImg) fImg.textContent = imageCount;
+    const fVid = document.getElementById('filterVideoCount');
+    if (fVid) fVid.textContent = videoCount;
+
+    tbody.innerHTML = '';
+
+    if (totalCount === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 35px; color: #94a3b8; font-size: 13px;">Chưa có câu hỏi nào. Bấm <strong>➕ Thêm câu hỏi</strong> hoặc <strong>📊 Nhập Excel / CSV</strong> để bắt đầu!</td></tr>`;
+        return;
+    }
+
+    const filtered = questionsList.map((q, idx) => ({ q, idx })).filter(item => {
+        const q = item.q;
+        const t = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
+
+        if (dbFilter !== 'all' && t !== dbFilter) return false;
+
+        if (dbSearch) {
+            const sttStr = String(q.stt || (item.idx + 1));
+            const qStr = (q.question || '').toLowerCase();
+            const aStr = (q.answer || '').toLowerCase();
+            if (!sttStr.includes(dbSearch) && !qStr.includes(dbSearch) && !aStr.includes(dbSearch)) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 25px; color: #94a3b8;">Không tìm thấy câu hỏi phù hợp với điều kiện tìm kiếm.</td></tr>`;
+        return;
+    }
+
+    filtered.forEach(item => {
+        const { q, idx } = item;
+        const stt = q.stt || (idx + 1);
+        const t = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
+        const isActiveCurrent = (idx === currentQuestionIndex);
+        const isCurrentlyFull = gameState.questionMedia && gameState.questionMedia.visible && (gameState.questionMedia.questionStt === stt || (gameState.questionMedia.url && gameState.questionMedia.url === q.mediaUrl));
+
+        const tr = document.createElement('tr');
+        if (isActiveCurrent) tr.classList.add('active-q-row');
+
+        // Format pill
+        let formatHtml = '';
+        if (t === 'image') {
+            formatHtml = `<span class="db-format-pill db-format-image">🖼️ ẢNH</span>`;
+        } else if (t === 'video') {
+            formatHtml = `<span class="db-format-pill db-format-video">🎬 VIDEO</span>`;
+        } else {
+            formatHtml = `<span class="db-format-pill db-format-text">📝 CHỮ</span>`;
+        }
+
+        // Media thumbnail
+        let mediaThumbHtml = '';
+        if (t === 'image' && q.mediaUrl) {
+            mediaThumbHtml = `<img src="${q.mediaUrl}" class="db-thumb" alt="Thumb" title="Bấm để chiếu Full trên Projector" onclick="showCurrentQuestionMedia(${idx})">`;
+        } else if (t === 'video' && q.mediaUrl) {
+            mediaThumbHtml = `<div class="db-thumb-video" title="Bấm để phát Full trên Projector" onclick="showCurrentQuestionMedia(${idx})">🎬</div>`;
+        }
+
+        // Projection button
+        let projectionBtnHtml = '';
+        if (t === 'image' || t === 'video' || q.mediaUrl) {
+            if (isCurrentlyFull) {
+                projectionBtnHtml = `<button class="button button-red" style="font-size: 10px; padding: 4px 8px; width: 100%; font-weight: bold;" onclick="hideQuestionMedia()">🟢 ĐANG CHIẾU FULL (ẨN)</button>`;
+            } else {
+                projectionBtnHtml = `<button class="button button-green" style="font-size: 10px; padding: 4px 8px; width: 100%; font-weight: bold;" onclick="showCurrentQuestionMedia(${idx})">👁️ Chiếu Full</button>`;
+            }
+        } else {
+            projectionBtnHtml = `<button class="button button-gray" style="font-size: 10px; padding: 3px 6px; opacity: 0.7;" onclick="openEditQuestionModal(${idx})" title="Gắn ảnh hoặc video cho câu hỏi này">➕ Gắn Media</button>`;
+        }
+
+        tr.innerHTML = `
+            <td style="text-align: center; font-weight: bold; font-size: 12px; color: #f59f00;">
+                #${stt}
+                <div style="display: flex; justify-content: center; gap: 2px; margin-top: 3px;">
+                    <button class="button button-gray" style="padding: 1px 4px; font-size: 9px;" onclick="moveQuestionUp(${idx})" title="Chuyển lên" ${idx === 0 ? 'disabled' : ''}>▲</button>
+                    <button class="button button-gray" style="padding: 1px 4px; font-size: 9px;" onclick="moveQuestionDown(${idx})" title="Chuyển xuống" ${idx === questionsList.length - 1 ? 'disabled' : ''}>▼</button>
+                </div>
+            </td>
+            <td style="text-align: center;">${formatHtml}</td>
+            <td>
+                <div class="db-media-cell">
+                    ${mediaThumbHtml}
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: bold; line-height: 1.35; color: #f8fafc;">${escapeHtml(q.question || '(Không có nội dung)')}</div>
+                        ${q.mediaName ? `<div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">📎 ${escapeHtml(q.mediaName)}</div>` : ''}
+                    </div>
+                </div>
+            </td>
+            <td style="color: #4ade80; font-weight: bold;">${escapeHtml(q.answer || '-')}</td>
+            <td style="text-align: center;">${projectionBtnHtml}</td>
+            <td style="text-align: center;">
+                <div style="display: flex; justify-content: center; gap: 4px;">
+                    <button class="button ${isActiveCurrent ? 'button-green' : 'button-blue'}" style="font-size: 10px; padding: 3px 6px;" onclick="jumpToQuestion(${idx}); switchAppTab('game');" title="Chọn câu hỏi này và quay lại bàn đấu">
+                        🎯 Chọn
+                    </button>
+                    <button class="button button-blue" style="font-size: 10px; padding: 3px 6px;" onclick="openEditQuestionModal(${idx})" title="Chỉnh sửa">
+                        ✏️ Sửa
+                    </button>
+                    <button class="button button-red" style="font-size: 10px; padding: 3px 6px;" onclick="deleteQuestion(${idx})" title="Xóa câu này">
+                        🗑️
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function moveQuestionUp(idx) {
+    if (idx <= 0) return;
+    const temp = questionsList[idx];
+    questionsList[idx] = questionsList[idx - 1];
+    questionsList[idx - 1] = temp;
+    saveAndBroadcastQuestions();
+}
+
+function moveQuestionDown(idx) {
+    if (idx >= questionsList.length - 1) return;
+    const temp = questionsList[idx];
+    questionsList[idx] = questionsList[idx + 1];
+    questionsList[idx + 1] = temp;
+    saveAndBroadcastQuestions();
+}
+
+function deleteQuestion(idx) {
+    const q = questionsList[idx];
+    const stt = q ? (q.stt || (idx + 1)) : (idx + 1);
+    if (!confirm(`Bạn có chắc muốn xóa câu hỏi #${stt}?`)) return;
+
+    questionsList.splice(idx, 1);
+    if (currentQuestionIndex >= questionsList.length) {
+        currentQuestionIndex = Math.max(0, questionsList.length - 1);
+    }
+    gameState.currentQuestionIndex = currentQuestionIndex;
+    saveAndBroadcastQuestions();
+    showToast(`🗑️ Đã xóa câu hỏi #${stt}`);
+}
+
+function clearAllQuestions() {
+    if (!confirm("⚠️ Bạn có chắc chắn muốn XÓA TOÀN BỘ câu hỏi trong ngân hàng dữ liệu?")) return;
+    questionsList = [];
+    currentQuestionIndex = 0;
+    gameState.currentQuestionIndex = 0;
+    hideQuestionMedia();
+    saveAndBroadcastQuestions();
+    showToast("🗑️ Đã xóa toàn bộ câu hỏi.");
+}
+
+function resetToSampleQuestions() {
+    if (!confirm("Khôi phục danh sách câu hỏi mẫu 27 câu ban đầu (có sẵn câu đố tranh dân gian và video)?")) return;
+    questionsList = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+    currentQuestionIndex = 0;
+    gameState.currentQuestionIndex = 0;
+    hideQuestionMedia();
+    saveAndBroadcastQuestions();
+    showToast("🔄 Đã khôi phục 27 câu hỏi mẫu ban đầu!");
+}
+
+function saveAndBroadcastQuestions() {
+    try {
+        localStorage.setItem("attack25_questions", JSON.stringify(questionsList));
+    } catch (e) {
+        console.warn("Storage quota warning:", e);
+    }
+    renderQuestion();
+    renderDatabaseTable();
+    broadcastQuestions();
+    broadcastState("questions_list_updated");
+}
+
+
+/* =====================================================
+   QUESTION MODAL EDITOR (ADD / EDIT & MEDIA UPLOADER)
+===================================================== */
+let modalMediaData = {
+    type: 'text', // 'text', 'image', 'video'
+    url: '',
+    name: ''
+};
+
+function selectModalFormat(format) {
+    modalMediaData.type = format;
+    ['formatOptText', 'formatOptImage', 'formatOptVideo'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('selected');
+    });
+
+    const imgSection = document.getElementById('modalImageSection');
+    const vidSection = document.getElementById('modalVideoSection');
+
+    if (format === 'image') {
+        const opt = document.getElementById('formatOptImage');
+        if (opt) opt.classList.add('selected');
+        if (imgSection) imgSection.style.display = 'flex';
+        if (vidSection) vidSection.style.display = 'none';
+    } else if (format === 'video') {
+        const opt = document.getElementById('formatOptVideo');
+        if (opt) opt.classList.add('selected');
+        if (imgSection) imgSection.style.display = 'none';
+        if (vidSection) vidSection.style.display = 'flex';
+    } else {
+        const opt = document.getElementById('formatOptText');
+        if (opt) opt.classList.add('selected');
+        if (imgSection) imgSection.style.display = 'none';
+        if (vidSection) vidSection.style.display = 'none';
+    }
+}
+
+function openAddQuestionModal() {
+    document.getElementById('modalEditIndex').value = "-1";
+    document.getElementById('modalTitle').innerHTML = `<span>➕</span> Thêm câu hỏi mới`;
+    document.getElementById('modalStt').value = questionsList.length + 1;
+    document.getElementById('modalQuestionText').value = '';
+    document.getElementById('modalAnswer').value = '';
+    modalMediaData = { type: 'text', url: '', name: '' };
+    selectModalFormat('text');
+    resetModalMediaPreviews();
+    document.getElementById('questionModal').style.display = 'flex';
+}
+
+function openEditQuestionModal(idx) {
+    const q = questionsList[idx];
+    if (!q) return;
+
+    document.getElementById('modalEditIndex').value = idx;
+    document.getElementById('modalTitle').innerHTML = `<span>✏️</span> Chỉnh sửa câu hỏi #${q.stt || (idx + 1)}`;
+    document.getElementById('modalStt').value = q.stt || (idx + 1);
+    document.getElementById('modalQuestionText').value = q.question || '';
+    document.getElementById('modalAnswer').value = q.answer || '';
+
+    const qType = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
+    modalMediaData = {
+        type: qType,
+        url: q.mediaUrl || '',
+        name: q.mediaName || ''
+    };
+
+    selectModalFormat(qType);
+    resetModalMediaPreviews();
+
+    if (qType === 'image' && q.mediaUrl) {
+        document.getElementById('modalImageUrlInput').value = q.mediaUrl.startsWith('data:') ? '' : q.mediaUrl;
+        showModalImagePreview(q.mediaUrl, q.mediaName || 'Hình ảnh đính kèm');
+    } else if (qType === 'video' && q.mediaUrl) {
+        document.getElementById('modalVideoUrlInput').value = q.mediaUrl.startsWith('data:') ? '' : q.mediaUrl;
+        showModalVideoPreview(q.mediaUrl, q.mediaName || 'Video đính kèm');
+    }
+
+    document.getElementById('questionModal').style.display = 'flex';
+}
+
+function openEditModalForCurrentQuestion() {
+    openEditQuestionModal(currentQuestionIndex);
+}
+
+function closeQuestionModal() {
+    const modal = document.getElementById('questionModal');
+    if (modal) modal.style.display = 'none';
+    resetModalMediaPreviews();
+}
+
+function resetModalMediaPreviews() {
+    const imgBox = document.getElementById('modalImagePreviewBox');
+    if (imgBox) imgBox.style.display = 'none';
+    const imgPrev = document.getElementById('modalImagePreview');
+    if (imgPrev) imgPrev.src = '';
+    const imgInput = document.getElementById('modalImageUrlInput');
+    if (imgInput) imgInput.value = '';
+
+    const vidBox = document.getElementById('modalVideoPreviewBox');
+    if (vidBox) vidBox.style.display = 'none';
+    const vid = document.getElementById('modalVideoPreview');
+    if (vid) {
+        vid.pause();
+        vid.src = '';
+        vid.style.display = 'none';
+    }
+    const frame = document.getElementById('modalFramePreview');
+    if (frame) {
+        frame.src = 'about:blank';
+        frame.style.display = 'none';
+    }
+    const vidInput = document.getElementById('modalVideoUrlInput');
+    if (vidInput) vidInput.value = '';
+}
+
+function handleModalImageUpload(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        modalMediaData.url = dataUrl;
+        modalMediaData.name = file.name;
+        showModalImagePreview(dataUrl, file.name);
+    };
+    reader.readAsDataURL(file);
+}
+
+function handleModalImageUrlInput(url) {
+    if (!url.trim()) return;
+    modalMediaData.url = url.trim();
+    modalMediaData.name = url.trim().split('/').pop().split('?')[0] || 'Image URL';
+    showModalImagePreview(modalMediaData.url, modalMediaData.name);
+}
+
+function showModalImagePreview(url, name) {
+    const box = document.getElementById('modalImagePreviewBox');
+    const img = document.getElementById('modalImagePreview');
+    const info = document.getElementById('modalImageInfo');
+    if (box) box.style.display = 'flex';
+    if (img) img.src = url;
+    if (info) info.textContent = `Tên file: ${name}`;
+}
+
+function handleModalVideoUpload(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        modalMediaData.url = dataUrl;
+        modalMediaData.name = file.name;
+        showModalVideoPreview(dataUrl, file.name);
+    };
+    reader.readAsDataURL(file);
+}
+
+function handleModalVideoUrlInput(url) {
+    if (!url.trim()) return;
+    modalMediaData.url = url.trim();
+    modalMediaData.name = url.trim();
+    showModalVideoPreview(modalMediaData.url, 'Video link');
+}
+
+function showModalVideoPreview(url, name) {
+    const box = document.getElementById('modalVideoPreviewBox');
+    const vid = document.getElementById('modalVideoPreview');
+    const frame = document.getElementById('modalFramePreview');
+    const info = document.getElementById('modalVideoInfo');
+
+    if (box) box.style.display = 'flex';
+    if (info) info.textContent = `Video: ${name}`;
+
+    const isStreamable = url.includes('streamable.com');
+    const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+
+    if (isStreamable || isYouTube) {
+        if (vid) {
+            vid.pause();
+            vid.style.display = 'none';
+        }
+        if (frame) {
+            frame.style.display = 'block';
+            let embedUrl = url;
+            if (isStreamable) embedUrl = parseStreamableUrl(url);
+            else if (isYouTube) embedUrl = parseYouTubeEmbedUrl(url);
+            frame.src = embedUrl;
+        }
+    } else {
+        if (frame) frame.style.display = 'none';
+        if (vid) {
+            vid.style.display = 'block';
+            vid.src = url;
+        }
+    }
+}
+
+function removeModalMedia() {
+    modalMediaData.url = '';
+    modalMediaData.name = '';
+    resetModalMediaPreviews();
+    showToast("Đã gỡ media.");
+}
+
+function saveQuestionModal(autoShowFull) {
+    const editIdx = parseInt(document.getElementById('modalEditIndex').value, 10);
+    const stt = parseInt(document.getElementById('modalStt').value, 10) || 1;
+    const questionText = document.getElementById('modalQuestionText').value.trim();
+    const answerText = document.getElementById('modalAnswer').value.trim();
+
+    if (!questionText) {
+        showToast("⚠️ Vui lòng nhập nội dung câu hỏi!");
+        return;
+    }
+
+    const questionObj = {
+        stt: stt,
+        type: modalMediaData.type,
+        question: questionText,
+        answer: answerText,
+        mediaUrl: (modalMediaData.type !== 'text' ? modalMediaData.url : ''),
+        mediaName: (modalMediaData.type !== 'text' ? modalMediaData.name : '')
+    };
+
+    let targetIndex = editIdx;
+    if (editIdx >= 0 && editIdx < questionsList.length) {
+        questionsList[editIdx] = questionObj;
+        targetIndex = editIdx;
+        showToast(`✅ Đã cập nhật câu hỏi #${stt}!`);
+    } else {
+        questionsList.push(questionObj);
+        targetIndex = questionsList.length - 1;
+        showToast(`✅ Đã thêm câu hỏi mới #${stt}!`);
+    }
+
+    saveAndBroadcastQuestions();
+    closeQuestionModal();
+
+    if (autoShowFull) {
+        showCurrentQuestionMedia(targetIndex);
+    }
+}
+
+
+/* =====================================================
+   EXCEL & CSV & JSON IMPORT / EXPORT
 ===================================================== */
 function handleExcelUpload(file) {
     if (!file) return;
@@ -1835,10 +3394,12 @@ function parseRawRows(rawRows) {
         const row = rawRows[i];
         if (!row || row.length === 0) continue;
 
-        // Try to identify STT, Question, Answer columns
         let stt = i + 1;
         let question = '';
         let answer = '';
+        let type = 'text';
+        let mediaUrl = '';
+        let mediaName = '';
 
         if (row.length === 1) {
             question = String(row[0]).trim();
@@ -1850,10 +3411,32 @@ function parseRawRows(rawRows) {
             stt = parseInt(row[0], 10) || (i + 1);
             question = String(row[1] || '').trim();
             answer = String(row[2] || '').trim();
+
+            // Detect format or media in remaining columns
+            for (let c = 3; c < row.length; c++) {
+                const val = String(row[c] || '').trim();
+                if (!val) continue;
+
+                if (val.match(/^https?:\/\//i) || val.match(/\.(png|jpg|jpeg|webp|gif|mp4|webm)/i) || val.includes('streamable') || val.includes('youtube')) {
+                    mediaUrl = val;
+                    if (val.match(/\.(mp4|webm)/i) || val.includes('streamable') || val.includes('youtube')) {
+                        type = 'video';
+                        mediaName = 'video_clip';
+                    } else {
+                        type = 'image';
+                        mediaName = 'image_file';
+                    }
+                } else if (['text', 'image', 'video', 'ảnh', 'hình ảnh', 'chữ', 'văn bản'].includes(val.toLowerCase())) {
+                    const lower = val.toLowerCase();
+                    if (lower === 'image' || lower === 'ảnh' || lower === 'hình ảnh') type = 'image';
+                    else if (lower === 'video') type = 'video';
+                    else type = 'text';
+                }
+            }
         }
 
         if (question && question.length > 0 && !question.toLowerCase().startsWith('câu hỏi (đã')) {
-            parsedQuestions.push({ stt, question, answer });
+            parsedQuestions.push({ stt, type, question, answer, mediaUrl, mediaName });
         }
     }
 
@@ -1861,13 +3444,7 @@ function parseRawRows(rawRows) {
         questionsList = parsedQuestions;
         currentQuestionIndex = 0;
         gameState.currentQuestionIndex = 0;
-        try {
-            localStorage.setItem("attack25_questions", JSON.stringify(questionsList));
-        } catch (e) {}
-
-        renderQuestion();
-        broadcastQuestions();
-        broadcastState("questions_updated");
+        saveAndBroadcastQuestions();
         showToast(`✅ Đã nhập thành công ${parsedQuestions.length} câu hỏi từ Excel!`);
     } else {
         showToast("Không tìm thấy câu hỏi hợp lệ trong file Excel.");
@@ -1878,6 +3455,101 @@ function parseCSVText(csvText) {
     const lines = csvText.split(/\r?\n/);
     const rawRows = lines.map(line => line.split(','));
     parseRawRows(rawRows);
+}
+
+function exportQuestionsToExcel() {
+    if (!questionsList || questionsList.length === 0) {
+        showToast("⚠️ Không có câu hỏi để xuất!");
+        return;
+    }
+
+    if (typeof XLSX === 'undefined') {
+        showToast("⚠️ Thư viện XLSX chưa tải xong.");
+        return;
+    }
+
+    const data = [
+        ["STT", "Định dạng", "Nội dung câu hỏi", "Đáp án", "Media Link / File"]
+    ];
+
+    questionsList.forEach((q, idx) => {
+        const stt = q.stt || (idx + 1);
+        const t = q.type || (q.mediaUrl ? (q.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text');
+        data.push([
+            stt,
+            t === 'image' ? 'Hình ảnh' : (t === 'video' ? 'Video' : 'Văn bản'),
+            q.question || '',
+            q.answer || '',
+            q.mediaUrl && !q.mediaUrl.startsWith('data:') ? q.mediaUrl : (q.mediaName || '')
+        ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Questions");
+    XLSX.writeFile(wb, "Attack25_Questions_Database.xlsx");
+    showToast("💾 Đã xuất file Excel câu hỏi thành công!");
+}
+
+function exportQuestionsJSON() {
+    if (!questionsList || questionsList.length === 0) {
+        showToast("⚠️ Không có câu hỏi để xuất!");
+        return;
+    }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(questionsList, null, 2));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", "Attack25_Questions_Database.json");
+    dlAnchorElem.click();
+    showToast("💾 Đã xuất file JSON câu hỏi đầy đủ (kèm Media)!");
+}
+
+function importQuestionsJSON(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (Array.isArray(data) && data.length > 0) {
+                questionsList = data.map((item, idx) => ({
+                    stt: item.stt || (idx + 1),
+                    type: item.type || (item.mediaUrl ? (item.mediaUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image') : 'text'),
+                    question: item.question || '',
+                    answer: item.answer || '',
+                    mediaUrl: item.mediaUrl || '',
+                    mediaName: item.mediaName || ''
+                }));
+                currentQuestionIndex = 0;
+                gameState.currentQuestionIndex = 0;
+                saveAndBroadcastQuestions();
+                showToast(`✅ Đã nhập thành công ${data.length} câu hỏi từ file JSON!`);
+            } else {
+                showToast("⚠️ File JSON không chứa danh sách câu hỏi hợp lệ.");
+            }
+        } catch (err) {
+            showToast("Lỗi khi đọc file JSON: " + err.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function parseYouTubeEmbedUrl(url) {
+    if (!url) return '';
+    const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    if (ytMatch && ytMatch[1]) {
+        return `https://www.youtube-nocookie.com/embed/${ytMatch[1]}`;
+    }
+    return url;
 }
 
 // Drag and drop setup
@@ -2873,6 +4545,8 @@ function renderAll() {
     renderPanels();
     renderBuzzerUI();
     updateSoundboardVolumeUI(gameState.soundVolume !== undefined ? gameState.soundVolume : 100);
+    renderDatabaseTable();
+    updateTopbarMediaStatus();
 }
 
 

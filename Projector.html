@@ -509,6 +509,106 @@ img {
     50% { transform: translateX(-50%) translateY(-6px); }
 }
 
+/* =====================================================
+   FULL-WINDOW QUESTION MEDIA OVERLAY (IMAGE / VIDEO)
+===================================================== */
+.projector-media-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1280px;
+    height: 720px;
+    z-index: 100;
+    background: rgba(3, 7, 18, 0.98);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    animation: overlayFadeIn 0.25s ease-out;
+}
+
+@keyframes overlayFadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.overlay-media-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 16px 20px 72px 20px;
+    box-sizing: border-box;
+}
+
+.overlay-media-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    background: #000;
+}
+
+.overlay-media-container video {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    background: #000;
+}
+
+.overlay-media-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.95);
+    background: #000;
+}
+
+.overlay-caption-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 14px 24px;
+    box-sizing: border-box;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.96) 0%, rgba(0, 0, 0, 0.85) 65%, rgba(0, 0, 0, 0) 100%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 10;
+}
+
+.overlay-badge {
+    background: #f59f00;
+    color: #000;
+    font-family: 'UTM Impact', Impact, sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    padding: 4px 16px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(245, 159, 0, 0.4);
+    flex-shrink: 0;
+}
+
+.overlay-question-text {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 </style>
 </head>
 
@@ -572,6 +672,20 @@ img {
         <div class="player-name player-2" id="player2">PLAYER 2</div>
         <div class="player-name player-3" id="player3">PLAYER 3</div>
         <div class="player-name player-4" id="player4">PLAYER 4</div>
+
+        <!-- LAYER 5: FULL-WINDOW QUESTION MEDIA OVERLAY (IMAGE / VIDEO) -->
+        <div class="projector-media-overlay" id="projectorMediaOverlay" style="display: none;">
+            <div class="overlay-media-container" id="overlayMediaContainer">
+                <img id="overlayImg" src="" alt="Media câu hỏi" style="display: none;">
+                <video id="overlayVid" controls playsinline style="display: none;"></video>
+                <iframe id="overlayFrame" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="display: none;"></iframe>
+            </div>
+            <!-- CAPTION BANNER -->
+            <div class="overlay-caption-bar" id="overlayCaptionBar">
+                <span class="overlay-badge" id="overlayBadge">CÂU HỎI 1</span>
+                <span class="overlay-question-text" id="overlayQText">Nội dung câu hỏi</span>
+            </div>
+        </div>
 
     </div>
 </div>
@@ -736,6 +850,10 @@ function setProjectorVolume(volPercent) {
                 audio.volume = currentVolume;
             } catch (e) {}
         });
+    }
+    const overlayVid = document.getElementById("overlayVid");
+    if (overlayVid) {
+        try { overlayVid.volume = currentVolume; } catch (e) {}
     }
 }
 
@@ -1072,6 +1190,116 @@ window.addEventListener('focus', () => {
 });
 
 /* =====================================================
+   FULL-WINDOW QUESTION MEDIA OVERLAY (IMAGE / VIDEO)
+===================================================== */
+let lastMediaPlayToken = null;
+
+function parseMediaEmbedUrl(rawUrl) {
+    if (!rawUrl || !rawUrl.trim()) return '';
+    const str = rawUrl.trim();
+
+    // Streamable
+    const sMatch = str.match(/streamable\.com\/(?:e\/)?([a-zA-Z0-9]+)/i);
+    if (sMatch && sMatch[1]) {
+        return `https://streamable.com/e/${sMatch[1]}`;
+    }
+
+    // YouTube
+    const ytMatch = str.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    if (ytMatch && ytMatch[1]) {
+        return `https://www.youtube-nocookie.com/embed/${ytMatch[1]}`;
+    }
+
+    return '';
+}
+
+function updateProjectorQuestionMedia(mediaState) {
+    const overlay = document.getElementById("projectorMediaOverlay");
+    const img = document.getElementById("overlayImg");
+    const vid = document.getElementById("overlayVid");
+    const frame = document.getElementById("overlayFrame");
+    const badge = document.getElementById("overlayBadge");
+    const qText = document.getElementById("overlayQText");
+
+    if (!overlay) return;
+
+    if (!mediaState || !mediaState.visible || !mediaState.url) {
+        overlay.style.display = "none";
+        if (vid) {
+            vid.pause();
+            vid.src = "";
+            vid.style.display = "none";
+        }
+        if (frame && frame.src !== "about:blank") {
+            frame.src = "about:blank";
+            frame.removeAttribute("data-src");
+            frame.style.display = "none";
+        }
+        if (img) {
+            img.src = "";
+            img.style.display = "none";
+        }
+        return;
+    }
+
+    // Show Full-Window Overlay
+    overlay.style.display = "flex";
+    if (badge) badge.textContent = `CÂU HỎI ${mediaState.questionStt || ''}`;
+    if (qText) qText.textContent = mediaState.questionText || '';
+
+    const rawUrl = mediaState.url;
+    const type = mediaState.type || (rawUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image');
+
+    const isNewToken = mediaState.playToken && mediaState.playToken !== lastMediaPlayToken;
+    if (isNewToken) {
+        lastMediaPlayToken = mediaState.playToken;
+    }
+
+    if (type === 'image') {
+        if (vid) { vid.pause(); vid.src = ''; vid.style.display = 'none'; }
+        if (frame) { frame.src = 'about:blank'; frame.removeAttribute('data-src'); frame.style.display = 'none'; }
+        if (img) {
+            img.style.display = 'block';
+            if (img.src !== rawUrl) {
+                img.src = rawUrl;
+            }
+        }
+    } else if (type === 'video') {
+        if (img) { img.src = ''; img.style.display = 'none'; }
+
+        const embedUrl = parseMediaEmbedUrl(rawUrl);
+        if (embedUrl) {
+            // Streamable or YouTube iframe
+            if (vid) { vid.pause(); vid.src = ''; vid.style.display = 'none'; }
+            if (frame) {
+                frame.style.display = 'block';
+                let targetSrc = embedUrl + (embedUrl.includes('?') ? '&' : '?') + 'autoplay=1&loop=0';
+                if (frame.getAttribute('data-src') !== targetSrc || isNewToken) {
+                    frame.src = targetSrc;
+                    frame.setAttribute('data-src', targetSrc);
+                }
+            }
+        } else {
+            // Direct video file (data:video/mp4, blob, or direct video file)
+            if (frame) { frame.src = 'about:blank'; frame.removeAttribute('data-src'); frame.style.display = 'none'; }
+            if (vid) {
+                vid.style.display = 'block';
+                if (vid.src !== rawUrl || isNewToken) {
+                    vid.src = rawUrl;
+                    vid.load();
+                }
+                vid.volume = currentVolume !== undefined ? currentVolume : 1.0;
+                if (mediaState.playing !== false) {
+                    vid.play().catch(e => console.log('Video autoplay error:', e));
+                } else {
+                    vid.pause();
+                }
+            }
+        }
+    }
+}
+
+/* =====================================================
    ÁP DỤNG GAME STATE TỪ CONTROLLER
 ===================================================== */
 function applyGameState(state) {
@@ -1147,6 +1375,11 @@ function applyGameState(state) {
     // 5. Cập nhật Âm lượng Soundboard (0 - 100%)
     if (state.soundVolume !== undefined) {
         setProjectorVolume(state.soundVolume);
+    }
+
+    // 6. Cập nhật Trình chiếu Media câu hỏi (Full Cửa Sổ)
+    if (state.questionMedia !== undefined) {
+        updateProjectorQuestionMedia(state.questionMedia);
     }
 }
 
