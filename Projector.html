@@ -255,7 +255,17 @@ img {
     object-fit: fill;
     transform: none;
     pointer-events: none;
-    transition: all 0.25s ease;
+}
+
+.default-panel img.panel-img-base {
+    z-index: 1;
+}
+
+.default-panel img.panel-img-fade {
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    will-change: opacity;
 }
 
 .default-panel.active {
@@ -1042,7 +1052,7 @@ function playSynthTone(type) {
 
 
 /* =====================================================
-   TẠO BẢNG 5 x 5
+   TẠO BẢNG 5 x 5 (HỖ TRỢ HIỆU ỨNG FADE 0.5S KHI ĐỔI MÀU / CHIẾM Ô OTHELLO)
 ===================================================== */
 const panelBoard = document.getElementById("panelBoard");
 const panelElements = {};
@@ -1058,20 +1068,39 @@ for (let row = 0; row < 5; row++) {
         panel.dataset.row = row + 1;
         panel.dataset.col = col + 1;
 
-        const image = document.createElement("img");
-        image.src = "DefaultPanel.png";
-        image.alt = "";
-        image.id = "panel-img-" + number;
+        // Lớp hình nền gốc (Base layer)
+        const baseImage = document.createElement("img");
+        baseImage.className = "panel-img-base";
+        baseImage.src = "DefaultPanel.png";
+        baseImage.alt = "";
+        baseImage.id = "panel-img-" + number;
+
+        // Lớp hình nền mờ dần 0.5s (Fade transition layer)
+        const fadeImage = document.createElement("img");
+        fadeImage.className = "panel-img-fade";
+        fadeImage.src = "DefaultPanel.png";
+        fadeImage.alt = "";
+        fadeImage.id = "panel-fade-" + number;
 
         const numberText = document.createElement("div");
         numberText.className = "panel-number";
         numberText.textContent = number;
 
-        panel.appendChild(image);
+        panel.appendChild(baseImage);
+        panel.appendChild(fadeImage);
         panel.appendChild(numberText);
 
         panelBoard.appendChild(panel);
-        panelElements[number] = { container: panel, image: image, text: numberText };
+        panelElements[number] = {
+            container: panel,
+            baseImg: baseImage,
+            fadeImg: fadeImage,
+            image: baseImage,
+            text: numberText,
+            currentSrc: "DefaultPanel.png",
+            initialized: false,
+            fadeTimer: null
+        };
     }
 }
 
@@ -1491,23 +1520,57 @@ function applyGameState(state) {
             elObj.container.classList.toggle("active", isSelected);
             elObj.container.classList.toggle("used", isUsed);
 
-            if (panelData.color) {
-                const colorMap = {
-                    red: "RedPanel.png",
-                    green: "GreenPanel.png",
-                    white: "WhitePanel.png",
-                    blue: "BluePanel.png"
-                };
-                elObj.image.src = colorMap[panelData.color] || "DefaultPanel.png";
+            const colorMap = {
+                red: "RedPanel.png",
+                green: "GreenPanel.png",
+                white: "WhitePanel.png",
+                blue: "BluePanel.png"
+            };
+            const targetSrc = panelData.color ? (colorMap[panelData.color] || "DefaultPanel.png") : "DefaultPanel.png";
 
+            if (panelData.color) {
                 if (state.hiddenColors && state.hiddenColors[panelData.color]) {
                     elObj.container.classList.add("color-hidden");
                 } else {
                     elObj.container.classList.remove("color-hidden");
                 }
             } else {
-                elObj.image.src = "DefaultPanel.png";
                 elObj.container.classList.remove("color-hidden");
+            }
+
+            if (!elObj.initialized) {
+                elObj.baseImg.src = targetSrc;
+                elObj.fadeImg.src = targetSrc;
+                elObj.fadeImg.style.transition = 'none';
+                elObj.fadeImg.style.opacity = '0';
+                elObj.currentSrc = targetSrc;
+                elObj.initialized = true;
+            } else if (elObj.currentSrc !== targetSrc) {
+                // Hiệu ứng Fade 0.5s mượt mà khi đổi màu / cướp ô theo luật Othello
+                if (elObj.fadeTimer) {
+                    clearTimeout(elObj.fadeTimer);
+                    elObj.fadeTimer = null;
+                }
+
+                elObj.fadeImg.src = targetSrc;
+                elObj.fadeImg.style.transition = 'none';
+                elObj.fadeImg.style.opacity = '0';
+
+                // Bắt buộc trình duyệt reflow layout để nhận opacity 0 trước khi transition
+                void elObj.fadeImg.offsetWidth;
+
+                // Fade dần sang màu người chiếm với duration 0.5s
+                elObj.fadeImg.style.transition = 'opacity 0.5s ease-in-out';
+                elObj.fadeImg.style.opacity = '1';
+
+                elObj.currentSrc = targetSrc;
+
+                elObj.fadeTimer = setTimeout(() => {
+                    elObj.baseImg.src = targetSrc;
+                    elObj.fadeImg.style.transition = 'none';
+                    elObj.fadeImg.style.opacity = '0';
+                    elObj.fadeTimer = null;
+                }, 500);
             }
         });
 
