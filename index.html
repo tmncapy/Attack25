@@ -245,6 +245,11 @@
                 const data = await res.json();
 
                 if (data && data.success) {
+                    try {
+                        localStorage.setItem('attack25_active_roomid', roomId);
+                        localStorage.setItem('attack25_active_auth', auth);
+                    } catch (e) {}
+
                     let page = 'Host.html';
                     if (role === 'player1') page = 'player1.html';
                     if (role === 'player2') page = 'player2.html';

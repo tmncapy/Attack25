@@ -17,15 +17,19 @@
 <script>
     (function checkProjectorRoom() {
         const urlParams = new URLSearchParams(window.location.search);
-        const roomId = urlParams.get('roomid');
+        let roomId = urlParams.get('roomid') || urlParams.get('roomId') || urlParams.get('room');
+        const isPreview = urlParams.get('preview') === '1';
+
         if (!roomId) {
-            document.addEventListener('DOMContentLoaded', function () {
-                const overlay = document.createElement('div');
-                overlay.id = 'noRoomOverlay';
-                overlay.style.cssText = 'position:fixed; inset:0; background:#0b0f17; z-index:999999; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#ff6b6b; font-size:28px; font-weight:bold; padding:20px; font-family:sans-serif;';
-                overlay.innerHTML = '<div style="font-size:60px; margin-bottom:16px;">⚠️</div><div>Vui lòng nhập tham số ?roomid=Mã phòng trên URL</div>';
-                document.body.appendChild(overlay);
-            });
+            try {
+                roomId = localStorage.getItem('attack25_active_roomid') || '123456';
+            } catch (e) {
+                roomId = '123456';
+            }
+        }
+
+        if (window.Attack25Sync && typeof Attack25Sync.setRoomId === 'function') {
+            Attack25Sync.setRoomId(roomId);
         }
     })();
 

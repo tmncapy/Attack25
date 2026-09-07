@@ -12,8 +12,14 @@
     const KEY_HOST = "attack25_ws_server_host";
 
     const urlParams = new URLSearchParams(window.location.search);
-    let currentRoomId = urlParams.get('roomid') || '123456';
+    let currentRoomId = urlParams.get('roomid') || urlParams.get('roomId') || urlParams.get('room') || '';
+    if (!currentRoomId) {
+        try { currentRoomId = localStorage.getItem('attack25_active_roomid') || '123456'; } catch (e) { currentRoomId = '123456'; }
+    }
     let currentAuth = urlParams.get('auth') || '';
+    if (!currentAuth) {
+        try { currentAuth = localStorage.getItem('attack25_active_auth') || ''; } catch (e) { currentAuth = ''; }
+    }
 
     const instanceId =
         (window.crypto && crypto.randomUUID)
@@ -26,6 +32,7 @@
     let ws = null;
     let reconnectTimer = null;
     let reconnecting = false;
+    let failedManualAttempts = 0;
 
     let manualHost = "";
 
@@ -91,13 +98,13 @@
             .replace(/^https?:\/\//i, "")
             .replace(/^wss?:\/\//i, "")
             .replace(/\/+$/, "")
-            .replace(/\/ws$/i, "");
+            .replace(/\/ws(\?.*)?$/i, "");
     }
 
     function getWebSocketUrl() {
         let host = normalizeHost(manualHost);
 
-        if (!host && window.location.protocol !== "file:") {
+        if (!host && window.location.protocol.startsWith("http")) {
             host = window.location.host;
         }
 
@@ -105,8 +112,10 @@
             host = "localhost:3000";
         }
 
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        return protocol + "//" + host + "/ws";
+        const isHttps = window.location.protocol === "https:" || (typeof location !== 'undefined' && location.origin.startsWith('https'));
+        const protocol = isHttps ? "wss:" : "ws:";
+        const qAuth = currentAuth ? "&auth=" + encodeURIComponent(currentAuth) : "";
+        return protocol + "//" + host + "/ws?roomid=" + encodeURIComponent(currentRoomId) + qAuth;
     }
 
     /* =========================================================
@@ -256,12 +265,13 @@
         } catch (error) {
             ws = null;
             emitConnection(false, url);
-            scheduleReconnect();
+            handleConnectionFailure();
             return;
         }
 
         ws.onopen = function () {
             reconnecting = false;
+            failedManualAttempts = 0;
             emitConnection(true, url);
 
             // Request state for current room on connect
@@ -281,7 +291,9 @@
             } catch (error) {}
         };
 
-        ws.onerror = function () {};
+        ws.onerror = function () {
+            handleConnectionFailure();
+        };
 
         ws.onclose = function () {
             ws = null;
@@ -291,12 +303,24 @@
         };
     }
 
+    function handleConnectionFailure() {
+        if (manualHost) {
+            failedManualAttempts++;
+            if (failedManualAttempts >= 2) {
+                console.warn("Manual host unreachable, falling back to window.location.host");
+                manualHost = "";
+                failedManualAttempts = 0;
+                try { localStorage.removeItem(KEY_HOST); } catch (e) {}
+            }
+        }
+    }
+
     function scheduleReconnect() {
         if (reconnectTimer) return;
         reconnectTimer = setTimeout(function () {
             reconnectTimer = null;
             connect();
-        }, 2500);
+        }, 2000);
     }
 
     /* =========================================================
@@ -306,8 +330,15 @@
     window.Attack25Sync = {
         setRoomId: function (roomId, auth) {
             if (roomId) {
+                const oldRoom = currentRoomId;
                 currentRoomId = String(roomId).trim();
                 if (auth !== undefined) currentAuth = String(auth).trim();
+                
+                try {
+                    localStorage.setItem('attack25_active_roomid', currentRoomId);
+                    if (currentAuth) localStorage.setItem('attack25_active_auth', currentAuth);
+                } catch (e) {}
+
                 initBroadcastChannel();
 
                 try {
@@ -317,7 +348,16 @@
                     }
                 } catch (e) {}
 
-                if (ws && ws.readyState === WebSocket.OPEN) {
+                if (oldRoom !== currentRoomId) {
+                    if (ws) {
+                        try {
+                            ws.onclose = null;
+                            ws.close();
+                        } catch (e) {}
+                        ws = null;
+                    }
+                    connect();
+                } else if (ws && ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({
                         channel: CHANNEL_BASE,
                         source: instanceId,

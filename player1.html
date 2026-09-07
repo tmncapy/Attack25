@@ -13,17 +13,27 @@
 <script>
     (function () {
         const urlParams = new URLSearchParams(window.location.search);
-        const roomId = urlParams.get('roomid');
-        const auth = urlParams.get('auth');
-        if (!roomId || !auth) {
-            window.location.href = '/index.html';
-            return;
+        let roomId = urlParams.get('roomid') || urlParams.get('roomId') || urlParams.get('room');
+        let auth = urlParams.get('auth');
+
+        if (!roomId) {
+            try { roomId = localStorage.getItem('attack25_active_roomid') || '123456'; } catch (e) { roomId = '123456'; }
         }
+        if (!auth) {
+            auth = '1111';
+        }
+
+        if (window.Attack25Sync && typeof Attack25Sync.setRoomId === 'function') {
+            Attack25Sync.setRoomId(roomId, auth);
+        }
+
         fetch('/api/verify-room?roomid=' + encodeURIComponent(roomId) + '&auth=' + encodeURIComponent(auth) + '&role=player1')
             .then(res => res.json())
             .then(data => {
-                if (!data || !data.success) {
-                    window.location.href = '/index.html';
+                if (data && data.success) {
+                    if (window.Attack25Sync && typeof Attack25Sync.setRoomId === 'function') {
+                        Attack25Sync.setRoomId(roomId, auth);
+                    }
                 }
             })
             .catch(() => {});

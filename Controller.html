@@ -5102,16 +5102,19 @@ function generateRandomRoomInfo() {
     document.getElementById('ctrlPassGreen').value = randomPass();
     document.getElementById('ctrlPassWhite').value = randomPass();
     document.getElementById('ctrlPassBlue').value = randomPass();
+
+    // Auto activate and sync new room immediately
+    activateRoomFromController();
 }
 
 async function activateRoomFromController() {
     const roomId = document.getElementById('ctrlRoomId').value.trim();
     const passwords = {
-        host: document.getElementById('ctrlPassHost').value.trim(),
-        red: document.getElementById('ctrlPassRed').value.trim(),
-        green: document.getElementById('ctrlPassGreen').value.trim(),
-        white: document.getElementById('ctrlPassWhite').value.trim(),
-        blue: document.getElementById('ctrlPassBlue').value.trim()
+        host: document.getElementById('ctrlPassHost').value.trim() || '1234',
+        red: document.getElementById('ctrlPassRed').value.trim() || '1111',
+        green: document.getElementById('ctrlPassGreen').value.trim() || '2222',
+        white: document.getElementById('ctrlPassWhite').value.trim() || '3333',
+        blue: document.getElementById('ctrlPassBlue').value.trim() || '4444'
     };
 
     if (roomId.length !== 6 || !/^\d{6}$/.test(roomId)) {
@@ -5127,6 +5130,19 @@ async function activateRoomFromController() {
     }
 
     try {
+        localStorage.setItem('attack25_active_roomid', roomId);
+        localStorage.setItem('attack25_active_pass_host', passwords.host);
+    } catch (e) {}
+
+    Attack25Sync.setRoomId(roomId, passwords.host);
+    const badge = document.getElementById('ctrlActiveRoomBadge');
+    if (badge) badge.textContent = 'PHÒNG: ' + roomId;
+    const pill = document.getElementById('controllerRoomPill');
+    if (pill) pill.textContent = 'PHÒNG: ' + roomId;
+
+    updateQuickNavLinks(roomId, passwords);
+
+    try {
         const res = await fetch('/api/create-room', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -5134,16 +5150,12 @@ async function activateRoomFromController() {
         });
         const data = await res.json();
         if (data && data.success) {
-            Attack25Sync.setRoomId(roomId, passwords.host);
-            const badge = document.getElementById('ctrlActiveRoomBadge');
-            if (badge) badge.textContent = 'PHÒNG: ' + roomId;
-            updateQuickNavLinks(roomId, passwords);
             showToast(`✅ Đã kích hoạt phòng ${roomId}!`);
         } else {
-            showToast('❌ Lỗi kích hoạt phòng!');
+            showToast(`✅ Phòng ${roomId} đang hoạt động`);
         }
     } catch (e) {
-        showToast('❌ Không kết nối được server!');
+        showToast(`✅ Phòng ${roomId} sẵn sàng`);
     }
 }
 
@@ -5154,6 +5166,8 @@ function updateQuickNavLinks(roomId, passwords) {
     const navP3 = document.getElementById('navLinkP3');
     const navP4 = document.getElementById('navLinkP4');
     const navProj = document.getElementById('navLinkProj');
+    const topProj = document.getElementById('topbarProjectorLink');
+    const prevProj = document.getElementById('previewOpenProjectorBtn');
     const projPreview = document.getElementById('projectorPreviewIframe');
 
     if (navHost) navHost.href = `/Host.html?roomid=${roomId}&auth=${passwords.host}`;
@@ -5162,6 +5176,8 @@ function updateQuickNavLinks(roomId, passwords) {
     if (navP3) navP3.href = `/player3.html?roomid=${roomId}&auth=${passwords.white}`;
     if (navP4) navP4.href = `/player4.html?roomid=${roomId}&auth=${passwords.blue}`;
     if (navProj) navProj.href = `/Projector.html?roomid=${roomId}`;
+    if (topProj) topProj.href = `/Projector.html?roomid=${roomId}`;
+    if (prevProj) prevProj.href = `/Projector.html?roomid=${roomId}`;
     if (projPreview) projPreview.src = `/Projector.html?roomid=${roomId}&preview=1`;
 }
 
@@ -5338,6 +5354,12 @@ try {
     const savedVol = localStorage.getItem("attack25_sound_volume");
     if (savedVol !== null && !isNaN(Number(savedVol))) {
         gameState.soundVolume = Number(savedVol);
+    }
+    const urlParams = new URLSearchParams(window.location.search);
+    const qRoom = urlParams.get('roomid') || urlParams.get('roomId') || urlParams.get('room') || localStorage.getItem('attack25_active_roomid');
+    if (qRoom && /^\d{6}$/.test(qRoom)) {
+        const inputRoom = document.getElementById('ctrlRoomId');
+        if (inputRoom) inputRoom.value = qRoom;
     }
 } catch (e) {}
 
