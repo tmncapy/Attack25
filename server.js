@@ -20,6 +20,7 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 app.use('/uploads', express.static(uploadsDir));
+app.use('/SFX', express.static(path.join(__dirname, 'SFX')));
 
 // Upload media endpoint for local videos and slideshow images
 app.post('/api/upload-media', (req, res) => {
