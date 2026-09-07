@@ -2256,32 +2256,41 @@ body * {
                     <!-- SECTION 2: SAMPLE SFX BOARD -->
                     <div style="background: #111827; padding: 10px; border-radius: 6px; border: 1.5px solid #374151;">
                         <div style="font-size: 11px; font-weight: bold; margin-bottom: 6px; color: #10b981; display: flex; align-items: center; justify-content: space-between;">
-                            <span>🎼 BẢNG SFX MẪU (THƯ MỤC SFX)</span>
-                            <button class="button button-red" onclick="triggerBroadcastSound('stop')" style="height: 18px; font-size: 9px; padding: 0 6px;">⏹️ Dừng Tất Cả</button>
+                            <span>🎼 BẢNG SFX (THƯ MỤC SFX)</span>
+                            <button class="button button-red" onclick="triggerBroadcastSound('stop')" style="height: 20px; font-size: 10px; padding: 0 8px;">⏹️ Dừng Tất Cả</button>
                         </div>
                         
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 4px;">
-                            <button class="button button-red" onclick="triggerBroadcastSound('SFX/red.wav')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Chuông Đỏ">🔔 Chuông Đỏ</button>
-                            <button class="button button-green" onclick="triggerBroadcastSound('SFX/green.wav')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Chuông Xanh Lá">🔔 Chuông Xanh</button>
-                            <button class="button button-white" onclick="triggerBroadcastSound('SFX/white.wav')" style="height: 24px; font-size: 10px; padding: 0 4px; color: #000;" title="Chuông Trắng">🔔 Chuông Trắng</button>
-                            <button class="button button-blue" onclick="triggerBroadcastSound('SFX/blue.wav')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Chuông Xanh Dương">🔔 Chuông Lam</button>
+                        <!-- 4 Chuông thí sinh (wav) -->
+                        <div style="font-size: 9px; color: #9ca3af; font-weight: bold; margin-bottom: 3px;">CHUÔNG THÍ SINH</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
+                            <button class="button button-red" onclick="triggerBroadcastSound('sfx/red.wav')" style="height: 25px; font-size: 10px; padding: 0 4px;" title="sfx/red.wav">🔔 Chuông Đỏ (red.wav)</button>
+                            <button class="button button-green" onclick="triggerBroadcastSound('sfx/green.wav')" style="height: 25px; font-size: 10px; padding: 0 4px;" title="sfx/green.wav">🔔 Chuông Xanh Lá (green.wav)</button>
+                            <button class="button button-white" onclick="triggerBroadcastSound('sfx/white.wav')" style="height: 25px; font-size: 10px; padding: 0 4px; color: #000;" title="sfx/white.wav">🔔 Chuông Trắng (white.wav)</button>
+                            <button class="button button-blue" onclick="triggerBroadcastSound('sfx/blue.wav')" style="height: 25px; font-size: 10px; padding: 0 4px;" title="sfx/blue.wav">🔔 Chuông Xanh Dương (blue.wav)</button>
                         </div>
 
+                        <!-- Hiệu ứng trong trận (In-Game SFX) -->
+                        <div style="font-size: 9px; color: #9ca3af; font-weight: bold; margin-bottom: 3px;">HIỆU ỨNG TRẬN ĐẤU</div>
+                        <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px;">
+                            <button class="button button-orange" onclick="triggerBroadcastSound('sfx/pqa25-signal.mp3')" style="height: 25px; font-size: 10px; padding: 0 6px;" title="sfx/pqa25-signal.mp3">🔊 Tín hiệu câu hỏi (pqa25-signal.mp3)</button>
+                            <button class="button button-orange" onclick="triggerBroadcastSound('sfx/pqa25-time.mp3')" style="height: 25px; font-size: 10px; padding: 0 6px;" title="sfx/pqa25-time.mp3">⏰ Suy nghĩ 5s (pqa25-time.mp3)</button>
+                            <button class="button button-red" onclick="triggerBroadcastSound('sfx/pqa25-wrong.mp3')" style="height: 25px; font-size: 10px; padding: 0 6px;" title="sfx/pqa25-wrong.mp3">❌ Sai / Khóa chuông (pqa25-wrong.mp3)</button>
+                            <button class="button button-gold" onclick="triggerBroadcastSound('sfx/pqa25-attackchance.mp3')" style="height: 25px; font-size: 10px; padding: 0 6px; color: #000;" title="sfx/pqa25-attackchance.mp3">⚡ Attack Chance! (pqa25-attackchance.mp3)</button>
+                        </div>
+                        
+                        <!-- Chung kết (Final Run) -->
+                        <div style="border-top: 1px solid #374151; margin: 5px 0 3px 0; padding-top: 5px; font-size: 9px; color: #9ca3af; font-weight: bold; text-align: center;">CHUNG KẾT (FINAL RUN)</div>
+                        <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px;">
+                            <button class="button button-orange" onclick="triggerBroadcastSound('sfx/pqa25-finaltime.mp3')" style="height: 25px; font-size: 10px; padding: 0 6px;" title="sfx/pqa25-finaltime.mp3">⏱️ Final Time 1 (pqa25-finaltime.mp3)</button>
+                            <button class="button button-orange" onclick="triggerBroadcastSound('sfx/pqa25-finaltime2.mp3')" style="height: 25px; font-size: 10px; padding: 0 6px;" title="sfx/pqa25-finaltime2.mp3">⏱️ Final Time 2 (pqa25-finaltime2.mp3)</button>
+                            <button class="button button-red" onclick="triggerBroadcastSound('sfx/pqa25-finalfail.mp3')" style="height: 25px; font-size: 10px; padding: 0 6px;" title="sfx/pqa25-finalfail.mp3">💥 Final Thất bại (pqa25-finalfail.mp3)</button>
+                        </div>
+                        
+                        <!-- Nhạc nền & Intro (BGM / Opening) -->
+                        <div style="border-top: 1px solid #374151; margin: 5px 0 3px 0; padding-top: 5px; font-size: 9px; color: #9ca3af; font-weight: bold; text-align: center;">NHẠC MỞ ĐẦU &amp; NHẠC CHỦ ĐỀ</div>
                         <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <button class="button button-orange" onclick="triggerBroadcastSound('SFX/pqa25-signal.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Âm thanh Tín hiệu câu hỏi">🔊 Tín hiệu câu hỏi</button>
-                            <button class="button button-orange" onclick="triggerBroadcastSound('SFX/pqa25-time.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Âm thanh Suy nghĩ 5 giây">⏰ Suy nghĩ 5s</button>
-                            <button class="button button-red" onclick="triggerBroadcastSound('SFX/pqa25-wrong.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Âm thanh Sai / Khóa chuông">❌ Sai / Khóa chuông</button>
-                            <button class="button button-gold" onclick="triggerBroadcastSound('SFX/pqa25-attackchance.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px; color: #000;" title="Attack Chance">⚡ Attack Chance!</button>
-                            
-                            <div style="border-top: 1px solid #374151; margin: 4px 0; padding-top: 4px; font-size: 9px; color: #9ca3af; font-weight: bold; text-align: center;">CHUNG KẾT (FINAL RUN)</div>
-                            
-                            <button class="button button-orange" onclick="triggerBroadcastSound('SFX/pqa25-finaltime.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Thời gian chung kết 1">⏱️ Final Time 1</button>
-                            <button class="button button-orange" onclick="triggerBroadcastSound('SFX/pqa25-finaltime2.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Thời gian chung kết 2">⏱️ Final Time 2</button>
-                            <button class="button button-red" onclick="triggerBroadcastSound('SFX/pqa25-finalfail.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px;" title="Chung kết Thất bại">💥 Final Thất bại</button>
-                            
-                            <div style="border-top: 1px solid #374151; margin: 4px 0; padding-top: 4px; font-size: 9px; color: #9ca3af; font-weight: bold; text-align: center;">NHẠC NỀN (BGM)</div>
-                            
-                            <button class="button button-blue" onclick="triggerBroadcastSound('SFX/PQA25-Theme.mp3')" style="height: 24px; font-size: 10px; padding: 0 4px; background: #4f46e5; border-color: #6366f1;" title="Nhạc chủ đề PQA25">🎵 Nhạc Chủ Đề</button>
+                            <button class="button button-purple" onclick="triggerBroadcastSound('sfx/intro VN.mp3')" style="height: 25px; font-size: 10px; padding: 0 6px; background: #9333ea; border-color: #a855f7;" title="sfx/intro VN.mp3">🎬 Intro VN (intro VN.mp3)</button>
+                            <button class="button button-blue" onclick="triggerBroadcastSound('sfx/PQA25-Theme.mp3')" style="height: 25px; font-size: 10px; padding: 0 6px; background: #4f46e5; border-color: #6366f1;" title="sfx/PQA25-Theme.mp3">🎵 Nhạc Chủ Đề (PQA25-Theme.mp3)</button>
                         </div>
                     </div>
                 </div>
