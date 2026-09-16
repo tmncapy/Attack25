@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attack 25 - Bảng Âm Thanh (Soundboard)</title>
+    <script src="socket.io.js"></script>
+    <script src="howler.js"></script>
+    <script src="sync-client.js"></script>
+    <style>
+        @font-face {
+            font-family: "UTM Impact";
+            src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: "UTM Avo";
+            src: local("UTM Avo"), local("UTMAvo"), url("UTM Avo.ttf") format("truetype");
+            font-display: swap;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: #070a12;
+            color: #f1f5f9;
+            font-family: "UTM Avo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            overflow-x: hidden;
+        }
+
+        /* HEADER & TOP BAR */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 16px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title h1 {
+            font-family: "UTM Impact", Impact, sans-serif;
+            font-size: 28px;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #f59f00, #ffc078);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(245, 159, 0, 0.3);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(47, 179, 68, 0.15);
+            border: 1px solid rgba(47, 179, 68, 0.4);
+            color: #4ade80;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #4ade80;
+            box-shadow: 0 0 8px #4ade80;
+        }
+
+        .top-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-broadcast {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .toggle-broadcast:hover {
+            border-color: #f59f00;
+        }
+
+        .toggle-broadcast input {
+            accent-color: #f59f00;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .master-volume {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .master-volume input[type="range"] {
+            width: 90px;
+            accent-color: #f59f00;
+        }
+
+        .btn-stop-all {
+            background: linear-gradient(135deg, #dc2626, #991b1b);
+            color: #ffffff;
+            border: 1px solid #ef4444;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: "UTM Impact", Impact, sans-serif;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-stop-all:hover {
+            transform: scale(1.04);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+        }
+
+        .btn-stop-all:active {
+            transform: scale(0.98);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #fff;
+        }
+
+        /* AUDIO VISUALIZER CANVAS */
+        .visualizer-container {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #visualizerCanvas {
+            width: 100%;
+            height: 60px;
+            border-radius: 6px;
+            background: #040711;
+        }
+
+        .visualizer-label {
+            position: absolute;
+            top: 16px;
+            left: 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 700;
+        }
+
+        /* SECTIONS & GRID LAYOUT */
+        .section-title {
+            font-family: "UTM Impact", Impact, sans-serif;
+            font-size: 18px;
+            letter-spacing: 0.5px;
+            color: #e2e8f0;
+            margin: 16px 0 12px 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent);
+            margin-left: 8px;
+        }
+
+        .sound-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        /* SOUND CARD */
+        .sound-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .sound-card:hover {
+            border-color: rgba(245, 159, 0, 0.4);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .sound-card.playing {
+            border-color: #f59f00;
+            box-shadow: 0 0 20px rgba(245, 159, 0, 0.35);
+            background: linear-gradient(145deg, #2a374e, #131d31);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .sound-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .sound-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .sound-filename {
+            font-size: 11px;
+            font-family: monospace;
+            color: #94a3b8;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            width: fit-content;
+        }
+
+        .hotkey-badge {
+            background: rgba(245, 159, 0, 0.2);
+            border: 1px solid rgba(245, 159, 0, 0.5);
+            color: #ffc078;
+            font-family: monospace;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        /* BUTTON CONTROLS INSIDE CARD */
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-play {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border: 1px solid #60a5fa;
+            color: #ffffff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-play:hover {
+            background: linear-gradient(135deg, #60a5fa, #2563eb);
+            box-shadow: 0 6px 14px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-play:active {
+            transform: scale(0.97);
+        }
+
+        .sound-card.playing .btn-play {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-color: #f87171;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        /* TEAM SPECIFIC PLAY BUTTON COLORS */
+        .sound-card.team-red .btn-play {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            border-color: #f87171;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+        }
+        .sound-card.team-green .btn-play {
+            background: linear-gradient(135deg, #22c55e, #15803d);
+            border-color: #4ade80;
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
+        }
+        .sound-card.team-white .btn-play {
+            background: linear-gradient(135deg, #f8fafc, #cbd5e1);
+            border-color: #ffffff;
+            color: #0f172a;
+            box-shadow: 0 4px 10px rgba(255, 255, 255, 0.3);
+        }
+        .sound-card.team-blue .btn-play {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-color: #60a5fa;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .card-footer-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #94a3b8;
+            padding-top: 4px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .loop-control {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .loop-control input {
+            accent-color: #f59f00;
+            cursor: pointer;
+        }
+
+        .card-volume {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-volume input[type="range"] {
+            width: 70px;
+            accent-color: #3b82f6;
+        }
+
+        /* EQUALIZER ANIMATION */
+        .eq-bars {
+            display: none;
+            align-items: flex-end;
+            gap: 2px;
+            height: 14px;
+        }
+
+        .sound-card.playing .eq-bars {
+            display: flex;
+        }
+
+        .eq-bar {
+            width: 3px;
+            background-color: #ffd43b;
+            border-radius: 1px;
+            animation: eqAnim 0.6s infinite ease-in-out alternate;
+        }
+
+        .eq-bar:nth-child(1) { height: 40%; animation-delay: 0.1s; }
+        .eq-bar:nth-child(2) { height: 100%; animation-delay: 0.3s; }
+        .eq-bar:nth-child(3) { height: 60%; animation-delay: 0.2s; }
+        .eq-bar:nth-child(4) { height: 80%; animation-delay: 0.4s; }
+
+        @keyframes eqAnim {
+            0% { height: 20%; }
+            100% { height: 100%; }
+        }
+
+        /* SHORTCUT HELPER FOOTER */
+        footer {
+            margin-top: auto;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 12px;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .shortcut-list {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .shortcut-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .kbd {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <header>
+        <div class="header-title">
+            <span style="font-size: 32px;">🎛️</span>
+            <div>
+                <h1>ATTACK 25 SOUNDBOARD</h1>
+                <div style="font-size: 12px; color: #94a3b8;">Bảng điều khiển âm thanh chương trình (Folder SFX/)</div>
+            </div>
+        </div>
+
+        <div class="top-controls">
+            <div class="status-badge" id="connStatus">
+                <span class="dot"></span>
+                <span id="connText">Đang kết nối WebSocket...</span>
+            </div>
+
+            <label class="toggle-broadcast">
+                <input type="checkbox" id="chkBroadcast" checked>
+                <span>🌐 Phát Đồng Bộ Toàn Hệ Thống</span>
+            </label>
+
+            <div class="master-volume">
+                <span>🔊 Volume</span>
+                <input type="range" id="masterVolume" min="0" max="100" value="100">
+                <span id="masterVolText">100%</span>
+            </div>
+
+            <button class="btn-stop-all" id="btnStopAll">
+                <span>🛑 DỪNG TẤT CẢ [Space]</span>
+            </button>
+
+            <div class="nav-links">
+                <a href="/Controller" class="nav-btn">🎛️ Controller</a>
+                <a href="/Host" class="nav-btn">🎙️ Host</a>
+                <a href="/Projector" class="nav-btn">🖥️ Projector</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- VISUALIZER CANVAS -->
+    <div class="visualizer-container">
+        <span class="visualizer-label">Sóng Âm Trực Tiếp (Web Audio Spectrum Visualizer)</span>
+        <canvas id="visualizerCanvas"></canvas>
+    </div>
+
+    <!-- MAIN SOUND GROUPS -->
+    <main>
+
+        <!-- 1. CHUÔNG THÍ SINH -->
+        <div class="section-title">🔔 1. TÍN HIỆU CHUÔNG THÍ SINH (PLAYER BUZZERS)</div>
+        <div class="sound-grid">
+
+            <!-- Red Player -->
+            <div class="sound-card team-red" id="card-red">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">🔴 Chuông Đội Đỏ (Player 1)</div>
+                        <div class="sound-filename">SFX/red.wav</div>
+                    </div>
+                    <div class="hotkey-badge">[1]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('red')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Sound</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-red">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-red" min="0" max="100" value="100" oninput="updateSoundVolume('red', this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Green Player -->
+            <div class="sound-card team-green" id="card-green">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">🟢 Chuông Đội Xanh Lá (Player 2)</div>
+                        <div class="sound-filename">SFX/green.wav</div>
+                    </div>
+                    <div class="hotkey-badge">[2]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('green')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Sound</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-green">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-green" min="0" max="100" value="100" oninput="updateSoundVolume('green', this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- White Player -->
+            <div class="sound-card team-white" id="card-white">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">⚪ Chuông Đội Trắng (Player 3)</div>
+                        <div class="sound-filename">SFX/white.wav</div>
+                    </div>
+                    <div class="hotkey-badge">[3]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('white')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Sound</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-white">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-white" min="0" max="100" value="100" oninput="updateSoundVolume('white', this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blue Player -->
+            <div class="sound-card team-blue" id="card-blue">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">🔵 Chuông Đội Xanh Dương (Player 4)</div>
+                        <div class="sound-filename">SFX/blue.wav</div>
+                    </div>
+                    <div class="hotkey-badge">[4]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('blue')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Sound</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-blue">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-blue" min="0" max="100" value="100" oninput="updateSoundVolume('blue', this.value)">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 2. NHẠC CHỦ ĐỀ & ATTACK CHANCE -->
+        <div class="section-title">🎵 2. NHẠC CHỦ ĐỀ & CƠ HỘI ATTACK</div>
+        <div class="sound-grid">
+
+            <!-- Attack 25 Theme -->
+            <div class="sound-card" id="card-theme">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">🎼 Nhạc Hiệu Attack 25 Main Theme</div>
+                        <div class="sound-filename">SFX/PQA25-Theme.mp3</div>
+                    </div>
+                    <div class="hotkey-badge">[T]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('theme')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Theme</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-theme">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-theme" min="0" max="100" value="100" oninput="updateSoundVolume('theme', this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attack Chance -->
+            <div class="sound-card" id="card-attackchance">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">⚡ Nhạc Cơ Hội Attack Chance</div>
+                        <div class="sound-filename">SFX/pqa25-attackchance.mp3</div>
+                    </div>
+                    <div class="hotkey-badge">[A]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('attackchance')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Attack Chance</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-attackchance">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-attackchance" min="0" max="100" value="100" oninput="updateSoundVolume('attackchance', this.value)">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 3. ĐỒNG HỒ & TÍN HIỆU -->
+        <div class="section-title">⏱️ 3. ĐỒNG HỒ SUY NGHĨ & TÍN HIỆU</div>
+        <div class="sound-grid">
+
+            <!-- Signal -->
+            <div class="sound-card" id="card-signal">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">🔔 Tín Hiệu Cho Phép Bấm Chuông</div>
+                        <div class="sound-filename">SFX/pqa25-signal.mp3</div>
+                    </div>
+                    <div class="hotkey-badge">[S]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('signal')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Signal</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-signal">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-signal" min="0" max="100" value="100" oninput="updateSoundVolume('signal', this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time -->
+            <div class="sound-card" id="card-time">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">⏱️ Nhạc Đếm Giờ Suy Nghĩ</div>
+                        <div class="sound-filename">SFX/pqa25-time.mp3</div>
+                    </div>
+                    <div class="hotkey-badge">[C]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('time')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Đếm Giờ</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-time">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-time" min="0" max="100" value="100" oninput="updateSoundVolume('time', this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Final Time 1 -->
+            <div class="sound-card" id="card-finaltime">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">⏳ Đồng Hồ Chung Kết 1</div>
+                        <div class="sound-filename">SFX/pqa25-finaltime.mp3</div>
+                    </div>
+                    <div class="hotkey-badge">[F]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('finaltime')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Final Time 1</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-finaltime">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-finaltime" min="0" max="100" value="100" oninput="updateSoundVolume('finaltime', this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Final Time 2 -->
+            <div class="sound-card" id="card-finaltime2">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">⌛ Đồng Hồ Chung Kết 2</div>
+                        <div class="sound-filename">SFX/pqa25-finaltime2.mp3</div>
+                    </div>
+                    <div class="hotkey-badge">[G]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('finaltime2')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Final Time 2</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-finaltime2">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-finaltime2" min="0" max="100" value="100" oninput="updateSoundVolume('finaltime2', this.value)">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 4. HIỆU ỨNG PHẠM QUY & KẾT THÚC -->
+        <div class="section-title">❌ 4. HIỆU ỨNG PHẠM QUY & KẾT THÚC</div>
+        <div class="sound-grid">
+
+            <!-- Wrong -->
+            <div class="sound-card" id="card-wrong">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">❌ Trả Lời Sai (Wrong Answer)</div>
+                        <div class="sound-filename">SFX/pqa25-wrong.mp3</div>
+                    </div>
+                    <div class="hotkey-badge">[W]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('wrong')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Sound Sai</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-wrong">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-wrong" min="0" max="100" value="100" oninput="updateSoundVolume('wrong', this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Final Fail -->
+            <div class="sound-card" id="card-finalfail">
+                <div class="card-header">
+                    <div class="sound-info">
+                        <div class="sound-title">💀 Thất Bại Chung Kết (Final Fail)</div>
+                        <div class="sound-filename">SFX/pqa25-finalfail.mp3</div>
+                    </div>
+                    <div class="hotkey-badge">[X]</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-play" onclick="triggerSound('finalfail')">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-label">Phát Final Fail</span>
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </button>
+                </div>
+                <div class="card-footer-controls">
+                    <label class="loop-control">
+                        <input type="checkbox" id="loop-finalfail">
+                        <span>Lặp</span>
+                    </label>
+                    <div class="card-volume">
+                        <span>🔊</span>
+                        <input type="range" id="vol-finalfail" min="0" max="100" value="100" oninput="updateSoundVolume('finalfail', this.value)">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER SHORTCUT REFERENCE -->
+    <footer>
+        <div style="font-weight: 700; color: #f8fafc;">Phím tắt thao tác nhanh (Hotkeys):</div>
+        <div class="shortcut-list">
+            <div class="shortcut-item"><span class="kbd">Space</span> Dừng tất cả</div>
+            <div class="shortcut-item"><span class="kbd">1</span> Đỏ</div>
+            <div class="shortcut-item"><span class="kbd">2</span> Xanh Lá</div>
+            <div class="shortcut-item"><span class="kbd">3</span> Trắng</div>
+            <div class="shortcut-item"><span class="kbd">4</span> Xanh Dương</div>
+            <div class="shortcut-item"><span class="kbd">T</span> Theme</div>
+            <div class="shortcut-item"><span class="kbd">A</span> Attack Chance</div>
+            <div class="shortcut-item"><span class="kbd">S</span> Signal</div>
+            <div class="shortcut-item"><span class="kbd">C</span> Clock</div>
+            <div class="shortcut-item"><span class="kbd">F</span> FinalTime 1</div>
+            <div class="shortcut-item"><span class="kbd">G</span> FinalTime 2</div>
+            <div class="shortcut-item"><span class="kbd">W</span> Wrong</div>
+            <div class="shortcut-item"><span class="kbd">X</span> Final Fail</div>
+        </div>
+    </footer>
+
+    <!-- SOUNDBOARD JAVASCRIPT LOGIC -->
+    <script>
+        // Sound Directory Configuration
+        const SOUND_DIR = "SFX/";
+
+        // 12 Audio Definitions from User Image
+        const soundDefinitions = {
+            'red': { title: 'Chuông Đội Đỏ', file: 'red.wav', key: '1' },
+            'green': { title: 'Chuông Đội Xanh Lá', file: 'green.wav', key: '2' },
+            'white': { title: 'Chuông Đội Trắng', file: 'white.wav', key: '3' },
+            'blue': { title: 'Chuông Đội Xanh Dương', file: 'blue.wav', key: '4' },
+
+            'theme': { title: 'Main Theme', file: 'PQA25-Theme.mp3', key: 't' },
+            'attackchance': { title: 'Attack Chance', file: 'pqa25-attackchance.mp3', key: 'a' },
+
+            'signal': { title: 'Signal Bấm Chuông', file: 'pqa25-signal.mp3', key: 's' },
+            'time': { title: 'Đồng Hồ Suy Nghĩ', file: 'pqa25-time.mp3', key: 'c' },
+            'finaltime': { title: 'Đồng Hồ Chung Kết 1', file: 'pqa25-finaltime.mp3', key: 'f' },
+            'finaltime2': { title: 'Đồng Hồ Chung Kết 2', file: 'pqa25-finaltime2.mp3', key: 'g' },
+
+            'wrong': { title: 'Trả Lời Sai', file: 'pqa25-wrong.mp3', key: 'w' },
+            'finalfail': { title: 'Thất Bại Chung Kết', file: 'pqa25-finalfail.mp3', key: 'x' }
+        };
+
+        // Active Audio Instance Storage & Web Audio Context
+        const activeAudios = {};
+        let audioCtx = null;
+        let masterAnalyser = null;
+        let masterGainNode = null;
+        let globalMasterVolume = 1.0;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                masterGainNode = audioCtx.createGain();
+                masterAnalyser = audioCtx.createAnalyser();
+                masterAnalyser.fftSize = 64;
+                masterGainNode.connect(masterAnalyser);
+                masterAnalyser.connect(audioCtx.destination);
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        // Initialize WebSocket Status & Listeners
+        window.addEventListener('DOMContentLoaded', () => {
+            initVisualizer();
+
+            if (window.Attack25Sync) {
+                window.Attack25Sync.onConnectionChange(status => {
+                    const badge = document.getElementById('connStatus');
+                    const text = document.getElementById('connText');
+                    if (status.connected) {
+                        badge.style.background = 'rgba(47, 179, 68, 0.15)';
+                        badge.style.borderColor = 'rgba(47, 179, 68, 0.4)';
+                        badge.style.color = '#4ade80';
+                        text.textContent = 'Đã kết nối WebSocket System';
+                    } else {
+                        badge.style.background = 'rgba(245, 159, 0, 0.15)';
+                        badge.style.borderColor = 'rgba(245, 159, 0, 0.4)';
+                        badge.style.color = '#ffc078';
+                        text.textContent = 'Chế độ Local Fallback';
+                    }
+                });
+
+                window.Attack25Sync.onSound(soundKey => {
+                    // Played from remote sync
+                    playAudioLocal(soundKey, false);
+                });
+            }
+
+            // Master Volume Control
+            const masterVolElem = document.getElementById('masterVolume');
+            const masterVolText = document.getElementById('masterVolText');
+            masterVolElem.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                globalMasterVolume = val / 100;
+                masterVolText.textContent = `${val}%`;
+                if (masterGainNode) {
+                    masterGainNode.gain.setValueAtTime(globalMasterVolume, audioCtx.currentTime);
+                }
+                // Apply to active HTML5 audio tags
+                Object.keys(activeAudios).forEach(id => {
+                    if (activeAudios[id] && activeAudios[id].audioElem) {
+                        const indVol = (parseInt(document.getElementById(`vol-${id}`)?.value || '100')) / 100;
+                        activeAudios[id].audioElem.volume = indVol * globalMasterVolume;
+                    }
+                });
+            });
+
+            // Stop All Button
+            document.getElementById('btnStopAll').addEventListener('click', stopAllSounds);
+
+            // Keyboard Shortcuts
+            window.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                if (e.code === 'Space' || e.key === 'Escape') {
+                    e.preventDefault();
+                    stopAllSounds();
+                    return;
+                }
+
+                const pressedKey = e.key.toLowerCase();
+                Object.keys(soundDefinitions).forEach(soundKey => {
+                    if (soundDefinitions[soundKey].key === pressedKey) {
+                        e.preventDefault();
+                        triggerSound(soundKey);
+                    }
+                });
+            });
+        });
+
+        // Trigger Sound Function (with Broadcast Check)
+        function triggerSound(soundKey) {
+            const isBroadcast = document.getElementById('chkBroadcast').checked;
+
+            // Stop sound if already playing
+            if (activeAudios[soundKey] && activeAudios[soundKey].isPlaying) {
+                stopSound(soundKey);
+                if (isBroadcast && window.Attack25Sync) {
+                    const rawState = localStorage.getItem('attack25_game_state');
+                    const state = rawState ? JSON.parse(rawState) : {};
+                    window.Attack25Sync.broadcastState(state, 'stop_sound', soundKey);
+                }
+                return;
+            }
+
+            playAudioLocal(soundKey, true);
+
+            if (isBroadcast && window.Attack25Sync) {
+                const rawState = localStorage.getItem('attack25_game_state');
+                const state = rawState ? JSON.parse(rawState) : {};
+                window.Attack25Sync.broadcastState(state, 'play_sound', soundKey);
+            }
+        }
+
+        // Local Audio Playback Engine
+        function playAudioLocal(soundKey, userInitiated = true) {
+            const def = soundDefinitions[soundKey];
+            if (!def) return;
+
+            const card = document.getElementById(`card-${soundKey}`);
+            const isLoop = document.getElementById(`loop-${soundKey}`)?.checked || false;
+            const indVol = (parseInt(document.getElementById(`vol-${soundKey}`)?.value || '100')) / 100;
+            const finalVol = indVol * globalMasterVolume;
+
+            // Stop existing if any
+            stopSound(soundKey);
+
+            // Audio paths to try: 1. SFX/filename, 2. filename fallback
+            const sfxPath = SOUND_DIR + def.file;
+            const rootPath = def.file;
+
+            const audio = new Audio();
+            audio.src = sfxPath;
+            audio.loop = isLoop;
+            audio.volume = finalVol;
+
+            // Connect Web Audio Analyser if context ready
+            try {
+                const ctx = getAudioContext();
+                const source = ctx.createMediaElementSource(audio);
+                source.connect(masterGainNode);
+            } catch (e) {}
+
+            activeAudios[soundKey] = {
+                audioElem: audio,
+                isPlaying: true
+            };
+
+            // Update UI
+            if (card) {
+                card.classList.add('playing');
+                const btnLabel = card.querySelector('.btn-label');
+                const btnIcon = card.querySelector('.btn-icon');
+                if (btnLabel) btnLabel.textContent = 'Dừng Sound';
+                if (btnIcon) btnIcon.textContent = '⏹';
+            }
+
+            const playPromise = audio.play();
+
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    // Fallback to root path if SFX path failed
+                    audio.src = rootPath;
+                    audio.play().catch(() => {
+                        // If file missing on disk, use Web Audio Synthesizer fallback so sound always plays!
+                        playSynthFallback(soundKey);
+                    });
+                });
+            }
+
+            audio.onended = () => {
+                if (!audio.loop) {
+                    resetCardUI(soundKey);
+                }
+            };
+        }
+
+        function stopSound(soundKey) {
+            if (activeAudios[soundKey]) {
+                if (activeAudios[soundKey].audioElem) {
+                    try {
+                        activeAudios[soundKey].audioElem.pause();
+                        activeAudios[soundKey].audioElem.currentTime = 0;
+                    } catch (e) {}
+                }
+                delete activeAudios[soundKey];
+            }
+            resetCardUI(soundKey);
+        }
+
+        function stopAllSounds() {
+            Object.keys(soundDefinitions).forEach(key => {
+                stopSound(key);
+            });
+            if (document.getElementById('chkBroadcast').checked && window.Attack25Sync) {
+                const rawState = localStorage.getItem('attack25_game_state');
+                const state = rawState ? JSON.parse(rawState) : {};
+                window.Attack25Sync.broadcastState(state, 'stop_all_sounds', null);
+            }
+        }
+
+        function resetCardUI(soundKey) {
+            const card = document.getElementById(`card-${soundKey}`);
+            if (card) {
+                card.classList.remove('playing');
+                const btnLabel = card.querySelector('.btn-label');
+                const btnIcon = card.querySelector('.btn-icon');
+                if (btnLabel) {
+                    if (soundKey === 'theme') btnLabel.textContent = 'Phát Theme';
+                    else if (soundKey === 'attackchance') btnLabel.textContent = 'Phát Attack Chance';
+                    else if (soundKey === 'signal') btnLabel.textContent = 'Phát Signal';
+                    else if (soundKey === 'time') btnLabel.textContent = 'Phát Đếm Giờ';
+                    else if (soundKey === 'finaltime') btnLabel.textContent = 'Phát Final Time 1';
+                    else if (soundKey === 'finaltime2') btnLabel.textContent = 'Phát Final Time 2';
+                    else if (soundKey === 'wrong') btnLabel.textContent = 'Phát Sound Sai';
+                    else if (soundKey === 'finalfail') btnLabel.textContent = 'Phát Final Fail';
+                    else btnLabel.textContent = 'Phát Sound';
+                }
+                if (btnIcon) btnIcon.textContent = '▶';
+            }
+        }
+
+        function updateSoundVolume(soundKey, val) {
+            if (activeAudios[soundKey] && activeAudios[soundKey].audioElem) {
+                const indVol = parseInt(val) / 100;
+                activeAudios[soundKey].audioElem.volume = indVol * globalMasterVolume;
+            }
+        }
+
+        // Web Audio Synthesizer Fallback (Guarantees Audio Feedback Even Before Files Uploaded)
+        function playSynthFallback(type) {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                if (type === 'red' || type === 'buzzer_red') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(660, now);
+                    osc.frequency.exponentialRampToValueAtTime(330, now + 0.35);
+                } else if (type === 'green' || type === 'buzzer_green') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(587, now);
+                    osc.frequency.setValueAtTime(880, now + 0.1);
+                } else if (type === 'white' || type === 'buzzer_white') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.25);
+                } else if (type === 'blue' || type === 'buzzer_blue') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.setValueAtTime(110, now + 0.15);
+                } else {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                }
+
+                gain.gain.setValueAtTime(0.4 * globalMasterVolume, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } catch (e) {}
+        }
+
+        // Canvas Audio Visualizer
+        function initVisualizer() {
+            const canvas = document.getElementById('visualizerCanvas');
+            const ctx = canvas.getContext('2d');
+
+            function resize() {
+                canvas.width = canvas.parentElement.clientWidth - 24;
+                canvas.height = 60;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            function draw() {
+                requestAnimationFrame(draw);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (!masterAnalyser) {
+                    ctx.fillStyle = '#1e293b';
+                    ctx.fillRect(0, canvas.height / 2 - 1, canvas.width, 2);
+                    return;
+                }
+
+                const bufferLength = masterAnalyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                masterAnalyser.getByteFrequencyData(dataArray);
+
+                const barWidth = (canvas.width / bufferLength) * 1.5;
+                let barHeight;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    barHeight = (dataArray[i] / 255) * canvas.height;
+
+                    const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
+                    gradient.addColorStop(0, '#3b82f6');
+                    gradient.addColorStop(0.5, '#f59f00');
+                    gradient.addColorStop(1, '#ef4444');
+
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(x, canvas.height - barHeight, barWidth - 2, barHeight);
+
+                    x += barWidth;
+                }
+            }
+            draw();
+        }
+    </script>
+</body>
+</html>
