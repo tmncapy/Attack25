@@ -5374,7 +5374,28 @@ try {
 
 renderAll();
 activateRoomFromController();
-broadcastState("sync");
+
+(function fetchInitialServerState() {
+    const currentRoom = (document.getElementById('ctrlRoomId') && document.getElementById('ctrlRoomId').value) || '123456';
+    fetch('/api/state?roomid=' + encodeURIComponent(currentRoom))
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.state) {
+                ensureValidPanels(data.state);
+                gameState = data.state;
+                if (data.state.currentQuestionIndex !== undefined) {
+                    currentQuestionIndex = data.state.currentQuestionIndex;
+                }
+                renderAll();
+            }
+            if (data && data.questions && data.questions.length > 0) {
+                questionsList = data.questions;
+                renderQuestion();
+                renderDatabaseTable();
+            }
+        })
+        .catch(() => {});
+})();
 
 </script>
 

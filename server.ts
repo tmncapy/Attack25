@@ -197,6 +197,46 @@ const defaultQuestions = [
 // Room storage: Map<roomId, RoomData>
 const rooms = new Map<string, RoomData>();
 
+function getRoomFilePath(roomId: string): string {
+  const safeId = roomId.replace(/[^a-zA-Z0-9_-]/g, '_');
+  return path.join(uploadsDir, `room_state_${safeId}.json`);
+}
+
+function saveRoomToDisk(room: RoomData) {
+  try {
+    const filePath = getRoomFilePath(room.roomId);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify(
+        {
+          roomId: room.roomId,
+          passwords: room.passwords,
+          state: room.state,
+          questions: room.questions
+        },
+        null,
+        2
+      ),
+      'utf-8'
+    );
+  } catch (e) {
+    console.error('Failed to save room to disk:', e);
+  }
+}
+
+function loadRoomFromDisk(roomId: string): Partial<RoomData> | null {
+  try {
+    const filePath = getRoomFilePath(roomId);
+    if (fs.existsSync(filePath)) {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      return data;
+    }
+  } catch (e) {
+    console.error('Failed to load room from disk:', e);
+  }
+  return null;
+}
+
 function getOrCreateRoom(roomId: string, passwords: any = null): RoomData {
   let cleanRoomId = String(roomId || '123456').trim();
   if (!cleanRoomId) cleanRoomId = '123456';
@@ -209,16 +249,27 @@ function getOrCreateRoom(roomId: string, passwords: any = null): RoomData {
       white: '3333',
       blue: '4444'
     };
-    rooms.set(cleanRoomId, {
+
+    const saved = loadRoomFromDisk(cleanRoomId);
+    const roomState = saved?.state || createInitialGameState();
+    const roomQuestions = saved?.questions && Array.isArray(saved.questions) && saved.questions.length > 0
+      ? saved.questions
+      : [...defaultQuestions];
+    const roomPasswords = saved?.passwords || defaultPasswords;
+
+    const newRoom: RoomData = {
       roomId: cleanRoomId,
-      passwords: passwords ? { ...defaultPasswords, ...passwords } : defaultPasswords,
-      state: createInitialGameState(),
-      questions: [...defaultQuestions],
+      passwords: passwords ? { ...roomPasswords, ...passwords } : roomPasswords,
+      state: roomState,
+      questions: roomQuestions,
       buzzerArmTime: null
-    });
+    };
+    rooms.set(cleanRoomId, newRoom);
+    saveRoomToDisk(newRoom);
   } else if (passwords) {
     const room = rooms.get(cleanRoomId)!;
     room.passwords = { ...room.passwords, ...passwords };
+    saveRoomToDisk(room);
   }
   return rooms.get(cleanRoomId)!;
 }
@@ -267,6 +318,90 @@ function recalculateScores(state: GameState) {
       }
     });
   }
+}
+
+function mergeIncomingState(serverState: GameState, incomingState: GameState, action?: string): GameState {
+  if (!incomingState) return serverState;
+  const isResetAction = action === 'resetGame' || action === 'reset_game';
+
+  // 1. Panels:
+  if (isResetAction) {
+    if (Array.isArray(incomingState.panels) && incomingState.panels.length === 25) {
+      serverState.panels = incomingState.panels;
+    } else {
+      serverState.panels = Array.from({ length: 25 }, (_, i) => ({ number: i + 1, used: false, color: null }));
+    }
+  } else if (Array.isArray(incomingState.panels) && incomingState.panels.length === 25) {
+    const incomingColoredCount = incomingState.panels.filter((p) => p && p.color).length;
+    const serverColoredCount = serverState.panels.filter((p) => p && p.color).length;
+
+    const isPanelAction = [
+      'setColor',
+      'selectPanel',
+      'markUsed',
+      'resetPanel',
+      'showPanel',
+      'clearSelection',
+      'updateSpecialRoundMode',
+      'toggleHideColor'
+    ].includes(action || '');
+
+    if (incomingColoredCount > 0 || isPanelAction || serverColoredCount === 0) {
+      serverState.panels = incomingState.panels;
+    }
+  }
+
+  // 2. Selected Panel
+  if (incomingState.selectedPanel !== undefined) {
+    serverState.selectedPanel = incomingState.selectedPanel;
+  }
+
+  // 3. Question Index
+  if (incomingState.currentQuestionIndex !== undefined) {
+    serverState.currentQuestionIndex = incomingState.currentQuestionIndex;
+  }
+
+  // 4. Buzzer
+  if (incomingState.buzzer) {
+    serverState.buzzer = { ...serverState.buzzer, ...incomingState.buzzer };
+  }
+
+  // 5. Players (names & score protection)
+  if (incomingState.players) {
+    const defaultNames = ['PLAYER 1', 'PLAYER 2', 'PLAYER 3', 'PLAYER 4', ''];
+    ['red', 'green', 'white', 'blue'].forEach((color, idx) => {
+      if (incomingState.players[color]) {
+        const incP = incomingState.players[color];
+        if (!serverState.players[color]) {
+          serverState.players[color] = { name: incP.name || `PLAYER ${idx + 1}`, score: 0 };
+        }
+        const incName = (incP.name || '').trim();
+        const curName = (serverState.players[color].name || '').trim();
+        const isDefaultInc = defaultNames.includes(incName.toUpperCase());
+
+        if (action === 'updatePlayer' || action === 'resetGame' || !isDefaultInc || !curName) {
+          if (incName) serverState.players[color].name = incName;
+        }
+      }
+    });
+  }
+
+  // 6. Video & Media
+  if (incomingState.video) {
+    serverState.video = { ...serverState.video, ...incomingState.video };
+  }
+  if (incomingState.questionMedia) {
+    serverState.questionMedia = { ...serverState.questionMedia, ...incomingState.questionMedia };
+  }
+  if (incomingState.soundVolume !== undefined) {
+    serverState.soundVolume = incomingState.soundVolume;
+  }
+  if (incomingState.hiddenColors !== undefined) {
+    serverState.hiddenColors = incomingState.hiddenColors;
+  }
+
+  recalculateScores(serverState);
+  return serverState;
 }
 
 // REST APIs
@@ -476,29 +611,45 @@ async function startServer() {
             })
           );
         } else if (data.type === 'SYNC_STATE' || data.type === 'state') {
-          if (data.state) {
-            currentRoom.state = data.state;
+          const action = data.action || '';
+          if (action === 'sync' || action === 'init' || action === 'get_state') {
+            // Client is just synchronizing on connect/reload: do NOT overwrite server state!
             recalculateScores(currentRoom.state);
-            if (data.action === 'buzzer_armed' || data.action === 'arm') {
-              currentRoom.buzzerArmTime = Date.now();
+            ws.send(
+              JSON.stringify({
+                channel: 'attack25-sync-v3',
+                type: 'state',
+                roomId: currentRoom.roomId,
+                state: currentRoom.state,
+                questions: currentRoom.questions
+              })
+            );
+          } else {
+            if (data.state) {
+              currentRoom.state = mergeIncomingState(currentRoom.state, data.state, action);
+              if (action === 'buzzer_armed' || action === 'arm') {
+                currentRoom.buzzerArmTime = Date.now();
+              }
+              saveRoomToDisk(currentRoom);
             }
+            broadcastToRoom(
+              currentRoom.roomId,
+              {
+                channel: 'attack25-sync-v3',
+                type: 'state',
+                roomId: currentRoom.roomId,
+                action: data.action,
+                state: currentRoom.state,
+                sound: data.sound,
+                msgId: data.msgId || 'srv_state_' + Date.now()
+              },
+              ws
+            );
           }
-          broadcastToRoom(
-            currentRoom.roomId,
-            {
-              channel: 'attack25-sync-v3',
-              type: 'state',
-              roomId: currentRoom.roomId,
-              action: data.action,
-              state: currentRoom.state,
-              sound: data.sound,
-              msgId: data.msgId || 'srv_state_' + Date.now()
-            },
-            ws
-          );
         } else if (data.type === 'SYNC_QUESTIONS' || data.type === 'questions') {
-          if (data.questions) {
+          if (Array.isArray(data.questions) && data.questions.length > 0) {
             currentRoom.questions = data.questions;
+            saveRoomToDisk(currentRoom);
           }
           broadcastToRoom(
             currentRoom.roomId,
@@ -527,6 +678,7 @@ async function startServer() {
               currentRoom.state.buzzer.winner = player;
               currentRoom.state.buzzer.buzzTime = elapsed;
               currentRoom.state.buzzer.pressOrder = [{ player: player, time: elapsed }];
+              saveRoomToDisk(currentRoom);
 
               broadcastToRoom(currentRoom.roomId, {
                 channel: 'attack25-sync-v3',
@@ -540,6 +692,7 @@ async function startServer() {
             } else {
               if (!currentRoom.state.buzzer.pressOrder.some((p) => p.player === player)) {
                 currentRoom.state.buzzer.pressOrder.push({ player: player, time: elapsed });
+                saveRoomToDisk(currentRoom);
                 broadcastToRoom(currentRoom.roomId, {
                   channel: 'attack25-sync-v3',
                   type: 'state',

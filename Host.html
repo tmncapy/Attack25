@@ -764,8 +764,14 @@ function playSynthTone(type) {
 let questionsList = [];
 let currentQuestionIndex = 0;
 
+const urlParamsLocal = new URLSearchParams(window.location.search);
+let activeRoomId = urlParamsLocal.get('roomid') || urlParamsLocal.get('roomId') || urlParamsLocal.get('room') || '';
+if (!activeRoomId) {
+    try { activeRoomId = localStorage.getItem('attack25_active_roomid') || '123456'; } catch (e) { activeRoomId = '123456'; }
+}
+
 try {
-    const savedQ = localStorage.getItem("attack25_questions");
+    const savedQ = localStorage.getItem("attack25_questions_" + activeRoomId) || localStorage.getItem("attack25_questions");
     if (savedQ) questionsList = JSON.parse(savedQ);
 } catch (e) {}
 
@@ -789,7 +795,7 @@ let gameState = {
 };
 
 try {
-    const saved = localStorage.getItem("attack25_gamestate");
+    const saved = localStorage.getItem("attack25_gamestate_" + activeRoomId) || localStorage.getItem("attack25_gamestate");
     if (saved) gameState = JSON.parse(saved);
 } catch (e) {}
 
@@ -810,10 +816,10 @@ try {
 } catch (e) {}
 
 window.addEventListener('storage', (e) => {
-    if (e.key === 'attack25_gamestate' && e.newValue) {
+    if ((e.key === 'attack25_gamestate_' + activeRoomId || e.key === 'attack25_gamestate') && e.newValue) {
         try { applyState(JSON.parse(e.newValue)); } catch (err) {}
     }
-    if (e.key === 'attack25_questions' && e.newValue) {
+    if ((e.key === 'attack25_questions_' + activeRoomId || e.key === 'attack25_questions') && e.newValue) {
         try {
             questionsList = JSON.parse(e.newValue);
             renderQuestion();
@@ -1118,7 +1124,22 @@ function showToast(msg) {
 // Init
 renderQuestion();
 applyState(gameState);
-broadcastState('sync');
+
+// Fetch current state from server on startup
+(function loadServerState() {
+    fetch('/api/state?roomid=' + encodeURIComponent(activeRoomId))
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.state) {
+                applyState(data.state);
+            }
+            if (data && data.questions && data.questions.length > 0) {
+                questionsList = data.questions;
+                renderQuestion();
+            }
+        })
+        .catch(() => {});
+})();
 
 </script>
 
