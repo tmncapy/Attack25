@@ -1,1190 +1,2243 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BÀN ĐIỀU KHIỂN - MC CONTROLLER</title>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <style>
-        @font-face {
-            font-family: 'LHF_Mono';
-            src: url('LHF_Mono.otf') format('opentype'), url('LHF Mono.otf') format('opentype');
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        @font-face {
-            font-family: 'UVN Thanh Pho Nang';
-            src: url('unicode.display.UVNThanhPhoNang.TTF') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-        }
+<title>Panel Quiz Attack 25 - Host Controller</title>
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { 
-            font-family: 'Myriad Pro', Arial, sans-serif;
-            font-weight: bold;
-            background: #111317; 
-            color: #e2e8f0; 
-            height: 100vh;
-            max-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            font-size: 11px;
-            overflow: hidden;
-        }
-        
-        /* Top Header Bar */
-        header {
-            height: 38px;
-            min-height: 38px;
-            background: #181b22;
-            border-bottom: 1px solid #262a36;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 10px;
-            flex-shrink: 0;
-            gap: 8px;
-        }
-        header h1 {
-            font-size: 12px;
-            color: #60a5fa;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
-        .header-badge {
-            background: #2563eb;
-            color: #fff;
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-        }
+<!-- SheetJS for Excel (.xlsx, .xls, .csv) import -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- 3 Required Connector Libraries -->
+<script src="jquery.js"></script>
+<script src="socket.io.js"></script>
+<script src="howler.js"></script>
+<!-- Universal Real-time Synchronizer (Relative path for file:/// and web) -->
+<script src="sync-client.js"></script>
 
-        .header-pin-bar {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            background: #111317;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid #262a36;
-        }
-        .header-pin-bar label {
-            margin-bottom: 0;
-            color: #94a3b8;
-            font-size: 10px;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-        .header-pin-bar input {
-            width: 48px;
-            text-align: center;
-            font-size: 11px;
-            font-weight: bold;
-            color: #38bdf8;
-            padding: 1px 4px;
-            height: 22px;
-        }
-        
-        /* Navigation Tab Bar */
-        .tab-bar {
-            display: flex;
-            background: #181b22;
-            border-bottom: 1px solid #262a36;
-            padding: 0 8px;
-            gap: 4px;
-            height: 28px;
-            min-height: 28px;
-            flex-shrink: 0;
-        }
-        .tab-button {
-            padding: 0 14px;
-            height: 100%;
-            background: transparent;
-            color: #94a3b8;
-            border: none;
-            border-bottom: 2px solid transparent;
-            font-weight: bold;
-            font-size: 11px;
-            cursor: pointer;
-            border-radius: 0;
-            width: auto;
-            transition: all 0.15s ease;
-            display: flex;
-            align-items: center;
-        }
-        .tab-button:hover {
-            color: #ffffff;
-            background: #20242e;
-        }
-        .tab-button.active {
-            color: #60a5fa;
-            border-bottom-color: #3b82f6;
-            background: #20242e;
-        }
+<style>
 
-        /* Main Dashboard Grid */
-        .dashboard-container {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr 1.05fr;
-            gap: 6px;
-            padding: 6px;
-            height: calc(100vh - 66px);
-            overflow: hidden;
-            box-sizing: border-box;
-        }
+/* =====================================================
+   FONT
+===================================================== */
+@font-face {
+    font-family: "UTM Impact";
+    src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
+    font-display: swap;
+}
 
-        /* Panels */
-        .panel {
-            background: #181b22;
-            border: 1px solid #262a36;
-            border-radius: 6px;
-            padding: 6px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            overflow-y: auto;
-            height: 100%;
-            box-sizing: border-box;
-        }
-        
-        .panel-title {
-            font-size: 11px;
-            font-weight: bold;
-            color: #60a5fa;
-            border-bottom: 1px solid #262a36;
-            padding-bottom: 3px;
-            margin-bottom: 1px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            flex-shrink: 0;
-        }
-        
-        .form-group {
-            background: #111317;
-            border: 1px solid #222632;
-            border-radius: 4px;
-            padding: 4px 6px;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-        
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 1px;
-            color: #94a3b8;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-        
-        input[type="text"], input[type="file"], input[type="number"], select, textarea {
-            width: 100%;
-            padding: 3px 6px;
-            background: #181b22;
-            border: 1px solid #2d3342;
-            color: #f1f5f9;
-            border-radius: 3px;
-            box-sizing: border-box;
-            font-size: 11px;
-            font-weight: bold;
-            font-family: 'Myriad Pro', Arial, sans-serif;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: #3b82f6;
-            outline: none;
-        }
+/* =====================================================
+   ROOT VARIABLES (COMPACT & MODERN DARK THEME)
+===================================================== */
+:root {
+    --bg: #0c0f14;
+    --panel: #141923;
+    --panel-2: #1b2230;
+    --panel-3: #232c3d;
+    --border: #2c3647;
 
-        /* Buttons - Minimal Color Palette */
-        button {
-            width: 100%;
-            padding: 4px 6px;
-            background: #222630;
-            color: #e2e8f0;
-            border: 1px solid #323848;
-            border-radius: 4px;
-            font-weight: bold;
-            font-family: 'Myriad Pro', Arial, sans-serif;
-            cursor: pointer;
-            font-size: 11px;
-            line-height: 1.2;
-            transition: all 0.12s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-        }
-        button:hover { background: #2c3240; border-color: #434c62; color: #ffffff; }
-        button:active { transform: translateY(1px); }
+    --text: #f1f3f7;
+    --muted: #8c97ab;
 
-        /* Primary Action (Blue) */
-        .btn-blue {
-            background: #1d4ed8;
-            border-color: #2563eb;
-            color: #ffffff;
-        }
-        .btn-blue:hover {
-            background: #2563eb;
-            border-color: #3b82f6;
-            color: #ffffff;
-        }
+    --red: #e03131;
+    --green: #2fb344;
+    --blue: #2f80ed;
+    --white: #e9ecef;
 
-        /* Neutral Secondary Action */
-        .btn-orange, .btn-purple {
-            background: #262c3a;
-            border-color: #3b4458;
-            color: #cbd5e1;
-        }
-        .btn-orange:hover, .btn-purple:hover {
-            background: #31394b;
-            border-color: #4e5a74;
-            color: #ffffff;
-        }
+    --gold: #f59f00;
+    --gold-light: #ffd43b;
+    --active: #f59f00;
+    --used: #3d4554;
+}
 
-        /* Danger / Trapdoor Action (Red) */
-        .btn-red {
-            background: #7f1d1d;
-            border-color: #991b1b;
-            color: #fecaca;
-        }
-        .btn-red:hover {
-            background: #991b1b;
-            border-color: #dc2626;
-            color: #ffffff;
-        }
-        
-        .inline-group { display: flex; gap: 4px; margin-top: 2px; }
-        .inline-group button { margin-top: 0; }
-        
-        .ans-row {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-            margin-top: 2px;
-        }
-        .ans-row input { flex: 1; }
-        .ans-row button { width: 75px; flex-shrink: 0; }
-        
-        .bet-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px;
-        }
-        .bet-box {
-            background: #111317;
-            border: 1px solid #222632;
-            border-radius: 4px;
-            padding: 2px 4px;
-            text-align: center;
-        }
-        .bet-box .title {
-            font-size: 10px;
-            color: #64748b;
-        }
-        .bet-display {
-            font-size: 12px;
-            font-weight: bold;
-            color: #38bdf8;
-            font-family: 'Myriad Pro', Arial, sans-serif;
-        }
-        
-        .sfx-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 3px;
-        }
-        .sfx-grid button {
-            padding: 3px 4px;
-            font-size: 10px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        /* Custom Scrollbars */
-        .panel::-webkit-scrollbar { width: 4px; }
-        .panel::-webkit-scrollbar-track { background: #111317; }
-        .panel::-webkit-scrollbar-thumb { background: #2d3342; border-radius: 2px; }
-        .panel::-webkit-scrollbar-thumb:hover { background: #475569; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
-        .progress-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding: 12px;
-            overflow-y: auto;
-            max-width: 1000px;
-            margin: 0 auto;
-            width: 100%;
-        }
+html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    overflow-x: hidden;
+    font-size: 13px;
+}
 
-        .settings-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding: 12px;
-            overflow-y: auto;
-            max-width: 900px;
-            margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
-        }
+/* =====================================================
+   COMPACT APP CONTAINER
+===================================================== */
+.app {
+    width: 100%;
+    min-height: 100vh;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
-        .q-status-btn {
-            background: #111317;
-            border: 1px solid #262a36;
-            color: #fff;
-            padding: 8px 4px;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            transition: all 0.15s ease;
-            width: 100%;
-        }
-        .q-status-btn.played {
-            background: #064e3b;
-            border-color: #059669;
-            color: #34d399;
-        }
-        .q-status-btn.unplay {
-            background: #7f1d1d;
-            border-color: #991b1b;
-            color: #fca5a5;
-        }
-        .chat-quick-btn {
-            background: #181b22;
-            color: #d8b4fe;
-            border: 1px solid #4a1d96;
-            border-radius: 4px;
-            font-size: 10px;
-            padding: 2px 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .chat-quick-btn:hover {
-            background: #6b21a8;
-            color: #ffffff;
-            border-color: #c084fc;
-        }
-        .chat-toast-item {
-            background: #1e1b4b;
-            border: 1px solid #a855f7;
-            color: #f5f3ff;
-            padding: 8px 14px;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
-            font-size: 12px;
-            max-width: 320px;
-            pointer-events: auto;
-            cursor: pointer;
-            animation: toastSlideIn 0.3s ease;
-            transition: opacity 0.3s;
-        }
-        @keyframes toastSlideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-    </style>
+/* =====================================================
+   HEADER (COMPACT)
+===================================================== */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-title {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    color: var(--gold-light);
+}
+
+.logo-subtitle {
+    color: var(--muted);
+    font-size: 11px;
+    background: #1c2433;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.connection {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #111822;
+    padding: 4px 10px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+}
+
+.connection-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2fb344;
+    box-shadow: 0 0 6px #2fb344;
+}
+
+/* =====================================================
+   MAIN 3-COLUMN COMPACT WORKSPACE
+===================================================== */
+.workspace-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(320px, 1.15fr) minmax(310px, 1.1fr) minmax(300px, 1fr);
+    gap: 8px;
+    align-items: start;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* =====================================================
+   CARD (COMPACT & DENSE)
+===================================================== */
+.card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.card-header {
+    height: 36px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.card-title {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 15px;
+    letter-spacing: .3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #f3f5f8;
+}
+
+.card-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #1e2636;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gold-light);
+    border: 1px solid #334057;
+}
+
+.card-body {
+    padding: 10px;
+}
+
+/* =====================================================
+   QUESTION TELEPROMPTER & EXCEL IMPORT
+===================================================== */
+.question-teleprompter {
+    background: linear-gradient(180deg, #18202d 0%, #121822 100%);
+    border: 1px solid #374357;
+    border-radius: 7px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.q-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.q-number-tag {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 14px;
+    color: var(--gold-light);
+    background: rgba(245, 159, 0, 0.15);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(245, 159, 0, 0.3);
+}
+
+.q-count-tag {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.q-text-box {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #ffffff;
+    min-height: 52px;
+    margin-bottom: 8px;
+    user-select: text;
+}
+
+.q-answer-box {
+    background: rgba(47, 179, 68, 0.12);
+    border: 1px solid rgba(47, 179, 68, 0.4);
+    border-radius: 5px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.q-answer-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: #2fb344;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.q-answer-val {
+    font-size: 14px;
+    font-weight: 700;
+    color: #40c057;
+    user-select: text;
+}
+
+.q-nav-row {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 1fr;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.q-jump-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.q-select-dropdown {
+    flex: 1;
+    height: 30px;
+    background: #18202d;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: #fff;
+    font-size: 12px;
+    padding: 0 8px;
+    outline: none;
+}
+
+.excel-dropzone {
+    border: 1.5px dashed #404e67;
+    border-radius: 6px;
+    background: #111620;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.excel-dropzone:hover, .excel-dropzone.dragover {
+    border-color: var(--gold);
+    background: rgba(245, 159, 0, 0.08);
+}
+
+.excel-dropzone-text {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* =====================================================
+   BUZZER SYSTEM (COMPACT)
+===================================================== */
+.buzzer-status-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: #18202d;
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+}
+
+.buzzer-status-banner.armed {
+    background: linear-gradient(90deg, #142a1a, #1b3823);
+    border-color: #2fb344;
+    box-shadow: 0 0 10px rgba(47, 179, 68, 0.2);
+}
+
+.buzzer-status-banner.locked {
+    background: linear-gradient(90deg, #281818, #352020);
+    border-color: #e03131;
+}
+
+.buzzer-status-banner.buzzed {
+    background: linear-gradient(90deg, #322610, #483410);
+    border-color: #f59f00;
+    box-shadow: 0 0 12px rgba(245, 159, 0, 0.3);
+}
+
+.buzzer-state-title {
+    font-size: 9px;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.buzzer-state-val {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 17px;
+    color: #fff;
+}
+
+.buzzer-winner-info {
+    font-size: 12px;
+    font-weight: bold;
+    text-align: right;
+}
+
+.buzzer-master-btns {
+    display: grid;
+    grid-template-columns: 1.3fr 0.9fr 0.9fr;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.buzzer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.buzzer-btn {
+    height: 48px;
+    border: 1.5px solid transparent;
+    border-radius: 6px;
+    background: var(--panel-2);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    transition: all 0.1s ease;
+    user-select: none;
+    position: relative;
+}
+
+.buzzer-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.15);
+}
+
+.buzzer-btn:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.buzzer-btn.btn-red { background: #5c1818; border-color: #e03131; }
+.buzzer-btn.btn-green { background: #154720; border-color: #2fb344; }
+.buzzer-btn.btn-white { background: #475061; border-color: #dee2e6; color: #fff; }
+.buzzer-btn.btn-blue { background: #153c6e; border-color: #2f80ed; }
+
+.buzzer-btn.buzzer-winner {
+    box-shadow: 0 0 16px #f59f00;
+    border-color: #ffd43b !important;
+    animation: buzzerPulse 0.8s infinite alternate;
+}
+
+@keyframes buzzerPulse {
+    from { transform: scale(1); filter: brightness(1.1); }
+    to { transform: scale(1.03); filter: brightness(1.4); }
+}
+
+.buzzer-btn.buzzer-locked-player {
+    opacity: 0.3;
+    filter: grayscale(0.9);
+    cursor: not-allowed;
+}
+
+.buzzer-key {
+    font-size: 9px;
+    font-weight: bold;
+    color: #ced4da;
+}
+
+.buzzer-rank-tag {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 10px;
+    font-weight: 900;
+    background: #f59f00;
+    color: #111;
+    padding: 0 4px;
+    border-radius: 3px;
+}
+
+.buzzer-judge-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+/* =====================================================
+   25-PANEL BOARD (COMPACT 5x5)
+===================================================== */
+.panel-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.panel-button {
+    aspect-ratio: 1.2 / 1;
+    min-height: 40px;
+    border: 2px solid #374254;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #f8fafc;
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: clamp(16px, 2vw, 24px);
+    font-weight: 900;
+    cursor: pointer;
+    transition: all .15s ease;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.panel-button:hover {
+    transform: translateY(-2px);
+    border-color: #f59f00;
+    box-shadow: 0 4px 12px rgba(245, 159, 0, 0.35);
+}
+
+.panel-button.active {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 16px #38bdf8, inset 0 0 6px #fff !important;
+    transform: scale(1.08);
+    z-index: 5;
+}
+
+.panel-button.used {
+    background: #334155 !important;
+    color: #64748b !important;
+    border-color: #1e293b !important;
+    opacity: .5;
+    text-decoration: line-through;
+}
+
+.panel-button.active.used {
+    background: #ffffff !important;
+    color: #000 !important;
+    opacity: 1;
+    text-decoration: none;
+}
+
+.panel-button.panel-red { background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #fff !important; border-color: #f87171 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.panel-button.panel-green { background: linear-gradient(135deg, #22c55e, #16a34a) !important; color: #fff !important; border-color: #4ade80 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.panel-button.panel-white { background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important; color: #0f172a !important; border-color: #ffffff !important; text-shadow: none; }
+.panel-button.panel-blue { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; color: #fff !important; border-color: #60a5fa !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+
+.color-actions {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) 1.2fr;
+    gap: 4px;
+}
+
+.board-actions {
+    margin-top: 6px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+}
+
+.button {
+    height: 32px;
+    border: none;
+    border-radius: 5px;
+    padding: 0 8px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 11px;
+    cursor: pointer;
+    transition: transform .1s ease, filter .15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 4px;
+}
+
+.button:hover { filter: brightness(1.15); }
+.button:active { transform: scale(.97); }
+
+.button-orange { background: #d97706; }
+.button-gray { background: #374254; }
+.button-red { background: #c92a2a; }
+.button-green { background: #2b8a3e; }
+.button-blue { background: #1971c2; }
+.button-white { background: #dee2e6; color: #111; }
+
+.status-row {
+    margin-top: 8px;
+    display: flex;
+    gap: 6px;
+}
+
+.status-box {
+    flex: 1;
+    background: var(--panel-2);
+    border-radius: 5px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+}
+
+.status-label {
+    display: block;
+    color: var(--muted);
+    font-size: 9px;
+    text-transform: uppercase;
+}
+
+.status-value {
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 16px;
+    color: #fff;
+}
+
+/* =====================================================
+   PLAYERS (CLEAN SCORE CONTROLS)
+===================================================== */
+.player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.player-card {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-left: 5px solid #777;
+    border-radius: 6px;
+    padding: 6px 8px;
+}
+
+.player-card.red { border-left-color: var(--red); }
+.player-card.green { border-left-color: var(--green); }
+.player-card.white { border-left-color: var(--white); }
+.player-card.blue { border-left-color: var(--blue); }
+
+.player-top {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.player-number {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #10141c;
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 13px;
+}
+
+.player-name-input {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0 6px;
+    background: #11151d;
+    border: 1px solid #333d4f;
+    border-radius: 4px;
+    color: white;
+    outline: none;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.player-controls {
+    margin-top: 5px;
+    display: grid;
+    grid-template-columns: 32px 1fr 32px;
+    gap: 4px;
+}
+
+.score-button {
+    height: 28px;
+    border: none;
+    border-radius: 4px;
+    background: #2f3849;
+    color: white;
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.score-button:hover { background: #404c62; }
+
+.score-input {
+    width: 100%;
+    height: 28px;
+    background: #11151d;
+    border: 1px solid #333d4f;
+    border-radius: 4px;
+    color: white;
+    text-align: center;
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: 17px;
+    outline: none;
+}
+
+/* =====================================================
+   PREVIEW (COMPACT)
+===================================================== */
+.preview-screen {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: radial-gradient(circle at center, #173c71 0%, #0b1730 50%, #05070c 100%);
+    border: 1px solid #2f3849;
+    border-radius: 5px;
+}
+
+.preview-board {
+    position: absolute;
+    left: 8%;
+    top: 10%;
+    width: 62%;
+    height: 80%;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 3px;
+    padding: 4px;
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 6px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.preview-cell {
+    background: linear-gradient(135deg, #f59f00, #d97706);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: clamp(9px, 1.1vw, 14px);
+    font-weight: 900;
+    border-radius: 3px;
+    border: 1px solid #fbbf24;
+    user-select: none;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.preview-cell.active {
+    background: #ffffff !important;
+    color: #000 !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 12px #38bdf8, inset 0 0 6px #fff;
+    transform: scale(1.1);
+    z-index: 10;
+}
+
+.preview-cell.used {
+    background: #334155 !important;
+    color: #64748b !important;
+    border-color: #1e293b !important;
+    text-decoration: line-through;
+    opacity: 0.45;
+    box-shadow: none;
+}
+
+.preview-cell.panel-red { background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #fff !important; border-color: #f87171 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.preview-cell.panel-green { background: linear-gradient(135deg, #22c55e, #16a34a) !important; color: #fff !important; border-color: #4ade80 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.preview-cell.panel-white { background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important; color: #0f172a !important; border-color: #ffffff !important; text-shadow: none; }
+.preview-cell.panel-blue { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; color: #fff !important; border-color: #60a5fa !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+
+.preview-scores {
+    position: absolute;
+    right: 5%;
+    top: 10%;
+    width: 22%;
+    height: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.preview-player {
+    height: 20%;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111;
+    font-family: "UTM Impact", Impact, sans-serif;
+    font-size: clamp(8px, 1vw, 12px);
+    font-weight: bold;
+}
+
+.preview-player.red { background: #e03131; color: #fff; }
+.preview-player.green { background: #2fb344; color: #fff; }
+.preview-player.white { background: #f8f9fa; }
+.preview-player.blue { background: #2f80ed; color: #fff; }
+
+/* =====================================================
+   TOAST NOTIFICATION
+===================================================== */
+.toast-container {
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.toast {
+    background: #1c2433;
+    border: 1px solid #3d4a61;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    font-size: 11px;
+    margin-top: 4px;
+    animation: toastIn 0.2s ease-out;
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+@media (max-width: 1100px) {
+    .workspace-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    .workspace-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style>
 </head>
+
 <body>
 
-    <!-- Video Compression Modal Overlay -->
-    <div id="video-compress-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(6px); z-index:99999; align-items:center; justify-content:center; flex-direction:column; gap:16px; color:#fff; font-family:'Myriad Pro', Arial, sans-serif;">
-        <div style="background:#1e293b; border:2px solid #3b82f6; border-radius:12px; padding:24px 32px; text-align:center; max-width:420px; width:90%; box-shadow:0 20px 40px rgba(0,0,0,0.8);">
-            <h3 style="color:#60a5fa; font-size:18px; margin-bottom:6px;">ĐANG NÉN VIDEO XUỐNG 480P</h3>
-            <p id="compress-file-name" style="color:#94a3b8; font-size:12px; margin-bottom:16px; word-break:break-all;">file_video.mp4</p>
-            
-            <div style="background:#0f172a; border-radius:10px; height:16px; overflow:hidden; border:1px solid #334155; margin-bottom:12px; position:relative;">
-                <div id="compress-bar-fill" style="background:linear-gradient(90deg, #2563eb, #38bdf8); height:100%; width:0%; transition:width 0.2s ease;"></div>
-            </div>
-            <div id="compress-status-text" style="color:#38bdf8; font-size:14px; font-weight:bold;">Đang xử lý... 0%</div>
-            <div style="color:#64748b; font-size:11px; margin-top:8px;">Tự động tối ưu 480p để truyền mượt mà, không bị giật lag khi chiếu trên Projector.</div>
-        </div>
-    </div>
+<div class="app">
 
-    <!-- Floating Toast for incoming Host Messages -->
-    <div id="controller-chat-toast-container" style="position:fixed; top:65px; right:20px; z-index:99999; display:flex; flex-direction:column; gap:8px; pointer-events:none;"></div>
-
-    <!-- Controller Chat Modal Dialog -->
-    <div id="controller-chat-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px); z-index:99998; align-items:center; justify-content:center;">
-        <div style="background:#111317; border:2px solid #a855f7; border-radius:12px; width:90%; max-width:640px; height:80vh; max-height:600px; display:flex; flex-direction:column; box-shadow:0 15px 35px rgba(0,0,0,0.8); overflow:hidden; font-family:'Myriad Pro', Arial, sans-serif;">
-            <div style="background:#1a102f; border-bottom:1px solid #3b1d6e; padding:10px 16px; display:flex; justify-content:space-between; align-items:center;">
-                <div style="color:#d8b4fe; font-size:15px; font-weight:bold; display:flex; align-items:center; gap:8px;">
-                    <span>💬 TRAO ĐỔI KỊCH BẢN VỚI MC HOST</span>
-                    <span style="font-size:10px; background:rgba(46,160,67,0.2); color:#3fb950; padding:2px 6px; border-radius:10px; border:1px solid rgba(63,185,80,0.4);">● Đang kết nối</span>
-                </div>
-                <div style="display:flex; gap:8px;">
-                    <button style="background:transparent; border:1px solid #4a1d96; color:#c084fc; padding:3px 8px; border-radius:4px; font-size:11px; cursor:pointer;" onclick="clearScriptChatHistory()">🗑️ Xóa lịch sử</button>
-                    <button style="background:#ef4444; border:none; color:#fff; width:26px; height:26px; border-radius:4px; font-size:13px; font-weight:bold; cursor:pointer;" onclick="closeControllerChatModal()">✕</button>
-                </div>
-            </div>
-
-            <!-- Modal Chat History -->
-            <div id="modal-chat-history" style="flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; background:#0a0c10;">
-            </div>
-
-            <!-- Modal Quick Presets -->
-            <div style="background:#12151c; border-top:1px solid #222632; padding:6px 12px; display:flex; flex-wrap:wrap; gap:4px;">
-                <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('🟢 Sẵn sàng lên sóng!')">🟢 Sẵn sàng</button>
-                <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('⏳ Kéo dài thời gian giao lưu!')">⏳ Giao lưu thêm</button>
-                <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('⏱️ Chuẩn bị đếm ngược!')">⏱️ Sắp đếm ngược</button>
-                <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('📖 Đọc giải thích đáp án!')">📖 Đọc giải thích</button>
-                <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('⚡ Chuẩn bị sập hố!')">⚡ Sắp sập hố</button>
-                <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('📺 Nghỉ giải lao quảng cáo!')">📺 Quảng cáo</button>
-            </div>
-
-            <!-- Modal Input Bar -->
-            <div style="background:#161b22; border-top:1px solid #30363d; padding:10px 12px; display:flex; gap:8px;">
-                <input type="text" id="modal-chat-input" placeholder="Nhập tin nhắn trao đổi kịch bản với Host... (Enter để gửi)" style="flex:1; background:#0d1117; border:1px solid #30363d; color:#f0f6fc; padding:8px 12px; border-radius:6px; font-size:13px;" onkeypress="if(event.key==='Enter') sendModalChatMessage()">
-                <button type="button" class="btn-purple" style="padding:8px 16px; font-size:13px; font-weight:bold;" onclick="sendModalChatMessage()">GỬI HOST</button>
-            </div>
-        </div>
-    </div>
-
-    <header>
-        <h1>HỆ THỐNG ĐIỀU KHIỂN TRÒ CHƠI <span class="header-badge">LIVE</span></h1>
-        
-        <div style="display: flex; align-items: center; gap: 4px; background: #111317; padding: 2px 6px; border-radius: 4px; border: 1px solid #262a36;">
-            <span style="color: #f59e0b; font-size: 10px; font-weight: bold; white-space: nowrap;">RELOAD TỪ XA:</span>
-            <button class="btn-orange" style="width: auto; padding: 2px 6px; font-size: 10px;" onclick="reloadRole('projector')" title="Tải lại Màn Hình Máy Chiếu">Projector</button>
-            <button class="btn-orange" style="width: auto; padding: 2px 6px; font-size: 10px;" onclick="reloadRole('answer')" title="Tải lại Màn Hình MC Sound">Sound/MC</button>
-            <button class="btn-orange" style="width: auto; padding: 2px 6px; font-size: 10px;" onclick="reloadRole('player')" title="Tải lại Màn Hình Người Chơi">Player</button>
-            <button class="btn-orange" style="width: auto; padding: 2px 6px; font-size: 10px;" onclick="reloadRole('host')" title="Tải lại Màn Hình Host">Host</button>
-            <button class="btn-red" style="width: auto; padding: 2px 6px; font-size: 10px;" onclick="reloadRole('all')" title="Tải lại Tất Cả Màn Hình">Tất cả</button>
+    <!-- COMPACT HEADER -->
+    <header class="header">
+        <div class="logo-area">
+            <div class="logo-title">ATTACK 25</div>
+            <div class="logo-subtitle">Host &amp; Question Controller</div>
         </div>
 
-        <div class="header-pin-bar">
-            <label>PIN PLAYER:</label>
-            <input type="text" id="pin-code-input" maxlength="4" value="1234">
-            <button class="btn-blue" style="width: auto; padding: 2px 6px;" onclick="updatePinCode()">Cập nhật</button>
-            <button class="btn-orange" style="width: auto; padding: 2px 6px;" onclick="generateRandomPin()">Ngẫu nhiên</button>
-            <button class="btn-red" style="width: auto; padding: 2px 6px;" onclick="forceLockPlayers()">Khóa Player</button>
+        <div class="header-right">
+            <a href="/Host.html" target="_blank" class="button button-gray" style="height:26px; padding:0 8px; text-decoration:none; color:#fff;" title="Mở máy MC">🎤 Host</a>
+            <a href="/player1.html" target="_blank" class="button button-red" style="height:26px; padding:0 6px; text-decoration:none; color:#fff;" title="Mở chuông Player 1">P1 (Đỏ)</a>
+            <a href="/player2.html" target="_blank" class="button button-green" style="height:26px; padding:0 6px; text-decoration:none; color:#fff;" title="Mở chuông Player 2">P2 (Xanh)</a>
+            <a href="/player3.html" target="_blank" class="button button-white" style="height:26px; padding:0 6px; text-decoration:none; color:#111;" title="Mở chuông Player 3">P3 (Trắng)</a>
+            <a href="/player4.html" target="_blank" class="button button-blue" style="height:26px; padding:0 6px; text-decoration:none; color:#fff;" title="Mở chuông Player 4">P4 (Lam)</a>
+            <a href="/Projector.html" target="_blank" class="button button-orange" style="height:26px; padding:0 8px; text-decoration:none; color:#fff;" title="Mở màn hình Projector">📽️ Projector</a>
+            <div class="connection">
+                <div class="connection-dot" id="connectionDot"></div>
+                <span id="connectionText">ĐỒNG BỘ</span>
+            </div>
+            <button class="button button-gray" style="height:26px; padding:0 8px;" onclick="broadcastState('sync')">
+                🔄 Sync
+            </button>
         </div>
-
-        <div id="sfx-status" style="font-weight: bold; color: #f59e0b; font-size: 11px;">Sẵn sàng phát âm thanh</div>
     </header>
 
-    <div class="tab-bar">
-        <button class="tab-button active" id="tab-btn-main" onclick="switchControllerTab('main')">BÀN ĐIỀU KHIỂN CHÍNH</button>
-        <button class="tab-button" id="tab-btn-questions" onclick="switchControllerTab('questions')">DỮ LIỆU CÂU HỎI</button>
-        <button class="tab-button" id="tab-btn-progress" onclick="switchControllerTab('progress')">TIẾN TRÌNH CHƠI</button>
-        <button class="tab-button" id="tab-btn-roles" onclick="switchControllerTab('roles')">QUẢN LÝ MÀN HÌNH (ROLES)</button>
-        <button class="tab-button" id="tab-btn-settings" onclick="switchControllerTab('settings')">CÀI ĐẶT CẤU HÌNH</button>
-        <button class="tab-button" id="tab-btn-logs" onclick="switchControllerTab('logs')">NHẬT KÝ HỆ THỐNG (LOG)</button>
-        <button class="tab-button" id="tab-btn-chat" onclick="openControllerChatModal()" style="border-color: #7e22ce; color: #d8b4fe; position: relative;" title="Mở cửa sổ Chat trao đổi kịch bản với Host">
-            💬 CHAT KỊCH BẢN HOST 
-            <span id="controller-chat-tab-badge" style="display:none; background:#ef4444; color:#fff; font-size:9px; padding:1px 5px; border-radius:10px; margin-left:4px; font-weight:bold;">0</span>
-        </button>
-    </div>
+    <!-- 3-COLUMN WORKSPACE -->
+    <main class="workspace-grid">
 
-    <div id="main-dashboard" class="dashboard-container">
-        <!-- COLUMN 1: CONTENT & QUESTIONS -->
-        <div class="panel">
-            <div class="panel-title">1. NẠP DỮ LIỆU & NỘI DUNG</div>
-            
-            <div class="form-group">
-                <label style="color: #60a5fa; font-weight: bold; border-bottom: 1px solid #262a36; padding-bottom: 3px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
-                    <span>1. NẠP DỮ LIỆU CÂU HỎI TỪ EXCEL</span>
-                    <span id="current-loaded-question-badge" style="font-size: 9px; background: #064e3b; color: #34d399; padding: 1px 6px; border-radius: 4px;">Đã nạp 0 câu</span>
-                </label>
+        <!-- COLUMN 1: QUESTION TELEPROMPTER & EXCEL IMPORT -->
+        <div class="column">
 
-                <!-- Nạp từ máy tính -->
-                <div style="background: #111317; border: 1px solid #222632; border-radius: 4px; padding: 6px;">
-                    <label style="font-size: 10px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; display: block;">CHỌN FILE EXCEL ĐỀ THI (.XLSX, .XLS):</label>
-                    <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="importExcel(this)" style="font-size: 11px;">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 6px;">
-                    <div>
-                        <label style="font-weight: 600;">Số Cửa Sử Dụng</label>
-                        <select id="select-round" onchange="handleDoorRuleChange()">
-                            <option value="1">4 Cửa (Vòng 1 - 4)</option>
-                            <option value="5">3 Cửa (Vòng 5 - 7)</option>
-                            <option value="8">2 Cửa (Vòng 8)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-weight: 600;">Chọn Số Vòng</label>
-                        <select id="select-round-num" onchange="handleRoundNumSelectChange()">
-                            <!-- Generated dynamically in controller.js -->
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-weight: 600;">Chọn Câu Hỏi / Chủ Đề</label>
-                        <select id="select-question-index" onchange="loadSelectedQuestion()">
-                            <option value="">-- Chưa có --</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>2. Chủ Đề Để Lựa Chọn</label>
-                <input type="text" id="topic-a" placeholder="Tên chủ đề A" style="margin-bottom: 2px;" oninput="updateDynamicControllerButtonLabels()">
-                <input type="text" id="topic-b" placeholder="Tên chủ đề B" oninput="updateDynamicControllerButtonLabels()">
-                <div class="inline-group">
-                    <button class="btn-blue" onclick="sendTopics()">Hiện 2 Chủ Đề</button>
-                    <button class="btn-orange" id="btn-lock-topic-a" onclick="lockTopic('A')">Chốt Chủ Đề A</button>
-                    <button class="btn-orange" id="btn-lock-topic-b" onclick="lockTopic('B')">Chốt Chủ Đề B</button>
-                </div>
-            </div>
-
-            <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
-                <label>3. Câu Hỏi & Đáp Án</label>
-                <textarea id="question-input" rows="2" placeholder="Nội dung câu hỏi chữ lớn..." style="margin-bottom: 4px; resize: vertical;"></textarea>
-                
-                <div style="background: #111317; border: 1px solid #222632; padding: 4px 6px; border-radius: 4px; margin-bottom: 6px;">
-                    <label style="color: #c084fc; font-size: 10px; margin-bottom: 2px;">THÔNG TIN MEDIA (HÌNH ÁNH / VIDEO)</label>
-                    <div style="display: flex; gap: 4px; margin-bottom: 2px;">
-                        <select id="main-media-type" style="width: 95px;" onchange="syncMainMediaToStore()">
-                            <option value="none">Không có</option>
-                            <option value="image">Hình ảnh</option>
-                            <option value="video">Video</option>
-                        </select>
-                        <input type="text" id="main-media-url" placeholder="URL hoặc chọn file..." style="flex: 1;" onchange="handleManualMediaUrlInput(this)" oninput="handleManualMediaUrlInput(this)">
-                        <input type="file" id="main-media-file-input" accept="image/*,video/*" style="display: none;" onchange="handleMainMediaFileUpload(event)">
-                        <button class="btn-purple" style="width: auto; padding: 2px 8px; font-size: 10px;" onclick="document.getElementById('main-media-file-input').click()">Chọn File</button>
-                    </div>
+            <!-- HOST QUESTION TELEPROMPTER -->
+            <section class="card">
+                <div class="card-header">
+                    <div class="card-title">📖 ĐỀ &amp; ĐÁP ÁN (MÁY HOST)</div>
+                    <span class="card-badge" id="qBadgeStatus">CÂU 1</span>
                 </div>
 
-                <div class="inline-group" style="margin-bottom: 6px;">
-                    <button class="btn-purple" onclick="sendMedia()">Hiện Hình/Video</button>
-                    <button class="btn-blue" onclick="sendQuestion()">Hiện Câu Hỏi</button>
-                    <button class="btn-orange" onclick="showAllQuestionAndAnswers()">Hiện Q &amp; A</button>
-                </div>
-                
-                <div style="border-top: 1px solid #222632; padding-top: 4px; display: flex; flex-direction: column; gap: 3px;">
-                    <button class="btn-blue" style="margin-bottom: 2px;" onclick="playSfx('SFX/drop_question_bed.mp3')">Bắt Đầu Hiện Đáp Án</button>
-                    
-                    <div class="ans-row">
-                        <input type="text" id="ans-1" placeholder="Đáp án cửa 1" oninput="updateDynamicControllerButtonLabels()">
-                        <button id="btn-reveal-ans-1" onclick="sendSingleAnswer(1)">Hiện Cửa 1</button>
-                    </div>
-                    
-                    <div class="ans-row">
-                        <input type="text" id="ans-2" placeholder="Đáp án cửa 2" oninput="updateDynamicControllerButtonLabels()">
-                        <button id="btn-reveal-ans-2" onclick="sendSingleAnswer(2)">Hiện Cửa 2</button>
-                    </div>
-                    
-                    <div class="ans-row">
-                        <input type="text" id="ans-3" placeholder="Đáp án cửa 3" oninput="updateDynamicControllerButtonLabels()">
-                        <button id="btn-reveal-ans-3" onclick="sendSingleAnswer(3)">Hiện Cửa 3</button>
-                    </div>
-                    
-                    <div class="ans-row">
-                        <input type="text" id="ans-4" placeholder="Đáp án cửa 4" oninput="updateDynamicControllerButtonLabels()">
-                        <button id="btn-reveal-ans-4" onclick="sendSingleAnswer(4)">Hiện Cửa 4</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+                <div class="card-body">
+                    <!-- MAIN TELEPROMPTER DISPLAY -->
+                    <div class="question-teleprompter">
+                        <div class="q-meta-row">
+                            <span class="q-number-tag" id="qNumberTag">CÂU HỎI 1</span>
+                            <span class="q-count-tag" id="qCountTag">1 / 27 câu</span>
+                        </div>
 
-        <!-- COLUMN 2: TIMER, BETS & TRAPDOORS -->
-        <div class="panel">
-            <div class="panel-title">2. THỜI GIAN & HỐ SẬP</div>
-            
-            <div class="form-group">
-                <label id="time-display" style="font-size: 11px; text-align: center; color: #38bdf8;">THỜI GIAN ĐẶT CƯỢC: --:--</label>
-                <div class="inline-group">
-                    <button id="btn-start-timer" onclick="startTimer()">Bắt Đầu (60s)</button>
-                    <button class="btn-orange" onclick="add30Seconds()">+30 Giây</button>
-                    <button class="btn-red" onclick="stopTimer()">Dừng Đếm</button>
-                </div>
-            </div>
+                        <!-- QUESTION TEXT -->
+                        <div class="q-text-box" id="qTextBox">
+                            Đang tải câu hỏi...
+                        </div>
 
-            <div class="form-group">
-                <label>Theo Dõi Tiền Đặt Cược Trực Tuyến</label>
-                <div class="bet-grid">
-                    <div class="bet-box"><div class="title" id="mc-bet-title-1">Cửa 1</div><div class="bet-display" id="mc-bet-1">0 $A (0 cọc)</div></div>
-                    <div class="bet-box"><div class="title" id="mc-bet-title-2">Cửa 2</div><div class="bet-display" id="mc-bet-2">0 $A (0 cọc)</div></div>
-                    <div class="bet-box"><div class="title" id="mc-bet-title-3">Cửa 3</div><div class="bet-display" id="mc-bet-3">0 $A (0 cọc)</div></div>
-                    <div class="bet-box"><div class="title" id="mc-bet-title-4">Cửa 4</div><div class="bet-display" id="mc-bet-4">0 $A (0 cọc)</div></div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label style="color: #38bdf8;">TĂNG GIẢM CỌC TIỀN NGUỜI CHƠI</label>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #181b22; padding: 3px 6px; border-radius: 3px; margin-bottom: 4px; border: 1px solid #222632;">
-                    <span style="font-size: 10px; color: #94a3b8;">Tổng tiền còn lại:</span>
-                    <span id="mc-total-money" style="font-size: 11px; color: #38bdf8;">1.000.000 $A (40 cọc)</span>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-bottom: 4px;">
-                    <button class="btn-blue" onclick="addPlayerStacksMC(1)">Thêm 1 Cọc (+25k)</button>
-                    <button class="btn-blue" onclick="addPlayerStacksMC(4)">Thêm 4 Cọc (+100k)</button>
-                    <button class="btn-orange" onclick="removePlayerStacksMC(1)">Bớt 1 Cọc (-25k)</button>
-                    <button class="btn-orange" onclick="removePlayerStacksMC(4)">Bớt 4 Cọc (-100k)</button>
-                </div>
-
-                <div style="display: flex; gap: 4px; align-items: center;">
-                    <input type="number" id="custom-stacks-input" placeholder="Số cọc" value="40" min="0" max="100" style="width: 60px; text-align: center; padding: 2px;">
-                    <button class="btn-purple" style="flex: 1;" onclick="setCustomStacksMC()">Đổi Số Cọc</button>
-                    <button class="btn-red" style="width: auto; padding: 2px 6px;" onclick="setPlayerStacksMC(40)" title="Khôi phục 40 cọc (1 triệu)">40 Cọc</button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label style="color: #f87171;">KÍCH HOẠT SẬP HỐ VẬT LÝ</label>
-                <button class="btn-orange" style="margin-bottom: 4px;" onclick="playSfx('SFX/drop_intrigue.mp3')">Kích Hoạt (Nhạc Hồi Hộp)</button>
-                
-                <div style="background: #181b22; border: 1px solid #222632; padding: 4px; border-radius: 4px; margin-bottom: 4px;">
-                    <div style="font-size: 10px; color: #fbbf24; margin-bottom: 3px;">CHỌN CÁC CỬA SAI ĐỂ SẬP CÙNG LÚC:</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 4px;">
-                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #ffffff; background: #111317; padding: 4px 6px; border-radius: 3px; font-size: 11px; border: 1px solid #222632; user-select: none;">
-                            <input type="checkbox" id="chk-door-1" class="door-chk" value="1" style="width: 14px; height: 14px; accent-color: #ef4444; cursor: pointer;">
-                            <span id="chk-label-1">Cửa 1</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #ffffff; background: #111317; padding: 4px 6px; border-radius: 3px; font-size: 11px; border: 1px solid #222632; user-select: none;">
-                            <input type="checkbox" id="chk-door-2" class="door-chk" value="2" style="width: 14px; height: 14px; accent-color: #ef4444; cursor: pointer;">
-                            <span id="chk-label-2">Cửa 2</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #ffffff; background: #111317; padding: 4px 6px; border-radius: 3px; font-size: 11px; border: 1px solid #222632; user-select: none;">
-                            <input type="checkbox" id="chk-door-3" class="door-chk" value="3" style="width: 14px; height: 14px; accent-color: #ef4444; cursor: pointer;">
-                            <span id="chk-label-3">Cửa 3</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #ffffff; background: #111317; padding: 4px 6px; border-radius: 3px; font-size: 11px; border: 1px solid #222632; user-select: none;">
-                            <input type="checkbox" id="chk-door-4" class="door-chk" value="4" style="width: 14px; height: 14px; accent-color: #ef4444; cursor: pointer;">
-                            <span id="chk-label-4">Cửa 4</span>
-                        </label>
+                        <!-- ANSWER BOX -->
+                        <div class="q-answer-box">
+                            <span class="q-answer-label">ĐÁP ÁN:</span>
+                            <span class="q-answer-val" id="qAnswerVal">-</span>
+                        </div>
                     </div>
 
-                    <div style="display: flex; gap: 3px;">
-                        <button class="btn-red" style="flex: 1; padding: 4px;" onclick="openSelectedDoors()">
-                            SẬP CÁC CỬA ĐÃ CHỌN
+                    <!-- QUESTION NAVIGATION BUTTONS -->
+                    <div class="q-nav-row">
+                        <button class="button button-gray" onclick="prevQuestion()">
+                            <span>⏮</span> Câu trước
                         </button>
-                        <button class="btn-purple" style="width: auto; padding: 2px 6px; font-size: 10px;" onclick="selectAllDoors(true)" title="Chọn tất cả 4 cửa">Tất cả</button>
-                        <button style="width: auto; padding: 2px 6px; font-size: 10px; background: #222630; color: #fff; border: 1px solid #323848;" onclick="selectAllDoors(false)" title="Bỏ chọn">Bỏ chọn</button>
-                    </div>
-                </div>
-
-                <div style="font-size: 10px; color: #94a3b8; margin-bottom: 2px;">Sập từng cửa riêng lẻ:</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-bottom: 4px;">
-                    <button class="btn-red" id="btn-trap-door-1" style="padding: 3px 4px; font-size: 10px;" onclick="openDoor(1)">SẬP HỐ LỖI 1</button>
-                    <button class="btn-red" id="btn-trap-door-2" style="padding: 3px 4px; font-size: 10px;" onclick="openDoor(2)">SẬP HỐ LỖI 2</button>
-                    <button class="btn-red" id="btn-trap-door-3" style="padding: 3px 4px; font-size: 10px;" onclick="openDoor(3)">SẬP HỐ LỖI 3</button>
-                    <button class="btn-red" id="btn-trap-door-4" style="padding: 3px 4px; font-size: 10px;" onclick="openDoor(4)">SẬP HỐ LỖI 4</button>
-                </div>
-
-                <button class="btn-red" style="font-size: 11px;" onclick="playSfx('SFX/drop_trapdoor_2.mp3.mp3', false, false)">SẬP (Tiếng Sập Hố 2)</button>
-            </div>
-
-            <div class="form-group" style="background: #111317; border: 1px solid #2d1b4e; border-radius: 6px; padding: 6px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; border-bottom: 1px solid #2d1b4e; padding-bottom: 3px;">
-                    <label style="color: #c084fc; font-weight: bold; font-size: 11px; margin-bottom: 0; display: flex; align-items: center; gap: 4px;">
-                        <span>💬 TRAO ĐỔI KỊCH BẢN VỚI HOST</span>
-                        <span id="controller-unread-badge" style="display:none; background:#ef4444; color:#fff; font-size:9px; padding:1px 5px; border-radius:8px; font-weight:bold;">0</span>
-                    </label>
-                    <div style="display: flex; gap: 3px;">
-                        <button type="button" style="background: transparent; color: #94a3b8; border: 1px solid #334155; border-radius: 3px; font-size: 9px; padding: 1px 4px; cursor: pointer;" onclick="clearScriptChatHistory()" title="Xóa toàn bộ lịch sử chat">🗑️</button>
-                        <button type="button" style="background: #2d1b4e; color: #d8b4fe; border: 1px solid #7e22ce; border-radius: 3px; font-size: 9px; padding: 1px 5px; cursor: pointer;" onclick="openControllerChatModal()" title="Mở hộp chat to">🔍 Phóng to</button>
-                    </div>
-                </div>
-
-                <!-- Chat history box -->
-                <div id="controller-chat-history" style="height: 95px; overflow-y: auto; background: #090a0d; border: 1px solid #1e1b2e; border-radius: 4px; padding: 5px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 4px; font-size: 11px;">
-                    <div style="color: #64748b; text-align: center; font-style: italic; margin: auto;">Chưa có tin nhắn nào giữa Host và Phòng Máy.</div>
-                </div>
-
-                <!-- Quick scenarios for Controller -->
-                <div style="display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 4px;">
-                    <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('🟢 Sẵn sàng lên sóng!')">🟢 Sẵn sàng</button>
-                    <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('⏳ Kéo dài thời gian giao lưu!')">⏳ Giao lưu</button>
-                    <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('⏱️ Chuẩn bị đếm ngược!')">⏱️ Đếm ngược</button>
-                    <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('📖 Đọc giải thích đáp án!')">📖 Giải thích</button>
-                    <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('⚡ Chuẩn bị sập hố!')">⚡ Sập hố</button>
-                    <button type="button" class="chat-quick-btn" onclick="sendQuickTechMsg('📺 Nghỉ giải lao quảng cáo!')">📺 Quảng cáo</button>
-                </div>
-
-                <div class="inline-group">
-                    <input type="text" id="host-msg-input" placeholder="Nhập tin nhắn kịch bản gửi Host..." onkeypress="if(event.key==='Enter') sendMsgToHost()">
-                    <button type="button" class="btn-purple" style="width: 55px; flex-shrink: 0; padding: 3px 6px; font-size: 11px;" onclick="sendMsgToHost()">Gửi</button>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-top: auto;">
-                <label>Quản Lý Vòng Đấu</label>
-                <div style="display: flex; flex-direction: column; gap: 3px;">
-                    <button class="btn-blue" onclick="collectMoneyBack()">THU TIỀN VỀ (BÀN)</button>
-                    <button class="btn-orange" onclick="penaltyFine()">PHẠT GIẢM 1 CỌC TIỀN</button>
-                    <button class="btn-red" onclick="resetRound()" style="margin-top: 2px;">RESET TOÀN BỘ VÒNG CHƠI</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- COLUMN 3: SOUNDBOARD SFX -->
-        <div class="panel">
-            <div class="panel-title">3. BẢNG ÂM THANH (SOUNDBOARD SFX)</div>
-            
-            <div style="background: #111317; padding: 4px 8px; border-radius: 4px; border: 1px solid #222632; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-                <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0; color: #60a5fa; font-size: 10px;">
-                    ÂM LƯỢNG: <span id="vol-display-val" style="color: #38bdf8; min-width: 32px; display: inline-block; text-align: right;">100%</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 4px; flex: 1;">
-                    <button class="btn-blue" style="width: 22px; height: 20px; padding: 0; font-size: 12px; flex-shrink: 0;" onclick="adjustVolume(-0.1)">-</button>
-                    <input type="range" id="volume-slider" min="0" max="100" value="100" style="flex: 1; cursor: pointer; accent-color: #3b82f6; height: 4px;" oninput="onVolumeSliderChange(this.value)">
-                    <button class="btn-blue" style="width: 22px; height: 20px; padding: 0; font-size: 12px; flex-shrink: 0;" onclick="adjustVolume(0.1)">+</button>
-                </div>
-            </div>
-
-            <div class="sfx-grid">
-                <button class="btn-red" onclick="playSfx('sfx/red.wav')">🔔 Chuông Đỏ</button>
-                <button class="btn-green" onclick="playSfx('sfx/green.wav')">🔔 Chuông Xanh</button>
-                <button class="btn-white" onclick="playSfx('sfx/white.wav')" style="color: #000; background: #f8fafc;">🔔 Chuông Trắng</button>
-                <button class="btn-blue" onclick="playSfx('sfx/blue.wav')">🔔 Chuông Lam</button>
-                <button class="btn-orange" onclick="playSfx('sfx/pqa25-signal.mp3')">🔊 Tín Hiệu</button>
-                <button class="btn-orange" onclick="playSfx('sfx/pqa25-time.mp3')">⏰ Suy Nghĩ 5s</button>
-                <button class="btn-red" onclick="playSfx('sfx/pqa25-wrong.mp3')">❌ Sai / Khóa</button>
-                <button class="btn-yellow" onclick="playSfx('sfx/pqa25-attackchance.mp3')" style="color: #000; background: #eab308;">⚡ Attack Chance</button>
-                <button class="btn-orange" onclick="playSfx('sfx/pqa25-finaltime.mp3')">⏱️ Final Time 1</button>
-                <button class="btn-orange" onclick="playSfx('sfx/pqa25-finaltime2.mp3')">⏱️ Final Time 2</button>
-                <button class="btn-red" onclick="playSfx('sfx/pqa25-finalfail.mp3')">💥 Final Thất Bại</button>
-                <button class="btn-purple" onclick="playSfx('sfx/intro VN.mp3')" style="background: #9333ea;">🎬 Intro VN</button>
-                <button class="btn-purple" onclick="playSfx('sfx/PQA25-Theme.mp3')">🎵 Nhạc Chủ Đề</button>
-            </div>
-
-            <button class="btn-red" style="margin-top: 3px;" onclick="stopSfx()">DỪNG TOÀN BỘ ÂM THANH</button>
-
-            <div class="form-group" style="margin-top: auto;">
-                <label>Phát File Âm Thanh Tùy Chọn:</label>
-                <select id="sfx-select-list" onchange="document.getElementById('custom-sfx-input').value = this.value" style="margin-bottom: 3px;">
-                    <option value="sfx/blue.wav">blue.wav</option>
-                    <option value="sfx/green.wav">green.wav</option>
-                    <option value="sfx/intro VN.mp3">intro VN.mp3</option>
-                    <option value="sfx/pqa25-attackchance.mp3">pqa25-attackchance.mp3</option>
-                    <option value="sfx/pqa25-finalfail.mp3">pqa25-finalfail.mp3</option>
-                    <option value="sfx/pqa25-finaltime.mp3">pqa25-finaltime.mp3</option>
-                    <option value="sfx/pqa25-finaltime2.mp3">pqa25-finaltime2.mp3</option>
-                    <option value="sfx/pqa25-signal.mp3">pqa25-signal.mp3</option>
-                    <option value="sfx/PQA25-Theme.mp3">PQA25-Theme.mp3</option>
-                    <option value="sfx/pqa25-time.mp3">pqa25-time.mp3</option>
-                    <option value="sfx/pqa25-wrong.mp3">pqa25-wrong.mp3</option>
-                    <option value="sfx/red.wav">red.wav</option>
-                    <option value="sfx/white.wav">white.wav</option>
-                </select>
-                <div class="inline-group">
-                    <input type="text" id="custom-sfx-input" placeholder="Tên file SFX..." value="sfx/pqa25-signal.mp3">
-                    <button class="btn-blue" style="width: 70px; flex-shrink: 0;" onclick="playCustomSfx()">Phát</button>
-                    <button class="btn-red" style="width: 60px; flex-shrink: 0;" onclick="stopSfx()">Tắt</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TAB 2: PROGRESS DASHBOARD -->
-    <div id="progress-dashboard" class="progress-container" style="display: none;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; width: 100%;">
-            <div style="background: #181b22; border: 1px solid #262a36; border-radius: 6px; padding: 12px; text-align: center;">
-                <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Số câu hỏi đã trải qua</div>
-                <div id="ctrl-played-text" style="font-size: 24px; color: #34d399; margin-top: 4px;">2 / 8</div>
-            </div>
-            <div style="background: #181b22; border: 1px solid #262a36; border-radius: 6px; padding: 12px; text-align: center;">
-                <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Số câu hỏi còn lại</div>
-                <div id="ctrl-remaining-text" style="font-size: 24px; color: #f87171; margin-top: 4px;">6 câu</div>
-            </div>
-            <div style="background: #181b22; border: 1px solid #262a36; border-radius: 6px; padding: 12px; text-align: center;">
-                <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Số tiền hiện có</div>
-                <div id="ctrl-money-text" style="font-size: 24px; color: #38bdf8; margin-top: 4px;">1.000.000 $A</div>
-            </div>
-        </div>
-
-        <div class="panel" style="width: 100%;">
-            <div class="panel-title">1. TRẠNG THÁI CÁC CÂU HỎI (CÂU 1 - 8)</div>
-            <p style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">Bấm vào ô tương ứng để bật/tắt trạng thái Đã Chơi / Chưa Chơi cho từng câu hỏi:</p>
-            
-            <div id="questions-status-grid" style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-bottom: 12px;">
-                <!-- Generated dynamically by controller.js -->
-            </div>
-
-            <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px;">
-                <button class="btn-blue" style="flex: 1; min-width: 80px;" onclick="setPlayedCount(0)">Reset (0 câu)</button>
-                <button class="btn-blue" style="flex: 1; min-width: 80px;" onclick="setPlayedCount(1)">Đã chơi 1</button>
-                <button class="btn-blue" style="flex: 1; min-width: 80px;" onclick="setPlayedCount(2)">Đã chơi 2</button>
-                <button class="btn-blue" style="flex: 1; min-width: 80px;" onclick="setPlayedCount(3)">Đã chơi 3</button>
-                <button class="btn-blue" style="flex: 1; min-width: 80px;" onclick="setPlayedCount(4)">Đã chơi 4</button>
-                <button class="btn-blue" style="flex: 1; min-width: 80px;" onclick="setPlayedCount(5)">Đã chơi 5</button>
-                <button class="btn-blue" style="flex: 1; min-width: 80px;" onclick="setPlayedCount(6)">Đã chơi 6</button>
-                <button class="btn-blue" style="flex: 1; min-width: 80px;" onclick="setPlayedCount(7)">Đã chơi 7</button>
-                <button class="btn-blue" style="flex: 1; min-width: 80px;" onclick="setPlayedCount(8)">Đã chơi 8</button>
-            </div>
-
-            <div class="panel-title">2. ĐIỀU KHIỂN HIỂN THỊ MÀN HÌNH PROJECTOR</div>
-            <p style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">Phát giao diện tiến trình chơi lên màn hình Projector:</p>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <button class="btn-blue" style="padding: 10px; font-size: 12px;" onclick="showProgressOnProjector()">
-                    HIỂN THỊ TIẾN TRÌNH TRÊN PROJECTOR
-                </button>
-                <button class="btn-red" style="padding: 10px; font-size: 12px;" onclick="hideProgressOnProjector()">
-                    ẨN MÀN HÌNH TIẾN TRÌNH
-                </button>
-                <button class="btn-blue" style="padding: 10px; font-size: 12px;" onclick="showWinningMoneyOnProjector()">
-                    HIỂN THỊ TIỀN THẮNG (PROJECTOR)
-                </button>
-                <button class="btn-red" style="padding: 10px; font-size: 12px;" onclick="hideWinningMoneyOnProjector()">
-                    ẨN TIỀN THẮNG
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- TAB 3: SETTINGS DASHBOARD -->
-    <div id="settings-dashboard" class="settings-container" style="display: none;">
-        <div class="panel" style="width: 100%; max-width: 800px; margin: 0 auto;">
-            <div class="panel-title">CÀI ĐẶT CẤU HÌNH TRÒ CHƠI</div>
-            <p style="font-size: 11px; color: #94a3b8; margin-bottom: 12px;">Chỉnh sửa các thông số kỹ thuật của trò chơi. Bấm "Lưu Cài Đặt &amp; Đồng Bộ" để áp dụng cho tất cả màn hình.</p>
-            
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
-                <!-- Group 1: Time & Questions -->
-                <div style="background: #181b22; border: 1px solid #222632; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="font-size: 11px; color: #60a5fa; border-bottom: 1px solid #262a36; padding-bottom: 4px; font-weight: bold;">
-                        1. THỜI GIAN &amp; SỐ CÂU HỎI
+                        <button class="button button-green" onclick="armCurrentQuestion()">
+                            <span>🔔</span> Mở chuông câu này
+                        </button>
+                        <button class="button button-orange" onclick="nextQuestion()">
+                            Câu sau <span>⏭</span>
+                        </button>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="cfg-timer-seconds" style="font-weight: 600;">Thời gian đếm ngược mặc định (giây):</label>
-                        <input type="number" id="cfg-timer-seconds" min="5" max="300" value="60" oninput="updateSettingsPreview()">
-                        <span style="font-size: 9px; color: #64748b;">Mặc định: 60 giây. Áp dụng khi câu hỏi không cài thời gian riêng.</span>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-weight: 600; color: #38bdf8;">THỜI GIAN CỦA TỪNG CÂU HỎI 1 (GIÂY):</label>
-                        <div id="cfg-question-timers-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 4px;">
-                            <!-- Generated dynamically by controller.js -->
-                        </div>
-                        <span style="font-size: 9px; color: #64748b;">Giúp cài thời gian đếm ngược riêng biệt cho từng câu hỏi 1 (ví dụ Câu 8 = 30s, các câu còn lại 60s).</span>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="cfg-total-questions" style="font-weight: 600;">Tổng số câu hỏi toàn chương trình:</label>
-                        <input type="number" id="cfg-total-questions" min="1" max="20" value="8" oninput="renderSettingsQuestionTimersGrid(); updateSettingsPreview();">
-                        <span style="font-size: 9px; color: #64748b;">Mặc định: 8 câu hỏi. Tự động cập nhật số ô câu hỏi trong Tiến Trình.</span>
-                    </div>
-                </div>
-
-                <!-- Group 2: Money & Stacks & Currency Unit -->
-                <div style="background: #181b22; border: 1px solid #222632; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="font-size: 11px; color: #60a5fa; border-bottom: 1px solid #262a36; padding-bottom: 4px; font-weight: bold;">
-                        2. CỌC TIỀN &amp; ĐƠN VỊ TIỀN TỆ
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="cfg-initial-stacks" style="font-weight: 600;">Số lượng cọc tiền ban đầu:</label>
-                        <input type="number" id="cfg-initial-stacks" min="1" max="200" value="40" oninput="updateSettingsPreview()">
-                        <span style="font-size: 9px; color: #64748b;">Mặc định: 40 cọc tiền.</span>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="cfg-stack-value" style="font-weight: 600;">Giá trị của 1 cọc tiền:</label>
-                        <input type="number" id="cfg-stack-value" min="1000" max="1000000000" step="1000" value="25000" oninput="updateSettingsPreview()">
-                        <span style="font-size: 9px; color: #64748b;">Mặc định: 25.000 (Tổng tiền khởi tạo = Số cọc x Giá trị 1 cọc).</span>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="cfg-currency-unit" style="font-weight: 600;">Đơn vị tiền tệ hiển thị:</label>
-                        <input type="text" id="cfg-currency-unit" value="$A" placeholder="Ví dụ: $A, VNĐ, ĐỒNG, $" oninput="updateSettingsPreview()">
-                        <span style="font-size: 9px; color: #64748b;">Hiển thị phía sau con số tiền trên Bàn Điều Khiển, Tiến Trình, Player, Answer &amp; Projector.</span>
-                    </div>
-                </div>
-
-                <!-- Group 3: Speed & Delay Settings -->
-                <div style="background: #181b22; border: 1px solid #222632; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="font-size: 11px; color: #60a5fa; border-bottom: 1px solid #262a36; padding-bottom: 4px; font-weight: bold;">
-                        3. TỐC ĐỘ &amp; DELAY ĐẶT TIỀN (PLAYER)
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="cfg-bet-delay-seconds" style="font-weight: 600;">Khoảng thời gian delay tốc độ đặt tiền (giây):</label>
-                        <input type="number" id="cfg-bet-delay-seconds" min="0" max="5" step="0.025" value="0.125" oninput="updateSettingsPreview()">
-                        <span style="font-size: 9px; color: #64748b;">Mặc định: 0.125 giây (125ms). Giúp kiểm soát tốc độ giãn cách giữa mỗi lần người chơi bấm nút Đặt tiền/Rút tiền.</span>
-                    </div>
-                </div>
-
-                <!-- Group 4: Screen Frames Option -->
-                <div style="background: #181b22; border: 1px solid #222632; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="font-size: 11px; color: #60a5fa; border-bottom: 1px solid #262a36; padding-bottom: 4px; font-weight: bold;">
-                        4. KHUNG MÀN HÌNH (MAIN1.PNG &amp; OUTLINESCREEN.PNG)
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="cfg-show-screen-frames" style="font-weight: 600;">Hiển thị 2 khung màn hình (main1.png &amp; outlinescreen.png):</label>
-                        <select id="cfg-show-screen-frames" onchange="updateSettingsPreview()" style="width: 100%; padding: 6px; border-radius: 4px; background: #111317; color: #fff; border: 1px solid #323848; font-size: 12px;">
-                            <option value="true">Hiển thị (Bật 2 khung main1.png &amp; outlinescreen.png)</option>
-                            <option value="false">Ẩn (Tắt 2 khung màn hình)</option>
+                    <!-- JUMP DROPDOWN -->
+                    <div class="q-jump-row">
+                        <select class="q-select-dropdown" id="qSelectDropdown" onchange="jumpToQuestion(this.value)">
+                            <!-- Options generated dynamically -->
                         </select>
-                        <span style="font-size: 9px; color: #64748b;">Cho phép bật/tắt hiển thị 2 lớp khung màn hình main1.png và outlinescreen.png trên Projector.</span>
+                        <button class="button button-gray" style="flex-shrink:0;" onclick="randomQuestion()" title="Chọn ngẫu nhiên một câu hỏi">
+                            <span>🎲</span> Ngẫu nhiên
+                        </button>
                     </div>
-                </div>
-            </div>
 
-            <!-- Preview Panel -->
-            <div style="background: #111317; border: 1px solid #262a36; border-radius: 6px; padding: 10px; margin-bottom: 12px;">
-                <div style="font-size: 10px; color: #38bdf8; text-transform: uppercase; margin-bottom: 6px; font-weight: bold;">
-                    XEM TRƯỚC TỔNG QUAN CẤU HÌNH
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; text-align: center;">
-                    <div style="background: #181b22; padding: 6px; border-radius: 4px; border: 1px solid #222632;">
-                        <div style="font-size: 9px; color: #94a3b8;">THỜI GIAN / CÂU</div>
-                        <div id="preview-cfg-time" style="font-size: 14px; color: #f59e0b; margin-top: 2px;">60 giây</div>
-                    </div>
-                    <div style="background: #181b22; padding: 6px; border-radius: 4px; border: 1px solid #222632;">
-                        <div style="font-size: 9px; color: #94a3b8;">TỔNG TIỀN BAN ĐẦU</div>
-                        <div id="preview-cfg-money" style="font-size: 14px; color: #34d399; margin-top: 2px;">1.000.000 $A (40 cọc)</div>
-                    </div>
-                    <div style="background: #181b22; padding: 6px; border-radius: 4px; border: 1px solid #222632;">
-                        <div style="font-size: 9px; color: #94a3b8;">TỔNG SỐ CÂU HỎI</div>
-                        <div id="preview-cfg-questions" style="font-size: 14px; color: #60a5fa; margin-top: 2px;">8 câu</div>
-                    </div>
-                    <div style="background: #181b22; padding: 6px; border-radius: 4px; border: 1px solid #222632;">
-                        <div style="font-size: 9px; color: #94a3b8;">DELAY ĐẶT TIỀN</div>
-                        <div id="preview-cfg-delay" style="font-size: 14px; color: #38bdf8; margin-top: 2px;">0.125 giây (125ms)</div>
-                    </div>
-                    <div style="background: #181b22; padding: 6px; border-radius: 4px; border: 1px solid #222632;">
-                        <div style="font-size: 9px; color: #94a3b8;">KHUNG MÀN HÌNH</div>
-                        <div id="preview-cfg-frames" style="font-size: 14px; color: #a7f3d0; margin-top: 2px;">Hiển thị</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div style="display: flex; gap: 8px;">
-                <button class="btn-blue" style="flex: 2; padding: 10px; font-size: 12px;" onclick="saveGameSettings()">
-                    LƯU CÀI ĐẶT &amp; ĐỒNG BỘ
-                </button>
-                <button class="btn-orange" style="flex: 1; padding: 10px; font-size: 12px;" onclick="resetGameSettingsToDefault()">
-                    KHÔI PHỤC MẶC ĐỊNH
-                </button>
-            </div>
-
-            <div id="cfg-save-status" style="margin-top: 8px; font-size: 11px; text-align: center; color: #34d399; display: none;">
-                Đã lưu cài đặt và đồng bộ thành công!
-            </div>
-        </div>
-    </div>
-
-    <!-- TAB 4: QUESTIONS DATA DASHBOARD -->
-    <div id="questions-dashboard" style="display: none; flex-direction: column; flex: 1; padding: 10px; gap: 10px; overflow-y: auto; background: #111317; height: calc(100vh - 66px);">
-        <div class="panel" style="width: 100%; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #262a36; padding-bottom: 8px;">
-                <div>
-                    <div class="panel-title" style="margin: 0; font-size: 14px; color: #60a5fa;">DANH SÁCH &amp; QUẢN LÝ DỮ LIỆU CÂU HỎI &amp; MEDIA</div>
-                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Xem, chỉnh sửa, gán hình ảnh/video cho từng câu hỏi A &amp; B. Bấm "Lưu Dữ Liệu Câu Hỏi" sau khi thay đổi.</div>
-                </div>
-                <div style="display: flex; gap: 6px;">
-                    <button class="btn-green" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="addNewRoundToStore()">Thêm Vòng Mới</button>
-                    <button class="btn-blue" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="saveQuestionsTabUI()">Lưu Dữ Liệu Câu Hỏi &amp; Media</button>
-                </div>
-            </div>
-
-            <div id="qtab-save-status" style="display: none; font-size: 11px; text-align: center; color: #34d399; background: #064e3b; padding: 4px; border-radius: 4px;">
-                Đã lưu dữ liệu câu hỏi &amp; media thành công!
-            </div>
-
-            <div id="questions-data-list" style="display: flex; flex-direction: column; gap: 12px;">
-                <!-- Dynamic list generated by controller.js -->
-            </div>
-        </div>
-    </div>
-
-    <!-- TAB 5: ROLES MANAGEMENT & REMOTE RELOAD DASHBOARD -->
-    <div id="roles-dashboard" style="display: none; flex-direction: column; flex: 1; padding: 12px; gap: 12px; overflow-y: auto; background: #111317; height: calc(100vh - 66px);">
-        <div class="panel" style="width: 100%; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;">
-            <div style="border-bottom: 1px solid #262a36; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div class="panel-title" style="margin: 0; font-size: 14px; color: #60a5fa;">QUẢN LÝ &amp; TẢI LẠI CÁC MÀN HÌNH (ROLES &amp; REMOTE RELOAD)</div>
-                    <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Khi một máy hoặc màn hình bị lag, phản hồi chậm, bạn có thể gửi lệnh tải lại (Reload) từ xa cho màn hình đó hoặc mở tab mới riêng biệt.</div>
-                </div>
-                <button class="btn-red" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="reloadRole('all')">
-                    RELOAD TẤT CẢ MÀN HÌNH
-                </button>
-            </div>
-
-            <div id="role-reload-status" style="display: none; background: #064e3b; border: 1px solid #059669; color: #34d399; padding: 8px 12px; border-radius: 6px; font-size: 12px; text-align: center; font-weight: bold;">
-                Đã gửi lệnh tải lại!
-            </div>
-
-            <!-- Grid of Roles -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
-                
-                <!-- Role 1: Projector -->
-                <div style="background: #181b22; border: 1px solid #262a36; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #262a36; padding-bottom: 6px;">
-                        <div>
-                            <div style="font-size: 13px; font-weight: bold; color: #38bdf8;">MÀN HÌNH MÁY CHIẾU (PROJECTOR)</div>
-                            <div style="font-size: 10px; color: #64748b;">File: projector.html</div>
+                    <!-- EXCEL FILE UPLOAD / DRAG & DROP -->
+                    <div class="excel-dropzone" id="excelDropzone" onclick="document.getElementById('excelFileInput').click()">
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleExcelUpload(this.files[0])">
+                        <div class="excel-dropzone-text">
+                            <span>📊</span>
+                            <span><strong>Kéo thả hoặc bấm để nhập file Excel / CSV</strong> (Không giới hạn số câu)</span>
                         </div>
                     </div>
-                    <p style="font-size: 10px; color: #94a3b8;">Hiển thị giao diện chính cho khán giả, vòng chơi, hình ảnh/video, thời gian và tiền cược.</p>
-                    <div style="display: flex; gap: 6px; margin-top: auto;">
-                        <button class="btn-orange" style="flex: 1; padding: 8px;" onclick="reloadRole('projector')">Reload Máy Chiếu</button>
-                        <button class="btn-blue" style="flex: 1; padding: 8px;" onclick="openRoleTab('projector.html')">Mở Tab Mới</button>
+                </div>
+            </section>
+
+            <!-- 25 PANELS BOARD -->
+            <section class="card">
+                <div class="card-header">
+                    <div class="card-title">🎯 BẢNG 25 Ô</div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span class="card-badge" id="selectedPanelText">Chưa chọn ô</span>
+                        <button class="button button-gray" id="btnQuickDeselect" style="height:22px; padding:0 6px; font-size:10px;" onclick="clearSelection()" title="Hủy chọn ô hiện tại">Bỏ chọn</button>
                     </div>
                 </div>
 
-                <!-- Role 2: MC Sound / Answer -->
-                <div style="background: #181b22; border: 1px solid #262a36; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #262a36; padding-bottom: 6px;">
-                        <div>
-                            <div style="font-size: 13px; font-weight: bold; color: #34d399;">MÀN HÌNH MC / SOUND (ANSWER)</div>
-                            <div style="font-size: 10px; color: #64748b;">File: answer.html (4 Cửa)</div>
+                <div class="card-body">
+                    <!-- 25 BUTTONS -->
+                    <div class="panel-grid" id="panelGrid"></div>
+
+                    <!-- COLOR CLAIM ACTIONS -->
+                    <div class="color-actions">
+                        <button class="button button-red" onclick="setPanelColor('red')">Ô ĐỎ</button>
+                        <button class="button button-green" onclick="setPanelColor('green')">Ô XANH LÁ</button>
+                        <button class="button button-white" onclick="setPanelColor('white')">Ô TRẮNG</button>
+                        <button class="button button-blue" onclick="setPanelColor('blue')">Ô XANH DƯƠNG</button>
+                        <button class="button button-gray" onclick="setPanelColor(null)">XÓA MÀU</button>
+                    </div>
+
+                    <!-- BOARD ACTIONS -->
+                    <div class="board-actions" style="grid-template-columns: 1.2fr 1.2fr 1fr 1fr;">
+                        <button class="button button-orange" onclick="sendSelectedPanel()">🌟 HIỆN Ô</button>
+                        <button class="button button-gray" onclick="clearSelection()" style="background:#4b5563; border:1px solid #6b7280;" title="Bỏ chọn ô đang chọn trên màn hình">❌ HỦY CHỌN</button>
+                        <button class="button button-gray" onclick="markSelectedUsed()">ĐÃ DÙNG</button>
+                        <button class="button button-red" onclick="resetSelectedPanel()">RESET Ô</button>
+                    </div>
+
+                    <!-- STATUS -->
+                    <div class="status-row">
+                        <div class="status-box">
+                            <span class="status-label">Ô đang chọn</span>
+                            <span class="status-value" id="statusSelected">-</span>
+                        </div>
+                        <div class="status-box">
+                            <span class="status-label">Đã dùng</span>
+                            <span class="status-value" id="statusUsed">0 / 25</span>
+                        </div>
+                        <div class="status-box">
+                            <span class="status-label">Còn lại</span>
+                            <span class="status-value" id="statusRemaining">25</span>
                         </div>
                     </div>
-                    <p style="font-size: 10px; color: #94a3b8;">Hiển thị đáp án 4 ô cửa, trạng thái tiền rơi, âm thanh hiệu ứng cửa sập.</p>
-                    <div style="display: flex; gap: 6px; margin-top: auto;">
-                        <button class="btn-orange" style="flex: 1; padding: 8px;" onclick="reloadRole('answer')">Reload Tất Cả Cửa</button>
-                        <button class="btn-blue" style="flex: 1; padding: 8px;" onclick="openRoleTab('answer.html')">Mở 4 Cửa gộp</button>
-                    </div>
-                    <div style="border-top: 1px solid #262a36; pt: 6px; margin-top: 4px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;">
-                        <button class="btn-purple" style="padding: 4px; font-size: 10px;" onclick="openRoleTab('answer1.html')">Cửa 1</button>
-                        <button class="btn-purple" style="padding: 4px; font-size: 10px;" onclick="openRoleTab('answer2.html')">Cửa 2</button>
-                        <button class="btn-purple" style="padding: 4px; font-size: 10px;" onclick="openRoleTab('answer3.html')">Cửa 3</button>
-                        <button class="btn-purple" style="padding: 4px; font-size: 10px;" onclick="openRoleTab('answer4.html')">Cửa 4</button>
-                    </div>
                 </div>
-
-                <!-- Role 3: Player -->
-                <div style="background: #181b22; border: 1px solid #262a36; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #262a36; padding-bottom: 6px;">
-                        <div>
-                            <div style="font-size: 13px; font-weight: bold; color: #f59e0b;">MÀN HÌNH NGƯỜI CHƠI (PLAYER)</div>
-                            <div style="font-size: 10px; color: #64748b;">File: player.html</div>
-                        </div>
-                    </div>
-                    <p style="font-size: 10px; color: #94a3b8;">Giao diện máy tính bảng/điện thoại cho thí sinh thực hiện thao tác chia cọc tiền cược.</p>
-                    <div style="display: flex; gap: 6px; margin-top: auto;">
-                        <button class="btn-orange" style="flex: 1; padding: 8px;" onclick="reloadRole('player')">Reload Player</button>
-                        <button class="btn-blue" style="flex: 1; padding: 8px;" onclick="openRoleTab('player.html')">Mở Tab Mới</button>
-                    </div>
-                </div>
-
-                <!-- Role 4: Host -->
-                <div style="background: #181b22; border: 1px solid #262a36; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #262a36; padding-bottom: 6px;">
-                        <div>
-                            <div style="font-size: 13px; font-weight: bold; color: #c084fc;">MÀN HÌNH MC HOST</div>
-                            <div style="font-size: 10px; color: #64748b;">File: host.html</div>
-                        </div>
-                    </div>
-                    <p style="font-size: 10px; color: #94a3b8;">Màn hình nhắc bài cho MC chính, xem trước đáp án, giải thích câu hỏi và tin nhắn kỹ thuật.</p>
-                    <div style="display: flex; gap: 6px; margin-top: auto;">
-                        <button class="btn-orange" style="flex: 1; padding: 8px;" onclick="reloadRole('host')">Reload MC Host</button>
-                        <button class="btn-blue" style="flex: 1; padding: 8px;" onclick="openRoleTab('host.html')">Mở Tab Mới</button>
-                    </div>
-                </div>
-
-                <!-- Role 5: Controller -->
-                <div style="background: #181b22; border: 1px solid #262a36; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #262a36; padding-bottom: 6px;">
-                        <div>
-                            <div style="font-size: 13px; font-weight: bold; color: #60a5fa;">BÀN ĐIỀU KHIỂN CHÍNH (CONTROLLER)</div>
-                            <div style="font-size: 10px; color: #64748b;">File: controller.html (Trang này)</div>
-                        </div>
-                    </div>
-                    <p style="font-size: 10px; color: #94a3b8;">Trang điều khiển chính của kỹ thuật viên / đạo diễn chương trình.</p>
-                    <div style="display: flex; gap: 6px; margin-top: auto;">
-                        <button class="btn-orange" style="flex: 1; padding: 8px;" onclick="reloadRole('controller')">Reload Controller Hiện Tại</button>
-                        <button class="btn-blue" style="flex: 1; padding: 8px;" onclick="openRoleTab('controller.html')">Mở Tab Controller Mới</button>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- TAB 6: LOGS DASHBOARD -->
-    <div id="logs-dashboard" style="display: none; flex-direction: column; flex: 1; padding: 10px; gap: 10px; overflow-y: auto; background: #111317; min-height: calc(100vh - 66px);">
-        <div class="panel" style="width: 100%; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; flex: 1;">
-            
-            <!-- Top Title and Export Actions -->
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #262a36; padding-bottom: 8px; flex-shrink: 0;">
-                <div>
-                    <div class="panel-title" style="margin: 0; font-size: 14px; color: #60a5fa;">NHẬT KÝ HỆ THỐNG &amp; CHI TIẾT ĐẶT CƯỢC (LOGS)</div>
-                    <div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Ghi nhận thời gian thực số tiền người chơi đặt, số tiền mất đi, số tiền còn lại, trạng thái đăng nhập &amp; đồng bộ của Player.</div>
-                </div>
-                <div style="display: flex; gap: 6px;">
-                    <button class="btn-orange" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="exportSystemLogsText()">Xuất File Text (.txt)</button>
-                    <button class="btn-red" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="clearSystemLogs()">Xóa Nhật Ký Log</button>
-                </div>
-            </div>
-
-            <!-- Stats Bar -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; flex-shrink: 0;">
-                <div style="background: #181b22; padding: 8px; border-radius: 6px; border: 1px solid #222632;">
-                    <div style="font-size: 10px; color: #94a3b8; font-weight: bold;">SỐ TIỀN CÒN LẠI</div>
-                    <div id="log-stat-remaining" style="font-size: 15px; color: #38bdf8; font-weight: bold; margin-top: 2px;">1.000.000 $A</div>
-                    <div id="log-stat-remaining-stacks" style="font-size: 10px; color: #64748b;">(40 cọc)</div>
-                </div>
-                <div style="background: #181b22; padding: 8px; border-radius: 6px; border: 1px solid #222632;">
-                    <div style="font-size: 10px; color: #94a3b8; font-weight: bold;">TIỀN ĐÃ ĐẶT (ĐANG TRÊN BÀN)</div>
-                    <div id="log-stat-bet" style="font-size: 15px; color: #f59e0b; font-weight: bold; margin-top: 2px;">0 $A</div>
-                    <div id="log-stat-bet-stacks" style="font-size: 10px; color: #64748b;">(0 cọc)</div>
-                </div>
-                <div style="background: #181b22; padding: 8px; border-radius: 6px; border: 1px solid #222632;">
-                    <div style="font-size: 10px; color: #94a3b8; font-weight: bold;">TỔNG TIỀN MẤT (RƠI HỐ)</div>
-                    <div id="log-stat-lost" style="font-size: 15px; color: #f85149; font-weight: bold; margin-top: 2px;">0 $A</div>
-                    <div id="log-stat-lost-stacks" style="font-size: 10px; color: #64748b;">(0 cọc)</div>
-                </div>
-                <div style="background: #181b22; padding: 8px; border-radius: 6px; border: 1px solid #222632;">
-                    <div style="font-size: 10px; color: #94a3b8; font-weight: bold;">TRẠNG THÁI PLAYER &amp; PIN</div>
-                    <div id="log-stat-auth-status" style="font-size: 13px; color: #34d399; font-weight: bold; margin-top: 2px;">🟢 PIN: 1234</div>
-                    <div id="log-stat-auth-detail" style="font-size: 10px; color: #64748b;">Đã xác thực &amp; Đồng bộ</div>
-                </div>
-            </div>
-
-            <!-- Filter & Search Controls Bar -->
-            <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; background: #181b22; padding: 6px 10px; border-radius: 6px; border: 1px solid #222632; flex-shrink: 0;">
-                <!-- Filter Buttons -->
-                <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-                    <span style="color: #94a3b8; font-size: 10px; font-weight: bold; margin-right: 2px;">LỌC LOG:</span>
-                    <button id="log-filter-btn-all" class="btn-blue" style="width: auto; padding: 3px 8px; font-size: 10px;" onclick="setLogFilter('all')">Tất Cả</button>
-                    <button id="log-filter-btn-bet" class="btn-orange" style="width: auto; padding: 3px 8px; font-size: 10px; opacity: 0.7;" onclick="setLogFilter('bet')">Đặt Tiền</button>
-                    <button id="log-filter-btn-lost" class="btn-orange" style="width: auto; padding: 3px 8px; font-size: 10px; opacity: 0.7;" onclick="setLogFilter('lost')">Mất Tiền</button>
-                    <button id="log-filter-btn-sec" class="btn-orange" style="width: auto; padding: 3px 8px; font-size: 10px; opacity: 0.7;" onclick="setLogFilter('sec')">⚠️ F12 &amp; Chuyển Tab</button>
-                    <button id="log-filter-btn-auth" class="btn-orange" style="width: auto; padding: 3px 8px; font-size: 10px; opacity: 0.7;" onclick="setLogFilter('auth')">Đăng Nhập / PIN</button>
-                    <button id="log-filter-btn-system" class="btn-orange" style="width: auto; padding: 3px 8px; font-size: 10px; opacity: 0.7;" onclick="setLogFilter('system')">Hệ Thống</button>
-                </div>
-
-                <!-- Search and Auto-scroll -->
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <input type="text" id="log-search-input" placeholder="Tìm kiếm nhật ký..." oninput="renderSystemLogsUI()" style="width: 170px; padding: 3px 6px; font-size: 10px; height: 24px;">
-                    <label style="display: flex; align-items: center; gap: 4px; margin: 0; cursor: pointer; color: #94a3b8; font-size: 10px; text-transform: none;">
-                        <input type="checkbox" id="log-autoscroll-chk" checked style="accent-color: #3b82f6;"> Tự cuộn
-                    </label>
-                </div>
-            </div>
-
-            <!-- Log Stream Container -->
-            <div id="logs-list-container" style="flex: 1; min-height: 320px; max-height: 520px; background: #0d1117; border: 1px solid #222632; border-radius: 6px; padding: 10px; overflow-y: auto; font-family: 'Segoe UI', monospace, sans-serif; font-size: 11px; display: flex; flex-direction: column; gap: 6px;">
-                <!-- Generated dynamically by controller.js -->
-            </div>
+            </section>
 
         </div>
-    </div>
 
-    <script src="network_sync.js"></script>
-    <script src="security.js"></script>
-    <script src="controller.js"></script>
-    <script>
-        if (typeof initPinProtection === 'function') {
-            initPinProtection('controller', 'Bàn Điều Khiển');
+        <!-- COLUMN 2: BUZZER SYSTEM & PREVIEW -->
+        <div class="column">
+
+            <!-- BUZZER MONITOR CARD -->
+            <section class="card">
+                <div class="card-header">
+                    <div class="card-title">🔔 GIÁM SÁT BUZZER</div>
+                    <span class="card-badge" id="buzzerBadge">ĐÃ KHÓA</span>
+                </div>
+
+                <div class="card-body">
+                    <!-- STATUS BANNER -->
+                    <div class="buzzer-status-banner locked" id="buzzerBanner">
+                        <div>
+                            <div class="buzzer-state-title">Trạng thái</div>
+                            <div class="buzzer-state-val" id="buzzerStateText">ĐÃ KHÓA CHUÔNG</div>
+                        </div>
+                        <div class="buzzer-winner-info" id="buzzerWinnerDisplay">
+                            Chưa có ai bấm chuông
+                        </div>
+                    </div>
+
+                    <!-- MASTER BUZZER CONTROLS -->
+                    <div class="buzzer-master-btns">
+                        <button class="button button-green" onclick="armBuzzer()">
+                            <span>🔔</span> MỞ CHUÔNG [Space]
+                        </button>
+                        <button class="button button-red" onclick="lockBuzzer()">
+                            <span>🔒</span> KHÓA
+                        </button>
+                        <button class="button button-gray" onclick="resetBuzzer()">
+                            <span>🔄</span> RESET [Del]
+                        </button>
+                    </div>
+
+                    <!-- 4 PLAYER BUZZER BUTTONS -->
+                    <div class="buzzer-grid">
+                        <button class="buzzer-btn btn-red" id="buzzBtnRed" onclick="playerPressBuzzer('red')">
+                            <span class="buzzer-key">[1]/[Q]</span>
+                            <span style="font-weight:900; font-size:13px;">ĐỎ</span>
+                            <span style="font-size:10px;" id="buzzNameRed">PLAYER 1</span>
+                        </button>
+
+                        <button class="buzzer-btn btn-green" id="buzzBtnGreen" onclick="playerPressBuzzer('green')">
+                            <span class="buzzer-key">[2]/[W]</span>
+                            <span style="font-weight:900; font-size:13px;">XANH LÁ</span>
+                            <span style="font-size:10px;" id="buzzNameGreen">PLAYER 2</span>
+                        </button>
+
+                        <button class="buzzer-btn btn-white" id="buzzBtnWhite" onclick="playerPressBuzzer('white')">
+                            <span class="buzzer-key">[3]/[E]</span>
+                            <span style="font-weight:900; font-size:13px;">TRẮNG</span>
+                            <span style="font-size:10px;" id="buzzNameWhite">PLAYER 3</span>
+                        </button>
+
+                        <button class="buzzer-btn btn-blue" id="buzzBtnBlue" onclick="playerPressBuzzer('blue')">
+                            <span class="buzzer-key">[4]/[R]</span>
+                            <span style="font-weight:900; font-size:13px;">XANH DƯƠNG</span>
+                            <span style="font-size:10px;" id="buzzNameBlue">PLAYER 4</span>
+                        </button>
+                    </div>
+
+                    <!-- JUDGEMENT CONTROLS -->
+                    <div class="buzzer-judge-row">
+                        <button class="button button-green" onclick="judgeCorrect()">
+                            <span>✅</span> ĐÚNG (+1 Điểm) [Enter]
+                        </button>
+                        <button class="button button-red" onclick="judgeWrong()">
+                            <span>❌</span> SAI (Khóa chuông) [Esc]
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PREVIEW DISPLAY (LIVE PROJECTOR STREAM) -->
+            <section class="card">
+                <div class="card-header">
+                    <div class="card-title">🖥️ PREVIEW PROJECTOR (MÀN HÌNH MÁY CHIẾU REAL-TIME)</div>
+                    <a href="Projector.html" target="_blank" class="button button-gray" style="height:22px; padding:0 8px; font-size:11px; text-decoration:none;" title="Mở Màn hình Máy chiếu trong cửa sổ mới">Mở cửa sổ riêng ↗</a>
+                </div>
+
+                <div class="card-body" style="padding:6px;">
+                    <div style="position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; background: #000; border: 1.5px solid #334155; box-shadow: 0 4px 16px rgba(0,0,0,0.6);">
+                        <iframe src="Projector.html?preview=1" style="width: 100%; height: 100%; border: none; pointer-events: none; display: block;" id="projectorPreviewIframe"></iframe>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- COLUMN 3: PLAYERS & SYSTEM -->
+        <div class="column">
+
+            <!-- PLAYER CONTROLS (CLEAN +/- SCORE) -->
+            <section class="card">
+                <div class="card-header">
+                    <div class="card-title">👥 NGƯỜI CHƠI &amp; ĐIỂM SỐ</div>
+                </div>
+
+                <div class="card-body">
+                    <div class="player-list">
+
+                        <!-- PLAYER RED -->
+                        <div class="player-card red">
+                            <div class="player-top">
+                                <div class="player-number">1</div>
+                                <input class="player-name-input" id="nameRed" value="PLAYER 1" oninput="updatePlayerName('red')">
+                            </div>
+                            <div class="player-controls">
+                                <button class="score-button" onclick="changeScore('red', -1)">−</button>
+                                <input type="number" class="score-input" id="scoreRed" value="0" onchange="updateScore('red')">
+                                <button class="score-button" onclick="changeScore('red', 1)">+</button>
+                            </div>
+                        </div>
+
+                        <!-- PLAYER GREEN -->
+                        <div class="player-card green">
+                            <div class="player-top">
+                                <div class="player-number">2</div>
+                                <input class="player-name-input" id="nameGreen" value="PLAYER 2" oninput="updatePlayerName('green')">
+                            </div>
+                            <div class="player-controls">
+                                <button class="score-button" onclick="changeScore('green', -1)">−</button>
+                                <input type="number" class="score-input" id="scoreGreen" value="0" onchange="updateScore('green')">
+                                <button class="score-button" onclick="changeScore('green', 1)">+</button>
+                            </div>
+                        </div>
+
+                        <!-- PLAYER WHITE -->
+                        <div class="player-card white">
+                            <div class="player-top">
+                                <div class="player-number">3</div>
+                                <input class="player-name-input" id="nameWhite" value="PLAYER 3" oninput="updatePlayerName('white')">
+                            </div>
+                            <div class="player-controls">
+                                <button class="score-button" onclick="changeScore('white', -1)">−</button>
+                                <input type="number" class="score-input" id="scoreWhite" value="0" onchange="updateScore('white')">
+                                <button class="score-button" onclick="changeScore('white', 1)">+</button>
+                            </div>
+                        </div>
+
+                        <!-- PLAYER BLUE -->
+                        <div class="player-card blue">
+                            <div class="player-top">
+                                <div class="player-number">4</div>
+                                <input class="player-name-input" id="nameBlue" value="PLAYER 4" oninput="updatePlayerName('blue')">
+                            </div>
+                            <div class="player-controls">
+                                <button class="score-button" onclick="changeScore('blue', -1)">−</button>
+                                <input type="number" class="score-input" id="scoreBlue" value="0" onchange="updateScore('blue')">
+                                <button class="score-button" onclick="changeScore('blue', 1)">+</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- SYSTEM CONTROLS -->
+            <section class="card">
+                <div class="card-header">
+                    <div class="card-title">⚙️ HỆ THỐNG</div>
+                </div>
+
+                <div class="card-body">
+                    <div class="board-actions">
+                        <button class="button button-gray" onclick="clearSelection()">BỎ CHỌN Ô</button>
+                        <button class="button button-gray" onclick="resetAllScores()">RESET ĐIỂM</button>
+                        <button class="button button-red" onclick="resetGame()">RESET GAME</button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+
+/* =====================================================
+   SYNTHESIZER SOUND ENGINE (WEB AUDIO API)
+===================================================== */
+function getAudioCtx() {
+    if (!window.globalAudioCtx) {
+        window.globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (window.globalAudioCtx.state === 'suspended') {
+        window.globalAudioCtx.resume().catch(() => {});
+    }
+    return window.globalAudioCtx;
+}
+
+function playSound(type) {
+    try {
+        const actx = getAudioCtx();
+        if (!actx) return;
+        const now = actx.currentTime;
+
+        if (type === 'buzzer') {
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain);
+            gain.connect(actx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'correct') {
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                const osc = actx.createOscillator();
+                const gain = actx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.2, now + i * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+                osc.connect(gain);
+                gain.connect(actx.destination);
+                osc.start(now + i * 0.08);
+                osc.stop(now + i * 0.08 + 0.35);
+            });
+        } else if (type === 'wrong') {
+            [180, 140].forEach(freq => {
+                const osc = actx.createOscillator();
+                const gain = actx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+                osc.connect(gain);
+                gain.connect(actx.destination);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            });
+        } else if (type === 'arm') {
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, now);
+            osc.frequency.setValueAtTime(880, now + 0.08);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.connect(gain);
+            gain.connect(actx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
         }
-    </script>
+    } catch (err) {}
+}
+
+
+/* =====================================================
+   DEFAULT QUESTION BANK (SEEDED FROM USER EXCEL)
+===================================================== */
+const DEFAULT_QUESTIONS = [
+    { stt: 1, question: "Trong tác phẩm Lão Hạc của Nam Cao, Lão Hạc nuôi con vật gì?", answer: "Con chó" },
+    { stt: 2, question: "Quần thể chùa Tam Chúc thuộc tỉnh nào của Việt Nam?", answer: "Hà Nam" },
+    { stt: 3, question: "Khi bị chảy máu cam, máu có màu gì?", answer: "Màu đỏ" },
+    { stt: 4, question: "Cá mập sinh sản bằng cách đẻ trứng hay đẻ con?", answer: "Đẻ con" },
+    { stt: 5, question: "Con khỉ đầu chó hay con chó đầu khỉ có thật?", answer: "Khỉ đầu chó" },
+    { stt: 6, question: "Cầu Mỹ Thuận bắc qua sông Tiền, nối liền hai tỉnh nào?", answer: "Tiền Giang – Vĩnh Long" },
+    { stt: 7, question: "Biển số xe mang ký hiệu 60 hiện nay thuộc tỉnh nào?", answer: "Đồng Nai" },
+    { stt: 8, question: "Trong truyện cổ tích Sọ Dừa, Sọ Dừa có bao nhiêu anh em?", answer: "Không có anh em" },
+    { stt: 9, question: "Nhân vật chính trong tác phẩm Tắt đèn của Ngô Tất Tố là ai?", answer: "Chị Dậu" },
+    { stt: 10, question: "Trong hệ thập phân của toán học, 30 + 70 – 50 bằng bao nhiêu?", answer: "50" },
+    { stt: 11, question: "Cột cờ Lũng Cú thuộc tỉnh nào của Việt Nam?", answer: "Hà Giang" },
+    { stt: 12, question: "Việt Nam đã từng đăng cai tổ chức SEA Games mấy lần?", answer: "2 lần" },
+    { stt: 13, question: "Nghề mộc sử dụng nguyên liệu chính là gì?", answer: "Gỗ" },
+    { stt: 14, question: "“Anh Hai là người thích nêm mắm dặm muối nhất” – anh Hai làm nghề gì?", answer: "Đầu bếp" },
+    { stt: 15, question: "Trong tranh Đông Hồ Em bé ôm gà, em bé trong tranh là bé trai hay bé gái?", answer: "Bé trai" },
+    { stt: 16, question: "Tên gọi chính thức của Thái Lan là gì?", answer: "Vương quốc Thái Lan" },
+    { stt: 17, question: "Hoàn chỉnh thành ngữ: “Án binh bất …”", answer: "Động" },
+    { stt: 18, question: "Trong truyện Ăn khế trả vàng, loài chim nào xuất hiện?", answer: "Chim phượng hoàng" },
+    { stt: 19, question: "Quốc kỳ nước nào có hình lá phong đỏ?", answer: "Canada" },
+    { stt: 20, question: "Sân vận động Lạch Tray thuộc thành phố nào?", answer: "Hải Phòng" },
+    { stt: 21, question: "Con sông dài nhất châu Á là sông nào?", answer: "Trường Giang" },
+    { stt: 22, question: "Vân tay của cặp sinh đôi có hoàn toàn giống nhau không?", answer: "Không" },
+    { stt: 23, question: "Trong các loài: chim cánh cụt, gấu hải cẩu, cá – loài nào đẻ trứng?", answer: "Chim cánh cụt" },
+    { stt: 24, question: "Kim la bàn luôn chỉ về hai hướng nào?", answer: "Bắc – Nam" },
+    { stt: 25, question: "Tắm biển tại nơi có hai dòng hải lưu nóng – lạnh dễ gây hiện tượng gì?", answer: "Chuột rút" },
+    { stt: 26, question: "Bánh xèo truyền thống làm từ bột gạo hay bột bắp?", answer: "Bột gạo" },
+    { stt: 27, question: "Cá Dory trong phim Đi tìm Nemo mắc bệnh gì?", answer: "Mất trí nhớ ngắn hạn" }
+];
+
+let questionsList = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+let currentQuestionIndex = 0;
+
+// Load questions from localStorage if saved
+try {
+    const savedQ = localStorage.getItem("attack25_questions");
+    if (savedQ) {
+        const parsed = JSON.parse(savedQ);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+            questionsList = parsed;
+        }
+    }
+} catch (e) {}
+
+
+/* =====================================================
+   GAME STATE
+===================================================== */
+const defaultState = {
+    selectedPanel: null,
+    panels: Array.from({ length: 25 }, (_, index) => ({
+        number: index + 1,
+        used: false,
+        color: null
+    })),
+    players: {
+        red: { name: "PLAYER 1", score: 0 },
+        green: { name: "PLAYER 2", score: 0 },
+        white: { name: "PLAYER 3", score: 0 },
+        blue: { name: "PLAYER 4", score: 0 }
+    },
+    buzzer: {
+        status: 'locked',
+        winner: null,
+        buzzTime: null,
+        pressOrder: [],
+        lockedPlayers: []
+    }
+};
+
+function ensureValidPanels(state) {
+    if (!state) return;
+    if (!state.panels || !Array.isArray(state.panels) || state.panels.length !== 25) {
+        state.panels = Array.from({ length: 25 }, (_, index) => ({
+            number: index + 1,
+            used: false,
+            color: null
+        }));
+    } else {
+        state.panels.forEach((p, idx) => {
+            if (!p || typeof p !== 'object') {
+                state.panels[idx] = { number: idx + 1, used: false, color: null };
+            } else {
+                p.number = parseInt(p.number, 10) || (idx + 1);
+            }
+        });
+    }
+}
+
+let gameState = JSON.parse(JSON.stringify(defaultState));
+
+// Restore state from localStorage
+try {
+    const saved = localStorage.getItem("attack25_gamestate");
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.players && parsed.panels) {
+            gameState = Object.assign(defaultState, parsed);
+        }
+    }
+} catch (e) {}
+
+ensureValidPanels(gameState);
+
+
+/* =====================================================
+   BROADCAST & REAL-TIME SYNC
+===================================================== */
+function broadcastState(action = "update", soundEvent = null) {
+    ensureValidPanels(gameState);
+    if (window.Attack25Sync) {
+        Attack25Sync.broadcastState(gameState, action, soundEvent);
+    }
+}
+
+function broadcastQuestions() {
+    if (window.Attack25Sync) {
+        Attack25Sync.broadcastQuestions(questionsList);
+    }
+}
+
+if (window.Attack25Sync) {
+    Attack25Sync.onStateChange((state) => {
+        if (state) {
+            ensureValidPanels(state);
+            gameState = state;
+            renderAll();
+        }
+    });
+
+    Attack25Sync.onQuestionsChange((questions) => {
+        if (questions && questions.length > 0) {
+            questionsList = questions;
+            renderQuestion();
+        }
+    });
+
+    Attack25Sync.onConnectionChange((conn) => {
+        const dot = document.getElementById("connectionDot");
+        const text = document.getElementById("connectionText");
+        const isOnline = typeof conn === 'object' ? conn.connected : !!conn;
+        const mode = typeof conn === 'object' ? conn.mode : 'websocket';
+
+        if (dot) dot.style.background = isOnline ? '#2fb344' : '#e03131';
+        if (text) {
+            if (isOnline) {
+                text.textContent = 'WS REAL-TIME';
+                text.title = `WebSocket kết nối tại: ${conn.url || 'localhost:3000'}`;
+            } else {
+                text.textContent = 'ĐANG KẾT NỐI WS...';
+                text.title = 'Nhấp để cấu hình địa chỉ máy chủ WebSocket';
+            }
+        }
+    });
+
+    const connBox = document.getElementById("connectionBox");
+    if (connBox) {
+        connBox.style.cursor = 'pointer';
+        connBox.onclick = () => {
+            const current = localStorage.getItem('attack25_ws_server_host') || window.location.host || 'localhost:3000';
+            const server = prompt("Nhập địa chỉ máy chủ WebSocket (IP:PORT ví dụ: 192.168.1.10:3000 hoặc localhost:3000):", current);
+            if (server !== null) {
+                Attack25Sync.setServerHost(server.trim());
+                showToast(`Đang kết nối lại tới máy chủ: ${server.trim() || 'Mặc định'}`);
+            }
+        };
+    }
+}
+
+/* =====================================================
+   AUDIO ENGINE (WAV AUDIO FILES + SYNTHESIZER FALLBACK)
+===================================================== */
+let audioCtx = null;
+const colorWavMap = {
+    'red': 'red.wav',
+    'green': 'green.wav',
+    'white': 'white.wav',
+    'blue': 'blue.wav',
+    'buzzer_red': 'red.wav',
+    'buzzer_green': 'green.wav',
+    'buzzer_white': 'white.wav',
+    'buzzer_blue': 'blue.wav',
+    'buzz_red': 'red.wav',
+    'buzz_green': 'green.wav',
+    'buzz_white': 'white.wav',
+    'buzz_blue': 'blue.wav'
+};
+
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    return audioCtx;
+}
+
+function playSound(type) {
+    const wavFile = colorWavMap[type];
+    if (wavFile) {
+        try {
+            const audio = new Audio(wavFile);
+            audio.volume = 1.0;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => playSynthTone(type));
+            }
+            return;
+        } catch (e) {
+            playSynthTone(type);
+            return;
+        }
+    }
+    playSynthTone(type);
+}
+
+function playSynthTone(type) {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        if (type === 'buzzer' || type === 'buzzer_red' || type === 'red') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(660, now);
+            osc.frequency.exponentialRampToValueAtTime(330, now + 0.35);
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'buzzer_green' || type === 'green') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(587.33, now);
+            osc.frequency.setValueAtTime(880, now + 0.1);
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'buzzer_white' || type === 'white') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1046.50, now);
+            osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.35);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'buzzer_blue' || type === 'blue') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(1046.50, now + 0.1);
+            gain.gain.setValueAtTime(0.35, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'correct') {
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.2, now + i * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now + i * 0.08);
+                osc.stop(now + i * 0.08 + 0.35);
+            });
+        } else if (type === 'wrong') {
+            [180, 140].forEach(freq => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            });
+        } else if (type === 'arm') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, now);
+            osc.frequency.setValueAtTime(880, now + 0.08);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        }
+    } catch (e) {}
+}
+
+
+/* =====================================================
+   QUESTION MANAGEMENT & TELEPROMPTER LOGIC
+===================================================== */
+function renderQuestion() {
+    if (!questionsList || questionsList.length === 0) {
+        document.getElementById('qNumberTag').textContent = 'CHƯA CÓ CÂU HỎI';
+        document.getElementById('qCountTag').textContent = '0 / 0 câu';
+        document.getElementById('qTextBox').textContent = 'Hãy nhập file Excel hoặc dán câu hỏi vào hệ thống.';
+        document.getElementById('qAnswerVal').textContent = '-';
+        document.getElementById('qBadgeStatus').textContent = '0 CÂU';
+        return;
+    }
+
+    if (currentQuestionIndex < 0) currentQuestionIndex = 0;
+    if (currentQuestionIndex >= questionsList.length) currentQuestionIndex = questionsList.length - 1;
+
+    const q = questionsList[currentQuestionIndex];
+    const stt = q.stt || (currentQuestionIndex + 1);
+
+    document.getElementById('qNumberTag').textContent = `CÂU HỎI ${stt}`;
+    document.getElementById('qCountTag').textContent = `${currentQuestionIndex + 1} / ${questionsList.length} câu`;
+    document.getElementById('qTextBox').textContent = q.question || 'Nội dung câu hỏi rỗng';
+    document.getElementById('qAnswerVal').textContent = q.answer || 'Chưa có đáp án';
+    document.getElementById('qBadgeStatus').textContent = `CÂU ${stt}`;
+
+    // Update Dropdown
+    const select = document.getElementById('qSelectDropdown');
+    select.innerHTML = '';
+    questionsList.forEach((item, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        const itemStt = item.stt || (idx + 1);
+        const shortQ = item.question ? item.question.substring(0, 45) + (item.question.length > 45 ? '...' : '') : '';
+        opt.textContent = `Câu ${itemStt}: ${shortQ}`;
+        opt.selected = idx === currentQuestionIndex;
+        select.appendChild(opt);
+    });
+}
+
+function prevQuestion() {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        renderQuestion();
+        resetBuzzer();
+    } else {
+        showToast("Đang ở câu hỏi đầu tiên.");
+    }
+}
+
+function nextQuestion() {
+    if (currentQuestionIndex < questionsList.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+        resetBuzzer();
+    } else {
+        showToast("Đã đến câu hỏi cuối cùng.");
+    }
+}
+
+function jumpToQuestion(idx) {
+    currentQuestionIndex = parseInt(idx, 10);
+    renderQuestion();
+    resetBuzzer();
+}
+
+function randomQuestion() {
+    if (questionsList.length <= 1) return;
+    let nextIdx = Math.floor(Math.random() * questionsList.length);
+    if (nextIdx === currentQuestionIndex) {
+        nextIdx = (nextIdx + 1) % questionsList.length;
+    }
+    currentQuestionIndex = nextIdx;
+    renderQuestion();
+    resetBuzzer();
+    showToast(`Đã chọn ngẫu nhiên câu số ${questionsList[currentQuestionIndex].stt || (currentQuestionIndex + 1)}`);
+}
+
+function armCurrentQuestion() {
+    armBuzzer();
+}
+
+
+/* =====================================================
+   EXCEL IMPORT LOGIC (SHEETJS & CSV)
+===================================================== */
+function handleExcelUpload(file) {
+    if (!file) return;
+
+    const reader = new FileReader();
+    const isBinary = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+
+    reader.onload = function(e) {
+        try {
+            let data = e.target.result;
+            let workbook;
+
+            if (typeof XLSX !== 'undefined') {
+                if (isBinary) {
+                    workbook = XLSX.read(data, { type: 'binary' });
+                } else {
+                    workbook = XLSX.read(data, { type: 'string' });
+                }
+
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                parseRawRows(rawRows);
+            } else {
+                // Fallback CSV parser
+                parseCSVText(data);
+            }
+        } catch (err) {
+            console.error("Excel parse error:", err);
+            showToast("Lỗi khi đọc file Excel: " + err.message);
+        }
+    };
+
+    if (isBinary) {
+        reader.readAsBinaryString(file);
+    } else {
+        reader.readAsText(file, "UTF-8");
+    }
+}
+
+function parseRawRows(rawRows) {
+    if (!rawRows || rawRows.length < 1) {
+        showToast("File Excel rỗng hoặc không đúng định dạng.");
+        return;
+    }
+
+    const parsedQuestions = [];
+    let startRow = 0;
+
+    // Check if first row is header
+    const firstRowStr = JSON.stringify(rawRows[0]).toLowerCase();
+    if (firstRowStr.includes('stt') || firstRowStr.includes('câu hỏi') || firstRowStr.includes('đáp án') || firstRowStr.includes('question')) {
+        startRow = 1;
+    }
+
+    for (let i = startRow; i < rawRows.length; i++) {
+        const row = rawRows[i];
+        if (!row || row.length === 0) continue;
+
+        // Try to identify STT, Question, Answer columns
+        let stt = i + 1;
+        let question = '';
+        let answer = '';
+
+        if (row.length === 1) {
+            question = String(row[0]).trim();
+        } else if (row.length === 2) {
+            question = String(row[0]).trim();
+            answer = String(row[1]).trim();
+        } else {
+            // Column 0 is STT, Column 1 is Question, Column 2 is Answer
+            stt = parseInt(row[0], 10) || (i + 1);
+            question = String(row[1] || '').trim();
+            answer = String(row[2] || '').trim();
+        }
+
+        if (question && question.length > 0 && !question.toLowerCase().startsWith('câu hỏi (đã')) {
+            parsedQuestions.push({ stt, question, answer });
+        }
+    }
+
+    if (parsedQuestions.length > 0) {
+        questionsList = parsedQuestions;
+        currentQuestionIndex = 0;
+        try {
+            localStorage.setItem("attack25_questions", JSON.stringify(questionsList));
+        } catch (e) {}
+
+        renderQuestion();
+        broadcastQuestions();
+        showToast(`✅ Đã nhập thành công ${parsedQuestions.length} câu hỏi từ Excel!`);
+    } else {
+        showToast("Không tìm thấy câu hỏi hợp lệ trong file Excel.");
+    }
+}
+
+function parseCSVText(csvText) {
+    const lines = csvText.split(/\r?\n/);
+    const rawRows = lines.map(line => line.split(','));
+    parseRawRows(rawRows);
+}
+
+// Drag and drop setup
+const dropzone = document.getElementById('excelDropzone');
+['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add('dragover');
+    }, false);
+});
+['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('dragover');
+    }, false);
+});
+dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files.length > 0) {
+        handleExcelUpload(files[0]);
+    }
+}, false);
+
+
+/* =====================================================
+   BUZZER SYSTEM LOGIC
+===================================================== */
+let buzzerArmTime = null;
+
+function armBuzzer() {
+    gameState.buzzer.status = 'armed';
+    gameState.buzzer.winner = null;
+    gameState.buzzer.buzzTime = null;
+    gameState.buzzer.pressOrder = [];
+    buzzerArmTime = performance.now();
+
+    playSound('arm');
+    renderBuzzerUI();
+    broadcastState('buzzer_armed', 'arm');
+    showToast('🔔 ĐÃ MỞ CHUÔNG - Thí sinh có thể bấm chuông!');
+}
+
+function lockBuzzer() {
+    gameState.buzzer.status = 'locked';
+    renderBuzzerUI();
+    broadcastState('buzzer_locked');
+    showToast('🔒 ĐÃ KHÓA CHUÔNG.');
+}
+
+function resetBuzzer() {
+    gameState.buzzer.status = 'locked';
+    gameState.buzzer.winner = null;
+    gameState.buzzer.buzzTime = null;
+    gameState.buzzer.pressOrder = [];
+    gameState.buzzer.lockedPlayers = [];
+    renderBuzzerUI();
+    broadcastState('buzzer_reset');
+    showToast('🔄 ĐÃ RESET CHUÔNG.');
+}
+
+function playerPressBuzzer(color) {
+    if (gameState.buzzer.status !== 'armed') {
+        if (gameState.buzzer.status === 'locked') {
+            showToast(`⚠️ Chuông đang khóa! Chưa thể bấm.`);
+        }
+        return;
+    }
+
+    if (gameState.buzzer.lockedPlayers.includes(color)) {
+        showToast(`⚠️ ${gameState.players[color].name} đang bị phạt khóa chuông!`);
+        return;
+    }
+
+    const elapsed = buzzerArmTime ? ((performance.now() - buzzerArmTime) / 1000).toFixed(3) : 0;
+
+    if (!gameState.buzzer.winner) {
+        gameState.buzzer.status = 'buzzed';
+        gameState.buzzer.winner = color;
+        gameState.buzzer.buzzTime = elapsed;
+        gameState.buzzer.pressOrder = [{ player: color, time: elapsed }];
+
+        playSound('buzzer');
+        renderBuzzerUI();
+        broadcastState('buzzer_hit', 'buzzer');
+        showToast(`🔔 ${gameState.players[color].name} GIÀNH QUYỀN TRẢ LỜI (${elapsed}s)!`);
+    } else {
+        if (!gameState.buzzer.pressOrder.some(p => p.player === color)) {
+            gameState.buzzer.pressOrder.push({ player: color, time: elapsed });
+            renderBuzzerUI();
+            broadcastState('buzzer_queue');
+        }
+    }
+}
+
+function judgeCorrect() {
+    if (!gameState.buzzer.winner) {
+        showToast('Chưa có ai bấm chuông để chấm đúng!');
+        return;
+    }
+
+    const winner = gameState.buzzer.winner;
+    changeScore(winner, 1);
+    playSound('correct');
+    showToast(`✅ CHÍNH XÁC! +1 Điểm cho ${gameState.players[winner].name}`);
+
+    gameState.buzzer.status = 'locked';
+    renderBuzzerUI();
+    broadcastState('judge_correct', 'correct');
+}
+
+function judgeWrong() {
+    if (!gameState.buzzer.winner) {
+        showToast('Chưa có ai bấm chuông để chấm sai!');
+        return;
+    }
+
+    const wrongPlayer = gameState.buzzer.winner;
+    playSound('wrong');
+    showToast(`❌ SAI RỒI! Khóa chuông ${gameState.players[wrongPlayer].name}`);
+
+    if (!gameState.buzzer.lockedPlayers.includes(wrongPlayer)) {
+        gameState.buzzer.lockedPlayers.push(wrongPlayer);
+    }
+
+    gameState.buzzer.winner = null;
+    gameState.buzzer.buzzTime = null;
+
+    if (gameState.buzzer.lockedPlayers.length >= 4) {
+        gameState.buzzer.status = 'locked';
+        showToast('Tất cả người chơi đều đã trả lời sai!');
+    } else {
+        gameState.buzzer.status = 'armed';
+        buzzerArmTime = performance.now();
+    }
+
+    renderBuzzerUI();
+    broadcastState('judge_wrong', 'wrong');
+}
+
+function renderBuzzerUI() {
+    const b = gameState.buzzer;
+    const banner = document.getElementById('buzzerBanner');
+    const stateText = document.getElementById('buzzerStateText');
+    const badge = document.getElementById('buzzerBadge');
+    const winnerDisplay = document.getElementById('buzzerWinnerDisplay');
+
+    banner.className = 'buzzer-status-banner ' + b.status;
+
+    if (b.status === 'armed') {
+        badge.textContent = 'ĐANG MỞ CHUÔNG';
+        badge.style.color = '#2fb344';
+        badge.style.borderColor = '#2fb344';
+        stateText.textContent = 'SẴN SÀNG BẤM CHUÔNG';
+        winnerDisplay.innerHTML = '<span style="color:#2fb344;">Đang chờ thí sinh...</span>';
+    } else if (b.status === 'buzzed' && b.winner) {
+        const pName = gameState.players[b.winner].name;
+        badge.textContent = 'ĐÃ BẤM CHUÔNG';
+        badge.style.color = '#f59f00';
+        badge.style.borderColor = '#f59f00';
+        stateText.textContent = pName.toUpperCase();
+        winnerDisplay.innerHTML = `<span style="color:#ffd43b; font-size:13px;">#1: ${pName} (+${b.buzzTime}s)</span>`;
+    } else {
+        badge.textContent = 'ĐÃ KHÓA';
+        badge.style.color = '#e03131';
+        badge.style.borderColor = '#e03131';
+        stateText.textContent = 'ĐÃ KHÓA CHUÔNG';
+        winnerDisplay.textContent = 'Nhấn Mở Chuông để bắt đầu';
+    }
+
+    // Player buzzer buttons
+    ['red', 'green', 'white', 'blue'].forEach(color => {
+        const btn = document.getElementById('buzzBtn' + capitalize(color));
+        const nameEl = document.getElementById('buzzName' + capitalize(color));
+        nameEl.textContent = gameState.players[color].name;
+
+        btn.classList.remove('buzzer-winner', 'buzzer-locked-player');
+
+        const oldTag = btn.querySelector('.buzzer-rank-tag');
+        if (oldTag) oldTag.remove();
+
+        if (b.winner === color) {
+            btn.classList.add('buzzer-winner');
+            const tag = document.createElement('span');
+            tag.className = 'buzzer-rank-tag';
+            tag.textContent = '#1';
+            btn.appendChild(tag);
+        } else {
+            const rankIdx = b.pressOrder.findIndex(p => p.player === color);
+            if (rankIdx > 0) {
+                const tag = document.createElement('span');
+                tag.className = 'buzzer-rank-tag';
+                tag.textContent = '#' + (rankIdx + 1);
+                btn.appendChild(tag);
+            }
+        }
+
+        if (b.lockedPlayers.includes(color)) {
+            btn.classList.add('buzzer-locked-player');
+        }
+    });
+}
+
+
+/* =====================================================
+   KEYBOARD SHORTCUTS
+===================================================== */
+window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        return;
+    }
+
+    const key = e.key.toLowerCase();
+
+    if (key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        if (gameState.buzzer.status === 'armed') lockBuzzer();
+        else armBuzzer();
+    } else if (key === 'delete' || key === 'backspace') {
+        e.preventDefault();
+        resetBuzzer();
+    } else if (key === '1' || key === 'q') {
+        playerPressBuzzer('red');
+    } else if (key === '2' || key === 'w') {
+        playerPressBuzzer('green');
+    } else if (key === '3' || key === 'e') {
+        playerPressBuzzer('white');
+    } else if (key === '4' || key === 'r') {
+        playerPressBuzzer('blue');
+    } else if (key === 'enter') {
+        judgeCorrect();
+    } else if (key === 'escape') {
+        judgeWrong();
+    } else if (key === 'arrowleft') {
+        prevQuestion();
+    } else if (key === 'arrowright') {
+        nextQuestion();
+    }
+});
+
+
+/* =====================================================
+   BOARD & PANEL LOGIC
+===================================================== */
+function createPanelButtons() {
+    const panelGrid = document.getElementById("panelGrid");
+    if (!panelGrid) return;
+
+    if (!gameState.panels || !Array.isArray(gameState.panels) || gameState.panels.length === 0) {
+        gameState.panels = Array.from({ length: 25 }, (_, index) => ({
+            number: index + 1,
+            used: false,
+            color: null
+        }));
+    }
+
+    panelGrid.innerHTML = "";
+
+    gameState.panels.forEach(panel => {
+        const button = document.createElement("button");
+        button.className = "panel-button";
+        button.textContent = panel.number;
+        button.dataset.number = panel.number;
+        button.id = "btn-panel-" + panel.number;
+        button.onclick = () => selectPanel(panel.number);
+        panelGrid.appendChild(button);
+    });
+}
+
+function selectPanel(number) {
+    if (gameState.selectedPanel === number) {
+        gameState.selectedPanel = null;
+    } else {
+        gameState.selectedPanel = number;
+    }
+    renderPanels();
+    broadcastState("selectPanel");
+}
+
+function recalculateScoresFromBoard() {
+    ['red', 'green', 'white', 'blue'].forEach(color => {
+        const count = gameState.panels.filter(p => p.color === color).length;
+        gameState.players[color].score = count;
+        const scoreEl = document.getElementById("score" + capitalize(color));
+        if (scoreEl && document.activeElement !== scoreEl) {
+            scoreEl.value = count;
+        }
+    });
+    updatePreviewScores();
+}
+
+function setPanelColor(color) {
+    if (gameState.selectedPanel === null) {
+        showToast("Hãy chọn một ô trên bảng trước.");
+        return;
+    }
+
+    const selectedNum = parseInt(gameState.selectedPanel, 10);
+    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
+    if (panel) {
+        panel.color = color;
+        recalculateScoresFromBoard();
+        renderPanels();
+        broadcastState("setColor");
+        const cText = color ? color.toUpperCase() : 'MẶC ĐỊNH';
+        showToast(`Đã gán ô ${panel.number} -> ${cText}`);
+    }
+}
+
+function sendSelectedPanel() {
+    if (gameState.selectedPanel === null) {
+        showToast("Hãy chọn một ô trên bảng trước.");
+        return;
+    }
+    const selectedNum = parseInt(gameState.selectedPanel, 10);
+    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
+    if (panel) {
+        panel.used = false;
+        renderPanels();
+        broadcastState("showPanel");
+        showToast(`Đang hiển thị ô ${panel.number}`);
+    }
+}
+
+function markSelectedUsed() {
+    if (gameState.selectedPanel === null) {
+        showToast("Hãy chọn một ô trên bảng trước.");
+        return;
+    }
+    const selectedNum = parseInt(gameState.selectedPanel, 10);
+    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
+    if (panel) {
+        panel.used = true;
+        renderPanels();
+        broadcastState("markUsed");
+        showToast(`Đã đánh dấu ô ${panel.number} là đã dùng`);
+    }
+}
+
+function resetSelectedPanel() {
+    if (gameState.selectedPanel === null) {
+        showToast("Hãy chọn một ô trước.");
+        return;
+    }
+    const selectedNum = parseInt(gameState.selectedPanel, 10);
+    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
+    if (panel) {
+        panel.used = false;
+        panel.color = null;
+        recalculateScoresFromBoard();
+        renderPanels();
+        broadcastState("resetPanel");
+        showToast(`Đã reset ô ${panel.number}`);
+    }
+}
+
+function clearSelection() {
+    if (gameState.selectedPanel === null) {
+        showToast("Hiện tại không có ô nào đang được chọn.");
+        return;
+    }
+    const prev = gameState.selectedPanel;
+    gameState.selectedPanel = null;
+    renderPanels();
+    broadcastState("clearSelection");
+    showToast(`❌ Đã hủy lựa chọn ô ${prev}`);
+}
+
+function renderPanels() {
+    ensureValidPanels(gameState);
+    const pGrid = document.getElementById("panelGrid");
+    if (pGrid && pGrid.children.length !== 25) {
+        createPanelButtons();
+    }
+
+    recalculateScoresFromBoard();
+    const selected = gameState.selectedPanel ? parseInt(gameState.selectedPanel, 10) : null;
+
+    document.querySelectorAll(".panel-button").forEach(button => {
+        const number = parseInt(button.dataset.number, 10);
+        const panel = gameState.panels.find(item => parseInt(item.number, 10) === number);
+        if (!panel) return;
+
+        button.classList.toggle("active", number === selected);
+        button.classList.toggle("used", !!panel.used);
+
+        button.classList.remove("panel-red", "panel-green", "panel-white", "panel-blue");
+        if (panel.color) {
+            button.classList.add("panel-" + panel.color);
+        }
+    });
+
+    document.getElementById("selectedPanelText").textContent =
+        selected === null ? "Chưa chọn ô" : "Đang chọn ô " + selected;
+
+    document.getElementById("statusSelected").textContent =
+        selected === null ? "-" : selected;
+
+    const usedCount = gameState.panels.filter(panel => panel.used).length;
+    document.getElementById("statusUsed").textContent = usedCount + " / 25";
+    document.getElementById("statusRemaining").textContent = 25 - usedCount;
+
+    // Update names and scores in form inputs
+    ['red', 'green', 'white', 'blue'].forEach(color => {
+        const p = gameState.players[color];
+        if (p) {
+            const nameEl = document.getElementById("name" + capitalize(color));
+            const scoreEl = document.getElementById("score" + capitalize(color));
+            if (nameEl && document.activeElement !== nameEl) nameEl.value = p.name;
+            if (scoreEl && document.activeElement !== scoreEl) scoreEl.value = p.score;
+        }
+    });
+
+    updatePreviewScores();
+}
+
+
+/* =====================================================
+   PLAYER & SCORE CONTROLS
+===================================================== */
+function updatePlayerName(color) {
+    const input = document.getElementById("name" + capitalize(color));
+    gameState.players[color].name = input.value;
+    renderBuzzerUI();
+    broadcastState("updatePlayer");
+}
+
+function changeScore(color, amount) {
+    const player = gameState.players[color];
+    player.score = Math.max(0, player.score + amount);
+    document.getElementById("score" + capitalize(color)).value = player.score;
+    updatePreviewScores();
+    broadcastState("updateScore");
+}
+
+function updateScore(color) {
+    const input = document.getElementById("score" + capitalize(color));
+    let score = Number(input.value);
+    if (isNaN(score) || score < 0) score = 0;
+    gameState.players[color].score = score;
+    input.value = score;
+    updatePreviewScores();
+    broadcastState("updateScore");
+}
+
+function updatePreviewScores() {
+    const r = document.getElementById("previewScoreRed");
+    const g = document.getElementById("previewScoreGreen");
+    const w = document.getElementById("previewScoreWhite");
+    const b = document.getElementById("previewScoreBlue");
+    if (r) r.textContent = gameState.players.red.score;
+    if (g) g.textContent = gameState.players.green.score;
+    if (w) w.textContent = gameState.players.white.score;
+    if (b) b.textContent = gameState.players.blue.score;
+}
+
+function resetAllScores() {
+    ['red', 'green', 'white', 'blue'].forEach(color => {
+        gameState.players[color].score = 0;
+        document.getElementById("score" + capitalize(color)).value = 0;
+    });
+    updatePreviewScores();
+    broadcastState("resetScores");
+    showToast("Đã reset toàn bộ điểm số về 0.");
+}
+
+function resetGame() {
+    gameState.selectedPanel = null;
+    gameState.panels.forEach(panel => {
+        panel.used = false;
+        panel.color = null;
+    });
+    resetBuzzer();
+    resetAllScores();
+    renderPanels();
+    broadcastState("resetGame");
+    showToast("Đã reset toàn bộ trò chơi.");
+}
+
+
+/* =====================================================
+   TOAST & HELPERS
+===================================================== */
+function showToast(msg) {
+    const container = document.getElementById("toastContainer");
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+function capitalize(text) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function renderAll() {
+    renderQuestion();
+    renderPanels();
+    renderBuzzerUI();
+}
+
+
+/* =====================================================
+   INITIALIZE
+===================================================== */
+renderAll();
+broadcastState("sync");
+
+</script>
+
 </body>
 </html>
