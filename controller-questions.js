@@ -12,8 +12,8 @@ function switchAppTab(tabName) {
     currentAppTab = tabName;
     const tabGame = document.getElementById('tabBtnGame');
     const tabDb = document.getElementById('tabBtnDatabase');
-    const viewGame = document.getElementById('gameWorkspaceView');
-    const viewDb = document.getElementById('databaseView');
+    const viewGame = document.getElementById('gameWorkspace');
+    const viewDb = document.getElementById('questionsDatabaseView');
 
     if (tabName === 'game') {
         if (tabGame) tabGame.classList.add('active');
@@ -258,10 +258,15 @@ let dbFilter = 'all';
 let dbSearch = '';
 
 function filterDatabase(type) {
-    dbFilter = type;
-    document.querySelectorAll('.db-filter-btn').forEach(b => b.classList.remove('active'));
-    const btn = document.getElementById(`filterBtn_${type}`);
-    if (btn) btn.classList.add('active');
+    dbFilter = (type === 'slideshow') ? 'slides' : type;
+    document.querySelectorAll('.db-filter-btn').forEach(b => {
+        const f = b.getAttribute('data-filter');
+        if (f === type || (f === 'slideshow' && type === 'slides') || (f === 'slides' && type === 'slideshow')) {
+            b.classList.add('active');
+        } else {
+            b.classList.remove('active');
+        }
+    });
     renderDatabaseTable();
 }
 
@@ -272,24 +277,48 @@ function handleDbSearch(val) {
 
 function renderDatabaseTable() {
     const tbody = document.getElementById("dbTableBody");
-    const countTotal = document.getElementById("dbStatTotal");
-    const countImage = document.getElementById("dbStatImage");
-    const countVideo = document.getElementById("dbStatVideo");
-    const countText = document.getElementById("dbStatText");
-
     if (!tbody) return;
 
-    if (countTotal) countTotal.textContent = questionsList.length;
-    if (countImage) countImage.textContent = questionsList.filter(q => q.type === 'image' || q.type === 'slides').length;
-    if (countVideo) countVideo.textContent = questionsList.filter(q => q.type === 'video').length;
-    if (countText) countText.textContent = questionsList.filter(q => !q.type || q.type === 'text').length;
+    const totalCount = questionsList.length;
+    const textCount = questionsList.filter(q => !q.type || q.type === 'text').length;
+    const imageCount = questionsList.filter(q => q.type === 'image').length;
+    const videoCount = questionsList.filter(q => q.type === 'video').length;
+    const slidesCount = questionsList.filter(q => q.type === 'slides').length;
+
+    // Header stats
+    const totalEl = document.getElementById("dbTotalCount") || document.getElementById("dbStatTotal");
+    const textEl = document.getElementById("dbTextCount") || document.getElementById("dbStatText");
+    const imageEl = document.getElementById("dbImageCount") || document.getElementById("dbStatImage");
+    const videoEl = document.getElementById("dbVideoCount") || document.getElementById("dbStatVideo");
+    const slidesEl = document.getElementById("dbSlideshowCount") || document.getElementById("dbStatSlideshow");
+    const tabBadge = document.getElementById("tabBadgeCount");
+
+    if (totalEl) totalEl.textContent = totalCount;
+    if (textEl) textEl.textContent = textCount;
+    if (imageEl) imageEl.textContent = imageCount;
+    if (videoEl) videoEl.textContent = videoCount;
+    if (slidesEl) slidesEl.textContent = slidesCount;
+    if (tabBadge) tabBadge.textContent = totalCount;
+
+    // Filter tags count
+    const fAll = document.getElementById("filterAllCount");
+    const fText = document.getElementById("filterTextCount");
+    const fImage = document.getElementById("filterImageCount");
+    const fVideo = document.getElementById("filterVideoCount");
+    const fSlides = document.getElementById("filterSlideshowCount");
+
+    if (fAll) fAll.textContent = totalCount;
+    if (fText) fText.textContent = textCount;
+    if (fImage) fImage.textContent = imageCount;
+    if (fVideo) fVideo.textContent = videoCount;
+    if (fSlides) fSlides.textContent = slidesCount;
 
     let filtered = questionsList.map((q, originalIdx) => ({ ...q, originalIdx }));
 
     if (dbFilter !== 'all') {
         if (dbFilter === 'media') {
             filtered = filtered.filter(q => q.type === 'image' || q.type === 'video' || q.type === 'slides');
-        } else if (dbFilter === 'slides') {
+        } else if (dbFilter === 'slides' || dbFilter === 'slideshow') {
             filtered = filtered.filter(q => q.type === 'slides');
         } else {
             filtered = filtered.filter(q => (q.type || 'text') === dbFilter);
@@ -312,23 +341,46 @@ function renderDatabaseTable() {
     tbody.innerHTML = filtered.map((q) => {
         const isCurrent = q.originalIdx === currentQuestionIndex;
         let formatBadge = '';
-        let mediaPreview = '<span style="color:#64748b; font-size:10px;">—</span>';
+        let mediaCell = '<span style="color:#64748b; font-size:10px;">— (Văn bản)</span>';
+
+        const isShowingOnProj = gameState.questionMedia &&
+            gameState.questionMedia.visible &&
+            gameState.questionMedia.questionStt === (q.stt || (q.originalIdx + 1));
 
         if (q.type === 'image') {
             formatBadge = `<span class="db-format-pill db-format-image">🖼️ Hình ảnh</span>`;
             if (q.mediaUrl) {
-                mediaPreview = `<div class="db-media-cell"><img src="${q.mediaUrl}" class="db-thumb" onclick="openEditQuestionModal(${q.originalIdx})" title="Nhấp để sửa/xem ảnh" /> <span style="font-size:10px; color:#94a3b8;">${q.mediaName || 'Ảnh'}</span></div>`;
+                mediaCell = `
+                    <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <img src="${q.mediaUrl}" class="db-thumb" onclick="openEditQuestionModal(${q.originalIdx})" title="Nhấp để sửa/xem ảnh" style="cursor:pointer;" />
+                        <button class="button ${isShowingOnProj ? 'button-green' : 'button-blue'}" style="height:22px; font-size:9px; padding:0 6px;" onclick="showQuestionMediaFromDb(${q.originalIdx})">
+                            ${isShowingOnProj ? '✅ Đang chiếu' : '📺 Chiếu Full'}
+                        </button>
+                    </div>
+                `;
             }
         } else if (q.type === 'slides') {
             const slideCount = Array.isArray(q.images) ? q.images.length : 0;
             formatBadge = `<span class="db-format-pill" style="background:rgba(124,58,237,0.15); color:#a78bfa; border:1px solid rgba(124,58,237,0.4);">📑 ${slideCount} Slide</span>`;
             const firstImg = (Array.isArray(q.images) && q.images.length > 0) ? (q.images[0].url || q.images[0]) : '';
-            if (firstImg) {
-                mediaPreview = `<div class="db-media-cell"><img src="${firstImg}" class="db-thumb" onclick="openEditQuestionModal(${q.originalIdx})" title="Nhấp để xem các slide" /> <span style="font-size:10px; color:#94a3b8;">${slideCount} ảnh</span></div>`;
-            }
+            mediaCell = `
+                <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
+                    ${firstImg ? `<img src="${firstImg}" class="db-thumb" onclick="openEditQuestionModal(${q.originalIdx})" title="Nhấp xem các slide" style="cursor:pointer;" />` : ''}
+                    <button class="button ${isShowingOnProj ? 'button-green' : 'button-purple'}" style="height:22px; font-size:9px; padding:0 6px;" onclick="showQuestionMediaFromDb(${q.originalIdx})">
+                        ${isShowingOnProj ? '✅ Đang chiếu' : '📑 Chiếu Slide'}
+                    </button>
+                </div>
+            `;
         } else if (q.type === 'video') {
             formatBadge = `<span class="db-format-pill db-format-video">🎬 Video</span>`;
-            mediaPreview = `<div class="db-media-cell"><div class="db-thumb-video" onclick="openEditQuestionModal(${q.originalIdx})">▶️</div> <span style="font-size:10px; color:#94a3b8;">${q.mediaName || 'Clip'}</span></div>`;
+            mediaCell = `
+                <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <div class="db-thumb-video" onclick="openEditQuestionModal(${q.originalIdx})" style="cursor:pointer;" title="Nhấp để sửa video">▶️</div>
+                    <button class="button ${isShowingOnProj ? 'button-green' : 'button-orange'}" style="height:22px; font-size:9px; padding:0 6px;" onclick="showQuestionMediaFromDb(${q.originalIdx})">
+                        ${isShowingOnProj ? '✅ Đang chiếu' : '🎬 Chiếu Video'}
+                    </button>
+                </div>
+            `;
         } else {
             formatBadge = `<span class="db-format-pill db-format-text">📝 Văn bản</span>`;
         }
@@ -336,12 +388,12 @@ function renderDatabaseTable() {
         return `
             <tr class="${isCurrent ? 'active-q-row' : ''}">
                 <td style="font-weight:bold; color:var(--gold); width: 45px; text-align:center;">${q.stt || (q.originalIdx + 1)}</td>
-                <td style="width: 100px;">${formatBadge}</td>
+                <td style="width: 100px; text-align:center;">${formatBadge}</td>
                 <td style="font-weight:600; color:#fff; max-width: 340px;">${escapeHtml(q.question)}</td>
                 <td style="font-weight:700; color:#4ade80; max-width: 180px;">${escapeHtml(q.answer)}</td>
-                <td style="width: 150px;">${mediaPreview}</td>
-                <td style="width: 220px; white-space:nowrap;">
-                    <button class="button button-blue" style="height:22px; font-size:9px; display:inline-flex; padding:0 6px;" onclick="jumpToQuestion(${q.originalIdx}); switchAppTab('game');" title="Chọn làm câu hỏi hiện tại">🎯 Chọn</button>
+                <td style="width: 155px; text-align:center;">${mediaCell}</td>
+                <td style="width: 135px; white-space:nowrap; text-align:center;">
+                    <button class="button button-blue" style="height:22px; font-size:9px; display:inline-flex; padding:0 6px;" onclick="jumpToQuestion(${q.originalIdx}); switchAppTab('game');" title="Chọn làm câu hỏi hiện tại trên Bàn điều khiển">🎯 Chọn</button>
                     <button class="button button-orange" style="height:22px; font-size:9px; display:inline-flex; padding:0 6px;" onclick="openEditQuestionModal(${q.originalIdx})" title="Chỉnh sửa câu hỏi">✏️ Sửa</button>
                     <button class="button button-gray" style="height:22px; font-size:9px; display:inline-flex; padding:0 4px;" onclick="moveQuestionUp(${q.originalIdx})" title="Di chuyển lên">⬆️</button>
                     <button class="button button-gray" style="height:22px; font-size:9px; display:inline-flex; padding:0 4px;" onclick="moveQuestionDown(${q.originalIdx})" title="Di chuyển xuống">⬇️</button>
@@ -350,6 +402,15 @@ function renderDatabaseTable() {
             </tr>
         `;
     }).join('');
+}
+
+function showQuestionMediaFromDb(idx) {
+    if (idx !== undefined && idx >= 0 && idx < questionsList.length) {
+        currentQuestionIndex = idx;
+        gameState.currentQuestionIndex = currentQuestionIndex;
+    }
+    showCurrentQuestionMedia();
+    renderDatabaseTable();
 }
 
 function moveQuestionUp(idx) {
