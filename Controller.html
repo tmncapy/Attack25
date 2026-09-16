@@ -631,44 +631,75 @@
             <!-- ROOM CODE & SYSTEM ACTIONS -->
             <section class="card">
                 <div class="card-header" style="padding: 3px 8px;">
-                    <div class="card-title" style="font-size: 11px;">🔑 MÃ PHÒNG &amp; HỆ THỐNG</div>
+                    <div class="card-title" style="font-size: 11px;">🔑 MÃ PHÒNG &amp; SAO CHÉP LINK ROLE</div>
                     <span class="card-badge" id="ctrlActiveRoomBadge" style="font-size: 9px; padding: 1px 5px;">PHÒNG: 123456</span>
                 </div>
                 <div class="card-body" style="padding: 5px; gap: 4px;">
+                    <!-- Room ID & Action buttons -->
                     <div style="display: flex; gap: 4px; align-items: center; justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 3px;">
                             <span style="font-size: 9px; color: var(--muted);">Mã phòng (6 số):</span>
-                            <input type="text" id="ctrlRoomId" maxlength="6" value="123456" style="width: 54px; height: 20px; background: #090d14; border: 1px solid #1e293b; border-radius: 3px; color: #f59f00; font-weight: bold; text-align: center; font-size: 10px;">
+                            <input type="text" id="ctrlRoomId" maxlength="6" value="123456" oninput="onRolePassChange()" style="width: 54px; height: 20px; background: #090d14; border: 1px solid #1e293b; border-radius: 3px; color: #f59f00; font-weight: bold; text-align: center; font-size: 10px;">
                         </div>
                         <div style="display: flex; gap: 3px;">
                             <button class="button button-gray" style="height:20px; font-size:9px; padding:0 4px;" onclick="generateRandomRoomInfo()">🎲 Random</button>
                             <button class="button button-gold" style="height:20px; font-size:9px; padding:0 5px; color: black; background:#f59f00;" onclick="activateRoomFromController()">💾 KÍCH HOẠT</button>
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;">
-                        <div style="display:flex; flex-direction:column; gap:1px;">
-                            <span style="font-size:8px; color:var(--muted); text-align:center;">Host</span>
-                            <input type="text" id="ctrlPassHost" maxlength="4" value="1234" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
+
+                    <!-- Domain Display / Custom Domain Option -->
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:9px; color:var(--muted); background:#090d14; padding:2px 5px; border-radius:3px; border:1px solid #1e293b;">
+                        <span style="white-space:nowrap; display:flex; align-items:center; gap:3px;">🌐 <span style="color:#94a3b8;">Domain:</span></span>
+                        <input type="text" id="ctrlCustomDomain" placeholder="Tự nhận domain hiện tại..." title="Mặc định lấy domain trang web đang chạy (Render, Vercel, Localhost...)" oninput="onRolePassChange()" style="flex:1; height:18px; background:#0f172a; border:1px solid #1e293b; border-radius:2px; color:#38bdf8; font-size:9px; padding:0 4px;">
+                    </div>
+
+                    <!-- 5 Role Click-to-Copy Buttons & Auth PIN Inputs -->
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin-top: 1px;">
+                        <!-- Host -->
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <button type="button" class="button button-purple" onclick="copyRoleLink('host')" style="height:22px; font-size:9px; padding:0 1px; background:#6366f1; border-color:#818cf8; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:2px;" title="Nhấp để sao chép link Host (MC) kèm mã auth">
+                                <span>🎤 Host 📋</span>
+                            </button>
+                            <input type="text" id="ctrlPassHost" maxlength="4" value="1234" title="Mã PIN Host" onchange="onRolePassChange()" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:1px;">
-                            <span style="font-size:8px; color:#ef4444; text-align:center;">P1</span>
-                            <input type="text" id="ctrlPassRed" maxlength="4" value="1111" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
+
+                        <!-- Player 1 (Red) -->
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <button type="button" class="button button-red" onclick="copyRoleLink('p1')" style="height:22px; font-size:9px; padding:0 1px; background:#dc2626; border-color:#ef4444; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:2px;" title="Nhấp để sao chép link Player 1 (Đỏ) kèm mã auth">
+                                <span>🔴 P1 📋</span>
+                            </button>
+                            <input type="text" id="ctrlPassRed" maxlength="4" value="1111" title="Mã PIN Player 1 (Đỏ)" onchange="onRolePassChange()" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:1px;">
-                            <span style="font-size:8px; color:#22c55e; text-align:center;">P2</span>
-                            <input type="text" id="ctrlPassGreen" maxlength="4" value="2222" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
+
+                        <!-- Player 2 (Green) -->
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <button type="button" class="button button-green" onclick="copyRoleLink('p2')" style="height:22px; font-size:9px; padding:0 1px; background:#16a34a; border-color:#22c55e; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:2px;" title="Nhấp để sao chép link Player 2 (Xanh Lá) kèm mã auth">
+                                <span>🟢 P2 📋</span>
+                            </button>
+                            <input type="text" id="ctrlPassGreen" maxlength="4" value="2222" title="Mã PIN Player 2 (Xanh Lá)" onchange="onRolePassChange()" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:1px;">
-                            <span style="font-size:8px; color:#f8fafc; text-align:center;">P3</span>
-                            <input type="text" id="ctrlPassWhite" maxlength="4" value="3333" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
+
+                        <!-- Player 3 (White) -->
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <button type="button" class="button button-white" onclick="copyRoleLink('p3')" style="height:22px; font-size:9px; padding:0 1px; background:#f8fafc; color:#0f172a; border-color:#cbd5e1; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:2px;" title="Nhấp để sao chép link Player 3 (Trắng) kèm mã auth">
+                                <span>⚪ P3 📋</span>
+                            </button>
+                            <input type="text" id="ctrlPassWhite" maxlength="4" value="3333" title="Mã PIN Player 3 (Trắng)" onchange="onRolePassChange()" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
                         </div>
-                        <div style="display:flex; flex-direction:column; gap:1px;">
-                            <span style="font-size:8px; color:#3b82f6; text-align:center;">P4</span>
-                            <input type="text" id="ctrlPassBlue" maxlength="4" value="4444" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
+
+                        <!-- Player 4 (Blue) -->
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <button type="button" class="button button-blue" onclick="copyRoleLink('p4')" style="height:22px; font-size:9px; padding:0 1px; background:#2563eb; border-color:#3b82f6; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:2px;" title="Nhấp để sao chép link Player 4 (Xanh Dương) kèm mã auth">
+                                <span>🔵 P4 📋</span>
+                            </button>
+                            <input type="text" id="ctrlPassBlue" maxlength="4" value="4444" title="Mã PIN Player 4 (Xanh Dương)" onchange="onRolePassChange()" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
                         </div>
                     </div>
-                    <div style="display:flex; gap:3px;">
-                        <button class="button button-gray" style="height:20px; font-size:9px; width:100%;" onclick="copyRoomInfoToClipboard()">📋 Sao chép thông tin phòng</button>
+
+                    <!-- Copy All / Copy Projector Actions -->
+                    <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:3px; margin-top: 1px;">
+                        <button class="button button-purple" style="height:22px; font-size:9px; padding:0 4px; background:#475569;" onclick="copyRoleLink('projector')" title="Sao chép link máy chiếu Projector">🖥️ Link Projector</button>
+                        <button class="button button-gold" style="height:22px; font-size:9px; padding:0 4px; color:#000; background:#f59f00;" onclick="copyAllRoleLinks()" title="Sao chép toàn bộ danh sách link Host, 4 Player và Projector">📋 Sao Chép Tất Cả Link</button>
                     </div>
 
                     <!-- SYSTEM RESETS -->

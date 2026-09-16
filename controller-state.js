@@ -546,6 +546,136 @@ function updateQuickNavLinks(roomId, passwords) {
     if (projPreview) projPreview.src = `/Projector.html?roomid=${roomId}&preview=1`;
 }
 
+function getActiveDomain() {
+    let domain = window.location.origin;
+    const customDomainEl = document.getElementById('ctrlCustomDomain');
+    if (customDomainEl && customDomainEl.value.trim()) {
+        domain = customDomainEl.value.trim().replace(/\/+$/, '');
+        if (!/^https?:\/\//i.test(domain)) {
+            domain = 'https://' + domain;
+        }
+    }
+    return domain;
+}
+
+function getRoleLink(role) {
+    const origin = getActiveDomain();
+    const roomId = document.getElementById('ctrlRoomId')?.value.trim() || '123456';
+    const passHost = document.getElementById('ctrlPassHost')?.value.trim() || '1234';
+    const passRed = document.getElementById('ctrlPassRed')?.value.trim() || '1111';
+    const passGreen = document.getElementById('ctrlPassGreen')?.value.trim() || '2222';
+    const passWhite = document.getElementById('ctrlPassWhite')?.value.trim() || '3333';
+    const passBlue = document.getElementById('ctrlPassBlue')?.value.trim() || '4444';
+
+    switch (role) {
+        case 'host':
+            return `${origin}/Host.html?roomid=${roomId}&auth=${passHost}`;
+        case 'p1':
+        case 'player1':
+        case 'red':
+            return `${origin}/player1.html?roomid=${roomId}&auth=${passRed}`;
+        case 'p2':
+        case 'player2':
+        case 'green':
+            return `${origin}/player2.html?roomid=${roomId}&auth=${passGreen}`;
+        case 'p3':
+        case 'player3':
+        case 'white':
+            return `${origin}/player3.html?roomid=${roomId}&auth=${passWhite}`;
+        case 'p4':
+        case 'player4':
+        case 'blue':
+            return `${origin}/player4.html?roomid=${roomId}&auth=${passBlue}`;
+        case 'projector':
+        case 'proj':
+            return `${origin}/Projector.html?roomid=${roomId}`;
+        case 'controller':
+            return `${origin}/Controller.html?roomid=${roomId}&auth=${passHost}`;
+        default:
+            return `${origin}/?roomid=${roomId}`;
+    }
+}
+
+function copyRoleLink(role) {
+    const link = getRoleLink(role);
+    const roleLabels = {
+        host: 'Host (MC)',
+        p1: 'Player 1 (Đỏ)',
+        player1: 'Player 1 (Đỏ)',
+        red: 'Player 1 (Đỏ)',
+        p2: 'Player 2 (Xanh Lá)',
+        player2: 'Player 2 (Xanh Lá)',
+        green: 'Player 2 (Xanh Lá)',
+        p3: 'Player 3 (Trắng)',
+        player3: 'Player 3 (Trắng)',
+        white: 'Player 3 (Trắng)',
+        p4: 'Player 4 (Xanh Dương)',
+        player4: 'Player 4 (Xanh Dương)',
+        blue: 'Player 4 (Xanh Dương)',
+        projector: 'Màn hình Projector'
+    };
+    const label = roleLabels[role] || role;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(() => {
+            showToast(`📋 Đã chép link ${label}!\n${link}`);
+        }).catch(() => {
+            showPrompt(`Link tham gia ${label}:`, link, () => {
+                showToast(`📋 Đã sao chép link ${label}!`);
+            });
+        });
+    } else {
+        showPrompt(`Link tham gia ${label}:`, link, () => {
+            showToast(`📋 Đã sao chép link ${label}!`);
+        });
+    }
+}
+
+function copyAllRoleLinks() {
+    const origin = getActiveDomain();
+    const roomId = document.getElementById('ctrlRoomId')?.value.trim() || '123456';
+    const passHost = document.getElementById('ctrlPassHost')?.value.trim() || '1234';
+    const passRed = document.getElementById('ctrlPassRed')?.value.trim() || '1111';
+    const passGreen = document.getElementById('ctrlPassGreen')?.value.trim() || '2222';
+    const passWhite = document.getElementById('ctrlPassWhite')?.value.trim() || '3333';
+    const passBlue = document.getElementById('ctrlPassBlue')?.value.trim() || '4444';
+
+    const text = `🎮 LINK THAM GIA PANEL QUIZ ATTACK 25 (PHÒNG: ${roomId})\n` +
+        `----------------------------------------\n` +
+        `🎤 Host (MC): ${origin}/Host.html?roomid=${roomId}&auth=${passHost}\n` +
+        `🔴 Player 1 (Đỏ): ${origin}/player1.html?roomid=${roomId}&auth=${passRed}\n` +
+        `🟢 Player 2 (Xanh Lá): ${origin}/player2.html?roomid=${roomId}&auth=${passGreen}\n` +
+        `⚪ Player 3 (Trắng): ${origin}/player3.html?roomid=${roomId}&auth=${passWhite}\n` +
+        `🔵 Player 4 (Xanh Dương): ${origin}/player4.html?roomid=${roomId}&auth=${passBlue}\n` +
+        `🖥️ Projector: ${origin}/Projector.html?roomid=${roomId}`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(`📋 Đã sao chép toàn bộ link tham gia phòng ${roomId}!`);
+        }).catch(() => {
+            showPrompt('Toàn bộ link tham gia:', text, () => {
+                showToast('📋 Đã sao chép!');
+            });
+        });
+    } else {
+        showPrompt('Toàn bộ link tham gia:', text, () => {
+            showToast('📋 Đã sao chép!');
+        });
+    }
+}
+
+function onRolePassChange() {
+    const roomId = document.getElementById('ctrlRoomId')?.value.trim() || '123456';
+    const passwords = {
+        host: document.getElementById('ctrlPassHost')?.value.trim() || '1234',
+        red: document.getElementById('ctrlPassRed')?.value.trim() || '1111',
+        green: document.getElementById('ctrlPassGreen')?.value.trim() || '2222',
+        white: document.getElementById('ctrlPassWhite')?.value.trim() || '3333',
+        blue: document.getElementById('ctrlPassBlue')?.value.trim() || '4444'
+    };
+    updateQuickNavLinks(roomId, passwords);
+}
+
 function copyRoomInfoToClipboard() {
     const roomId = document.getElementById('ctrlRoomId')?.value.trim() || '';
     const h = document.getElementById('ctrlPassHost')?.value.trim() || '';
