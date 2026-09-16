@@ -14,12 +14,53 @@
 <script src="howler.js"></script>
 <!-- Universal Real-time Synchronizer (Relative path) -->
 <script src="sync-client.js"></script>
+<!-- Disable DevTool -->
+<script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+<script>
+    (function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        let roomId = urlParams.get('roomid') || urlParams.get('roomId') || urlParams.get('room');
+        let auth = urlParams.get('auth');
+
+        if (!roomId) {
+            try { roomId = localStorage.getItem('attack25_active_roomid') || '123456'; } catch (e) { roomId = '123456'; }
+        }
+        if (!auth) {
+            try { auth = localStorage.getItem('attack25_active_pass_host') || '1234'; } catch (e) { auth = '1234'; }
+        }
+
+        if (window.Attack25Sync && typeof Attack25Sync.setRoomId === 'function') {
+            Attack25Sync.setRoomId(roomId, auth);
+        }
+
+        fetch('/api/verify-room?roomid=' + encodeURIComponent(roomId) + '&auth=' + encodeURIComponent(auth) + '&role=host')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success) {
+                    if (window.Attack25Sync && typeof Attack25Sync.setRoomId === 'function') {
+                        Attack25Sync.setRoomId(roomId, auth);
+                    }
+                }
+            })
+            .catch(() => {});
+    })();
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && e.keyCode === 85)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+</script>
 
 <style>
 
 @font-face {
     font-family: "UTM Impact";
     src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
     font-display: swap;
 }
 
@@ -45,6 +86,43 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    font-weight: bold !important;
+}
+
+/* Tắt bold đối với tất cả thành phần sử dụng font UTM Impact */
+.brand-badge,
+.q-number,
+.buzzer-status-text,
+.player-score,
+[style*="UTM Impact"],
+[style*="utm impact"],
+[style*="Impact"],
+.utm-impact {
+    font-weight: normal !important;
+    font-synthesis: none !important;
+}
+
+button:hover,
+.button:hover,
+.btn:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+[role="button"]:hover,
+.action-btn:hover,
+.panel-btn:hover,
+.reset-btn:hover,
+.buzzer-btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-success:hover,
+.btn-danger:hover,
+.btn-warning:hover,
+.btn-info:hover,
+.btn-dark:hover {
+    background: #C2410C !important;
+    background-color: #C2410C !important;
+    color: white !important;
+    font-weight: bold !important;
 }
 
 html, body {
@@ -470,7 +548,7 @@ html, body {
             <div class="buzzer-box locked" id="hostBuzzerBox">
                 <div>
                     <div style="font-size:11px; text-transform:uppercase; color:var(--muted);">Chuông giành quyền</div>
-                    <div class="buzzer-status-text" id="hostBuzzerStatus">ĐÃ KHÓA CHUÔNG</div>
+                    <div class="buzzer-status-text host-buzzer-normal" id="hostBuzzerStatus">ĐÃ KHÓA CHUÔNG</div>
                 </div>
                 <div id="hostWinnerInfo" style="text-align:right; font-size:13px; font-weight:bold;">
                     Chưa có ai bấm
@@ -569,23 +647,21 @@ const colorWavMap = {
     'buzz_blue': 'blue.wav'
 };
 
-function playSound(type) {
-    const wavFile = colorWavMap[type];
-    if (wavFile) {
-        try {
-            const audio = new Audio(wavFile);
-            audio.volume = 1.0;
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => playSynthTone(type));
-            }
-            return;
-        } catch (e) {
-            playSynthTone(type);
-            return;
-        }
+function stopAllSounds() {
+    if (window.activeAudios && Array.isArray(window.activeAudios)) {
+        window.activeAudios.forEach(audio => {
+            try {
+                audio.pause();
+                audio.currentTime = 0;
+            } catch (e) {}
+        });
+        window.activeAudios = [];
     }
-    playSynthTone(type);
+}
+
+function playSound(type) {
+    // Chỉ phát âm thanh trên Projector, không phát cho Host hay bất kỳ role nào khác
+    return;
 }
 
 function playSynthTone(type) {
@@ -688,12 +764,19 @@ function playSynthTone(type) {
 let questionsList = [];
 let currentQuestionIndex = 0;
 
+const urlParamsLocal = new URLSearchParams(window.location.search);
+let activeRoomId = urlParamsLocal.get('roomid') || urlParamsLocal.get('roomId') || urlParamsLocal.get('room') || '';
+if (!activeRoomId) {
+    try { activeRoomId = localStorage.getItem('attack25_active_roomid') || '123456'; } catch (e) { activeRoomId = '123456'; }
+}
+
 try {
-    const savedQ = localStorage.getItem("attack25_questions");
+    const savedQ = localStorage.getItem("attack25_questions_" + activeRoomId) || localStorage.getItem("attack25_questions");
     if (savedQ) questionsList = JSON.parse(savedQ);
 } catch (e) {}
 
 let gameState = {
+    currentQuestionIndex: 0,
     selectedPanel: null,
     panels: Array.from({ length: 25 }, (_, i) => ({ number: i + 1, used: false, color: null })),
     players: {
@@ -712,7 +795,7 @@ let gameState = {
 };
 
 try {
-    const saved = localStorage.getItem("attack25_gamestate");
+    const saved = localStorage.getItem("attack25_gamestate_" + activeRoomId) || localStorage.getItem("attack25_gamestate");
     if (saved) gameState = JSON.parse(saved);
 } catch (e) {}
 
@@ -733,10 +816,10 @@ try {
 } catch (e) {}
 
 window.addEventListener('storage', (e) => {
-    if (e.key === 'attack25_gamestate' && e.newValue) {
+    if ((e.key === 'attack25_gamestate_' + activeRoomId || e.key === 'attack25_gamestate') && e.newValue) {
         try { applyState(JSON.parse(e.newValue)); } catch (err) {}
     }
-    if (e.key === 'attack25_questions' && e.newValue) {
+    if ((e.key === 'attack25_questions_' + activeRoomId || e.key === 'attack25_questions') && e.newValue) {
         try {
             questionsList = JSON.parse(e.newValue);
             renderQuestion();
@@ -787,6 +870,11 @@ function applyState(state) {
     if (!state) return;
     gameState = state;
 
+    if (state.currentQuestionIndex !== undefined) {
+        currentQuestionIndex = state.currentQuestionIndex;
+    }
+    renderQuestion();
+
     // Recalculate scores from board panels
     if (state.panels && Array.isArray(state.panels)) {
         ['red', 'green', 'white', 'blue'].forEach(color => {
@@ -829,10 +917,12 @@ function applyState(state) {
 
         if (b.status === 'armed') {
             statusEl.textContent = "SẴN SÀNG BẤM CHUÔNG";
+            statusEl.classList.add("host-buzzer-normal");
             winnerEl.innerHTML = '<span style="color:#4ade80;">Chờ thí sinh bấm...</span>';
         } else if (b.status === 'buzzed' && b.winner) {
             const pName = state.players[b.winner] ? state.players[b.winner].name : b.winner.toUpperCase();
             statusEl.textContent = pName.toUpperCase();
+            statusEl.classList.remove("host-buzzer-normal");
             winnerEl.innerHTML = `<span style="color:#ffd43b; font-size:15px;">#1: ${pName} (+${b.buzzTime}s)</span>`;
 
             const cap = b.winner.charAt(0).toUpperCase() + b.winner.slice(1);
@@ -840,6 +930,7 @@ function applyState(state) {
             if (el) el.classList.add("buzzed");
         } else {
             statusEl.textContent = "ĐÃ KHÓA CHUÔNG";
+            statusEl.classList.add("host-buzzer-normal");
             winnerEl.textContent = "Nhấn Mở Chuông";
         }
     }
@@ -882,6 +973,7 @@ function renderQuestion() {
 function prevQuestion() {
     if (currentQuestionIndex > 0) {
         currentQuestionIndex--;
+        gameState.currentQuestionIndex = currentQuestionIndex;
         renderQuestion();
         resetBuzzer();
     }
@@ -890,6 +982,7 @@ function prevQuestion() {
 function nextQuestion() {
     if (currentQuestionIndex < questionsList.length - 1) {
         currentQuestionIndex++;
+        gameState.currentQuestionIndex = currentQuestionIndex;
         renderQuestion();
         resetBuzzer();
     }
@@ -897,6 +990,7 @@ function nextQuestion() {
 
 function jumpToQuestion(idx) {
     currentQuestionIndex = parseInt(idx, 10);
+    gameState.currentQuestionIndex = currentQuestionIndex;
     renderQuestion();
     resetBuzzer();
 }
@@ -906,6 +1000,7 @@ function randomQuestion() {
     let nextIdx = Math.floor(Math.random() * questionsList.length);
     if (nextIdx === currentQuestionIndex) nextIdx = (nextIdx + 1) % questionsList.length;
     currentQuestionIndex = nextIdx;
+    gameState.currentQuestionIndex = currentQuestionIndex;
     renderQuestion();
     resetBuzzer();
     showToast(`Đã chọn ngẫu nhiên câu số ${questionsList[currentQuestionIndex].stt || (currentQuestionIndex + 1)}`);
@@ -918,6 +1013,7 @@ function randomQuestion() {
 let buzzerArmTime = null;
 
 function armBuzzer() {
+    gameState.currentQuestionIndex = currentQuestionIndex;
     gameState.buzzer.status = 'armed';
     gameState.buzzer.winner = null;
     gameState.buzzer.buzzTime = null;
@@ -931,6 +1027,7 @@ function armBuzzer() {
 }
 
 function lockBuzzer() {
+    gameState.currentQuestionIndex = currentQuestionIndex;
     gameState.buzzer.status = 'locked';
     applyState(gameState);
     broadcastState('buzzer_locked');
@@ -938,6 +1035,7 @@ function lockBuzzer() {
 }
 
 function resetBuzzer() {
+    gameState.currentQuestionIndex = currentQuestionIndex;
     gameState.buzzer.status = 'locked';
     gameState.buzzer.winner = null;
     gameState.buzzer.buzzTime = null;
@@ -1026,7 +1124,22 @@ function showToast(msg) {
 // Init
 renderQuestion();
 applyState(gameState);
-broadcastState('sync');
+
+// Fetch current state from server on startup
+(function loadServerState() {
+    fetch('/api/state?roomid=' + encodeURIComponent(activeRoomId))
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.state) {
+                applyState(data.state);
+            }
+            if (data && data.questions && data.questions.length > 0) {
+                questionsList = data.questions;
+                renderQuestion();
+            }
+        })
+        .catch(() => {});
+})();
 
 </script>
 

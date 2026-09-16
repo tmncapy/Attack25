@@ -14,1048 +14,475 @@
 <script src="howler.js"></script>
 <!-- Universal Real-time Synchronizer (Relative path for file:/// and web) -->
 <script src="sync-client.js"></script>
-
-<style>
-
-/* =====================================================
-   FONT
-===================================================== */
-@font-face {
-    font-family: "UTM Impact";
-    src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
-    font-display: swap;
-}
-
-/* =====================================================
-   ROOT VARIABLES (COMPACT & MODERN DARK THEME)
-===================================================== */
-:root {
-    --bg: #0c0f14;
-    --panel: #141923;
-    --panel-2: #1b2230;
-    --panel-3: #232c3d;
-    --border: #2c3647;
-
-    --text: #f1f3f7;
-    --muted: #8c97ab;
-
-    --red: #e03131;
-    --green: #2fb344;
-    --blue: #2f80ed;
-    --white: #e9ecef;
-
-    --gold: #f59f00;
-    --gold-light: #ffd43b;
-    --active: #f59f00;
-    --used: #3d4554;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-html, body {
-    width: 100%;
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    overflow-x: hidden;
-    font-size: 13px;
-}
-
-/* =====================================================
-   COMPACT APP CONTAINER
-===================================================== */
-.app {
-    width: 100%;
-    min-height: 100vh;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-/* =====================================================
-   HEADER (COMPACT)
-===================================================== */
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 14px;
-}
-
-.logo-area {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.logo-title {
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 20px;
-    letter-spacing: 0.5px;
-    color: var(--gold-light);
-}
-
-.logo-subtitle {
-    color: var(--muted);
-    font-size: 11px;
-    background: #1c2433;
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.connection {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    background: #111822;
-    padding: 4px 10px;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-}
-
-.connection-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #2fb344;
-    box-shadow: 0 0 6px #2fb344;
-}
-
-/* =====================================================
-   MAIN 3-COLUMN COMPACT WORKSPACE
-===================================================== */
-.workspace-grid {
-    flex: 1;
-    display: grid;
-    grid-template-columns: minmax(320px, 1.15fr) minmax(310px, 1.1fr) minmax(300px, 1fr);
-    gap: 8px;
-    align-items: start;
-}
-
-.column {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-/* =====================================================
-   CARD (COMPACT & DENSE)
-===================================================== */
-.card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.card-header {
-    height: 36px;
-    padding: 0 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.card-title {
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 15px;
-    letter-spacing: .3px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #f3f5f8;
-}
-
-.card-badge {
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: #1e2636;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--gold-light);
-    border: 1px solid #334057;
-}
-
-.card-body {
-    padding: 10px;
-}
-
-/* =====================================================
-   QUESTION TELEPROMPTER & EXCEL IMPORT
-===================================================== */
-.question-teleprompter {
-    background: linear-gradient(180deg, #18202d 0%, #121822 100%);
-    border: 1px solid #374357;
-    border-radius: 7px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    position: relative;
-}
-
-.q-meta-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-}
-
-.q-number-tag {
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 14px;
-    color: var(--gold-light);
-    background: rgba(245, 159, 0, 0.15);
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid rgba(245, 159, 0, 0.3);
-}
-
-.q-count-tag {
-    font-size: 11px;
-    color: var(--muted);
-}
-
-.q-text-box {
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.4;
-    color: #ffffff;
-    min-height: 52px;
-    margin-bottom: 8px;
-    user-select: text;
-}
-
-.q-answer-box {
-    background: rgba(47, 179, 68, 0.12);
-    border: 1px solid rgba(47, 179, 68, 0.4);
-    border-radius: 5px;
-    padding: 6px 10px;
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-}
-
-.q-answer-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    font-weight: 800;
-    color: #2fb344;
-    letter-spacing: 0.5px;
-    flex-shrink: 0;
-}
-
-.q-answer-val {
-    font-size: 14px;
-    font-weight: 700;
-    color: #40c057;
-    user-select: text;
-}
-
-.q-nav-row {
-    display: grid;
-    grid-template-columns: 1fr 1.3fr 1fr;
-    gap: 6px;
-    margin-bottom: 8px;
-}
-
-.q-jump-row {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.q-select-dropdown {
-    flex: 1;
-    height: 30px;
-    background: #18202d;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    color: #fff;
-    font-size: 12px;
-    padding: 0 8px;
-    outline: none;
-}
-
-.excel-dropzone {
-    border: 1.5px dashed #404e67;
-    border-radius: 6px;
-    background: #111620;
-    padding: 8px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.excel-dropzone:hover, .excel-dropzone.dragover {
-    border-color: var(--gold);
-    background: rgba(245, 159, 0, 0.08);
-}
-
-.excel-dropzone-text {
-    font-size: 11px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-/* =====================================================
-   BUZZER SYSTEM (COMPACT)
-===================================================== */
-.buzzer-status-banner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 10px;
-    border-radius: 6px;
-    background: #18202d;
-    border: 1px solid var(--border);
-    margin-bottom: 8px;
-}
-
-.buzzer-status-banner.armed {
-    background: linear-gradient(90deg, #142a1a, #1b3823);
-    border-color: #2fb344;
-    box-shadow: 0 0 10px rgba(47, 179, 68, 0.2);
-}
-
-.buzzer-status-banner.locked {
-    background: linear-gradient(90deg, #281818, #352020);
-    border-color: #e03131;
-}
-
-.buzzer-status-banner.buzzed {
-    background: linear-gradient(90deg, #322610, #483410);
-    border-color: #f59f00;
-    box-shadow: 0 0 12px rgba(245, 159, 0, 0.3);
-}
-
-.buzzer-state-title {
-    font-size: 9px;
-    text-transform: uppercase;
-    color: var(--muted);
-}
-
-.buzzer-state-val {
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 17px;
-    color: #fff;
-}
-
-.buzzer-winner-info {
-    font-size: 12px;
-    font-weight: bold;
-    text-align: right;
-}
-
-.buzzer-master-btns {
-    display: grid;
-    grid-template-columns: 1.3fr 0.9fr 0.9fr;
-    gap: 6px;
-    margin-bottom: 8px;
-}
-
-.buzzer-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin-bottom: 8px;
-}
-
-.buzzer-btn {
-    height: 48px;
-    border: 1.5px solid transparent;
-    border-radius: 6px;
-    background: var(--panel-2);
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    transition: all 0.1s ease;
-    user-select: none;
-    position: relative;
-}
-
-.buzzer-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
-    filter: brightness(1.15);
-}
-
-.buzzer-btn:active:not(:disabled) {
-    transform: scale(0.97);
-}
-
-.buzzer-btn.btn-red { background: #5c1818; border-color: #e03131; }
-.buzzer-btn.btn-green { background: #154720; border-color: #2fb344; }
-.buzzer-btn.btn-white { background: #475061; border-color: #dee2e6; color: #fff; }
-.buzzer-btn.btn-blue { background: #153c6e; border-color: #2f80ed; }
-
-.buzzer-btn.buzzer-winner {
-    box-shadow: 0 0 16px #f59f00;
-    border-color: #ffd43b !important;
-    animation: buzzerPulse 0.8s infinite alternate;
-}
-
-@keyframes buzzerPulse {
-    from { transform: scale(1); filter: brightness(1.1); }
-    to { transform: scale(1.03); filter: brightness(1.4); }
-}
-
-.buzzer-btn.buzzer-locked-player {
-    opacity: 0.3;
-    filter: grayscale(0.9);
-    cursor: not-allowed;
-}
-
-.buzzer-key {
-    font-size: 9px;
-    font-weight: bold;
-    color: #ced4da;
-}
-
-.buzzer-rank-tag {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    font-size: 10px;
-    font-weight: 900;
-    background: #f59f00;
-    color: #111;
-    padding: 0 4px;
-    border-radius: 3px;
-}
-
-.buzzer-judge-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-}
-
-/* =====================================================
-   25-PANEL BOARD (COMPACT 5x5)
-===================================================== */
-.panel-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    margin-bottom: 10px;
-}
-
-.panel-button {
-    aspect-ratio: 1.2 / 1;
-    min-height: 40px;
-    border: 2px solid #374254;
-    border-radius: 6px;
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-    color: #f8fafc;
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: clamp(16px, 2vw, 24px);
-    font-weight: 900;
-    cursor: pointer;
-    transition: all .15s ease;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-}
-
-.panel-button:hover {
-    transform: translateY(-2px);
-    border-color: #f59f00;
-    box-shadow: 0 4px 12px rgba(245, 159, 0, 0.35);
-}
-
-.panel-button.active {
-    background: #ffffff !important;
-    color: #000000 !important;
-    border-color: #38bdf8 !important;
-    box-shadow: 0 0 16px #38bdf8, inset 0 0 6px #fff !important;
-    transform: scale(1.08);
-    z-index: 5;
-}
-
-.panel-button.used {
-    background: #334155 !important;
-    color: #64748b !important;
-    border-color: #1e293b !important;
-    opacity: .5;
-    text-decoration: line-through;
-}
-
-.panel-button.active.used {
-    background: #ffffff !important;
-    color: #000 !important;
-    opacity: 1;
-    text-decoration: none;
-}
-
-.panel-button.panel-red { background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #fff !important; border-color: #f87171 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
-.panel-button.panel-green { background: linear-gradient(135deg, #22c55e, #16a34a) !important; color: #fff !important; border-color: #4ade80 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
-.panel-button.panel-white { background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important; color: #0f172a !important; border-color: #ffffff !important; text-shadow: none; }
-.panel-button.panel-blue { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; color: #fff !important; border-color: #60a5fa !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
-
-.color-actions {
-    margin-top: 8px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr) 1.2fr;
-    gap: 4px;
-}
-
-.board-actions {
-    margin-top: 6px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 5px;
-}
-
-.button {
-    height: 32px;
-    border: none;
-    border-radius: 5px;
-    padding: 0 8px;
-    color: #fff;
-    font-weight: 700;
-    font-size: 11px;
-    cursor: pointer;
-    transition: transform .1s ease, filter .15s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 4px;
-}
-
-.button:hover { filter: brightness(1.15); }
-.button:active { transform: scale(.97); }
-
-.button-orange { background: #d97706; }
-.button-gray { background: #374254; }
-.button-red { background: #c92a2a; }
-.button-green { background: #2b8a3e; }
-.button-blue { background: #1971c2; }
-.button-white { background: #dee2e6; color: #111; }
-
-.status-row {
-    margin-top: 8px;
-    display: flex;
-    gap: 6px;
-}
-
-.status-box {
-    flex: 1;
-    background: var(--panel-2);
-    border-radius: 5px;
-    padding: 4px 8px;
-    border: 1px solid var(--border);
-}
-
-.status-label {
-    display: block;
-    color: var(--muted);
-    font-size: 9px;
-    text-transform: uppercase;
-}
-
-.status-value {
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 16px;
-    color: #fff;
-}
-
-/* =====================================================
-   PLAYERS (CLEAN SCORE CONTROLS)
-===================================================== */
-.player-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.player-card {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-left: 5px solid #777;
-    border-radius: 6px;
-    padding: 6px 8px;
-}
-
-.player-card.red { border-left-color: var(--red); }
-.player-card.green { border-left-color: var(--green); }
-.player-card.white { border-left-color: var(--white); }
-.player-card.blue { border-left-color: var(--blue); }
-
-.player-top {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
-
-.player-number {
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #10141c;
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 13px;
-}
-
-.player-name-input {
-    flex: 1;
-    min-width: 0;
-    height: 28px;
-    padding: 0 6px;
-    background: #11151d;
-    border: 1px solid #333d4f;
-    border-radius: 4px;
-    color: white;
-    outline: none;
-    font-weight: 700;
-    font-size: 12px;
-}
-
-.player-controls {
-    margin-top: 5px;
-    display: grid;
-    grid-template-columns: 32px 1fr 32px;
-    gap: 4px;
-}
-
-.score-button {
-    height: 28px;
-    border: none;
-    border-radius: 4px;
-    background: #2f3849;
-    color: white;
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-.score-button:hover { background: #404c62; }
-
-.score-input {
-    width: 100%;
-    height: 28px;
-    background: #11151d;
-    border: 1px solid #333d4f;
-    border-radius: 4px;
-    color: white;
-    text-align: center;
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 17px;
-    outline: none;
-}
-
-/* =====================================================
-   PREVIEW (COMPACT)
-===================================================== */
-.preview-screen {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-    background: radial-gradient(circle at center, #173c71 0%, #0b1730 50%, #05070c 100%);
-    border: 1px solid #2f3849;
-    border-radius: 5px;
-}
-
-.preview-board {
-    position: absolute;
-    left: 8%;
-    top: 10%;
-    width: 62%;
-    height: 80%;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-template-rows: repeat(5, 1fr);
-    gap: 3px;
-    padding: 4px;
-    background: #1e293b;
-    border: 2px solid #334155;
-    border-radius: 6px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-}
-
-.preview-cell {
-    background: linear-gradient(135deg, #f59f00, #d97706);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #000;
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: clamp(9px, 1.1vw, 14px);
-    font-weight: 900;
-    border-radius: 3px;
-    border: 1px solid #fbbf24;
-    user-select: none;
-    transition: all 0.15s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.preview-cell.active {
-    background: #ffffff !important;
-    color: #000 !important;
-    border-color: #38bdf8 !important;
-    box-shadow: 0 0 12px #38bdf8, inset 0 0 6px #fff;
-    transform: scale(1.1);
-    z-index: 10;
-}
-
-.preview-cell.used {
-    background: #334155 !important;
-    color: #64748b !important;
-    border-color: #1e293b !important;
-    text-decoration: line-through;
-    opacity: 0.45;
-    box-shadow: none;
-}
-
-.preview-cell.panel-red { background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #fff !important; border-color: #f87171 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
-.preview-cell.panel-green { background: linear-gradient(135deg, #22c55e, #16a34a) !important; color: #fff !important; border-color: #4ade80 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
-.preview-cell.panel-white { background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important; color: #0f172a !important; border-color: #ffffff !important; text-shadow: none; }
-.preview-cell.panel-blue { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; color: #fff !important; border-color: #60a5fa !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
-
-.preview-scores {
-    position: absolute;
-    right: 5%;
-    top: 10%;
-    width: 22%;
-    height: 80%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.preview-player {
-    height: 20%;
-    border-radius: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #111;
-    font-family: "UTM Impact", Impact, sans-serif;
-    font-size: clamp(8px, 1vw, 12px);
-    font-weight: bold;
-}
-
-.preview-player.red { background: #e03131; color: #fff; }
-.preview-player.green { background: #2fb344; color: #fff; }
-.preview-player.white { background: #f8f9fa; }
-.preview-player.blue { background: #2f80ed; color: #fff; }
-
-/* =====================================================
-   TOAST NOTIFICATION
-===================================================== */
-.toast-container {
-    position: fixed;
-    bottom: 12px;
-    right: 12px;
-    z-index: 1000;
-    pointer-events: none;
-}
-
-.toast {
-    background: #1c2433;
-    border: 1px solid #3d4a61;
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 5px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    font-size: 11px;
-    margin-top: 4px;
-    animation: toastIn 0.2s ease-out;
-}
-
-@keyframes toastIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* =====================================================
-   RESPONSIVE
-===================================================== */
-@media (max-width: 1100px) {
-    .workspace-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-@media (max-width: 700px) {
-    .workspace-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-</style>
+<!-- Disable DevTool -->
+<script disable-devtool-auto src="https://cdn.jsdelivr.net/npm/disable-devtool"></script>
+<script>
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || (e.ctrlKey && e.keyCode === 85)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+</script>
+
+<link rel="stylesheet" href="controller.css">
 </head>
 
 <body>
 
 <div class="app">
 
-    <!-- COMPACT HEADER -->
-    <header class="header">
-        <div class="logo-area">
-            <div class="logo-title">ATTACK 25</div>
-            <div class="logo-subtitle">Host &amp; Question Controller</div>
-        </div>
-
-        <div class="header-right">
-            <a href="/Host.html" target="_blank" class="button button-gray" style="height:26px; padding:0 8px; text-decoration:none; color:#fff;" title="Mở máy MC">🎤 Host</a>
-            <a href="/player1.html" target="_blank" class="button button-red" style="height:26px; padding:0 6px; text-decoration:none; color:#fff;" title="Mở chuông Player 1">P1 (Đỏ)</a>
-            <a href="/player2.html" target="_blank" class="button button-green" style="height:26px; padding:0 6px; text-decoration:none; color:#fff;" title="Mở chuông Player 2">P2 (Xanh)</a>
-            <a href="/player3.html" target="_blank" class="button button-white" style="height:26px; padding:0 6px; text-decoration:none; color:#111;" title="Mở chuông Player 3">P3 (Trắng)</a>
-            <a href="/player4.html" target="_blank" class="button button-blue" style="height:26px; padding:0 6px; text-decoration:none; color:#fff;" title="Mở chuông Player 4">P4 (Lam)</a>
-            <a href="/Projector.html" target="_blank" class="button button-orange" style="height:26px; padding:0 8px; text-decoration:none; color:#fff;" title="Mở màn hình Projector">📽️ Projector</a>
-            <div class="connection">
-                <div class="connection-dot" id="connectionDot"></div>
-                <span id="connectionText">ĐỒNG BỘ</span>
+    <!-- TOP NAVIGATION BAR -->
+    <header class="app-topbar" style="background: #111722; border-bottom: 1px solid #1f2a3c; padding: 4px 10px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">
+        <div class="topbar-left" style="display: flex; align-items: center; gap: 10px;">
+            <span class="app-brand-badge" style="background: linear-gradient(135deg, #f59f00, #d97706); color: #000; font-family: 'UTM Impact', Impact, sans-serif; font-size: 14px; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px;">ATTACK 25 <small style="font-size: 10px; color: #111; font-weight: 800;">CONTROL</small></span>
+            <div class="topbar-tabs" style="display: flex; gap: 4px;">
+                <button class="topbar-tab active" id="tabBtnGame" onclick="switchAppTab('game')" style="padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                    <span>🎯</span> BÀN ĐIỀU KHIỂN TRẬN ĐẤU
+                </button>
+                <button class="topbar-tab" id="tabBtnDatabase" onclick="switchAppTab('database')" style="padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                    <span>📚</span> DATABASE CÂU HỎI <span class="tab-badge" id="tabBadgeCount" style="background: #f59f00; color: #000; font-size: 10px; padding: 1px 5px; border-radius: 10px; font-weight: bold;">27</span>
+                </button>
             </div>
-            <button class="button button-gray" style="height:26px; padding:0 8px;" onclick="broadcastState('sync')">
-                🔄 Sync
-            </button>
+        </div>
+        <div class="topbar-right" style="display: flex; align-items: center; gap: 6px;">
+            <!-- Projector Media Broadcast Status & Quick Hide -->
+            <div class="topbar-media-status" id="topbarMediaStatus" style="display:none; align-items: center; gap: 6px; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; padding: 2px 8px; border-radius: 4px; font-size: 10px; color: #fca5a5;">
+                <span class="pulse-dot" style="width: 6px; height: 6px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 6px #ef4444; display: inline-block;"></span>
+                <span id="topbarMediaLabel">Đang chiếu Full</span>
+                <button class="topbar-media-hide-btn" onclick="hideQuestionMedia()" style="background: #ef4444; color: #fff; border: none; border-radius: 3px; padding: 1px 5px; font-size: 9px; cursor: pointer;">Ẩn Media</button>
+            </div>
+            
+            <!-- Quick Link Buttons -->
+            <div style="display: flex; gap: 3px; align-items: center;">
+                <a id="navLinkHost" href="/Host.html?roomid=123456&auth=1234" target="_blank" class="button button-gray" style="height:22px; padding:0 6px; text-decoration:none; color:#fff; font-size:10px;" title="Mở máy MC">🎤 Host</a>
+                <a id="navLinkP1" href="/player1.html?roomid=123456&auth=1111" target="_blank" class="button button-red" style="height:22px; padding:0 5px; text-decoration:none; color:#fff; font-size:10px;" title="Mở chuông Player 1">P1</a>
+                <a id="navLinkP2" href="/player2.html?roomid=123456&auth=2222" target="_blank" class="button button-green" style="height:22px; padding:0 5px; text-decoration:none; color:#fff; font-size:10px;" title="Mở chuông Player 2">P2</a>
+                <a id="navLinkP3" href="/player3.html?roomid=123456&auth=3333" target="_blank" class="button button-white" style="height:22px; padding:0 5px; text-decoration:none; color:#111; font-size:10px;" title="Mở chuông Player 3">P3</a>
+                <a id="navLinkP4" href="/player4.html?roomid=123456&auth=4444" target="_blank" class="button button-blue" style="height:22px; padding:0 5px; text-decoration:none; color:#fff; font-size:10px;" title="Mở chuông Player 4">P4</a>
+                <a id="navLinkProj" href="/Projector.html?roomid=123456" target="_blank" class="button button-orange" style="height:22px; padding:0 6px; text-decoration:none; color:#fff; font-size:10px;" title="Mở màn hình Projector">🖥️ Proj</a>
+            </div>
+
+            <!-- Sync Connection Status -->
+            <div style="display: flex; gap: 4px; align-items: center; margin-left: 2px;">
+                <div class="connection" style="padding: 2px 6px; font-size: 10px; display:flex; align-items:center; gap:4px; background:#0b111a; border-radius:10px; border:1px solid #1e293b;">
+                    <div class="connection-dot" id="connectionDot" style="width:6px; height:6px; border-radius:50%; background:#2fb344; box-shadow:0 0 5px #2fb344;"></div>
+                    <span id="connectionText" style="font-size:9px; font-weight:bold; color:#38bdf8;">ĐỒNG BỘ</span>
+                </div>
+                <button class="button button-gray" style="height:22px; padding:0 5px; font-size:10px;" onclick="broadcastState('sync')" title="Đồng bộ thủ công">
+                    🔄 Sync
+                </button>
+            </div>
+
+            <span class="room-pill" id="controllerRoomPill" style="padding:3px 8px; font-size:10px; background:#0f172a; border-radius:4px; color:#38bdf8; border:1px solid #334155; font-family:monospace; font-weight:bold;">PHÒNG: 123456</span>
         </div>
     </header>
 
     <!-- 3-COLUMN WORKSPACE -->
-    <main class="workspace-grid">
+    <main class="workspace-grid" id="gameWorkspace">
 
-        <!-- COLUMN 1: QUESTION TELEPROMPTER & EXCEL IMPORT -->
+        <!-- =========================================================
+             COLUMN 1: 🎯 BẢNG 25 Ô & VÒNG ĐẶC BIỆT (THE BOARD ENGINE)
+             ========================================================= -->
         <div class="column">
 
-            <!-- HOST QUESTION TELEPROMPTER -->
+            <!-- 25 PANELS BOARD -->
             <section class="card">
                 <div class="card-header">
-                    <div class="card-title">📖 ĐỀ &amp; ĐÁP ÁN (MÁY HOST)</div>
-                    <span class="card-badge" id="qBadgeStatus">CÂU 1</span>
+                    <div class="card-title">🎯 BẢNG 25 Ô ATTACK 25</div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 10px; cursor: pointer; color: #94a3b8; user-select: none;">
+                            <input type="checkbox" id="chkAutoOthello" checked style="cursor: pointer; width: 13px; height: 13px; accent-color: #f59f00;">
+                            <span>Luật Othello tự động</span>
+                        </label>
+                        <span class="card-badge" id="selectedPanelText" style="background:#1e293b; color:#f59f00; font-size:10px; padding:1px 6px;">Chưa chọn ô</span>
+                        <button class="button button-gray" id="btnQuickDeselect" style="height:20px; padding:0 5px; font-size:9px;" onclick="clearSelection()" title="Hủy chọn ô hiện tại">Bỏ chọn</button>
+                    </div>
                 </div>
 
-                <div class="card-body">
-                    <!-- MAIN TELEPROMPTER DISPLAY -->
-                    <div class="question-teleprompter">
-                        <div class="q-meta-row">
-                            <span class="q-number-tag" id="qNumberTag">CÂU HỎI 1</span>
-                            <span class="q-count-tag" id="qCountTag">1 / 27 câu</span>
-                        </div>
+                <div class="card-body" style="padding: 6px; gap: 6px;">
+                    <!-- 25 BUTTONS MATRIX -->
+                    <div class="panel-grid" id="panelGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 2px;"></div>
 
-                        <!-- QUESTION TEXT -->
-                        <div class="q-text-box" id="qTextBox">
-                            Đang tải câu hỏi...
-                        </div>
-
-                        <!-- ANSWER BOX -->
-                        <div class="q-answer-box">
-                            <span class="q-answer-label">ĐÁP ÁN:</span>
-                            <span class="q-answer-val" id="qAnswerVal">-</span>
-                        </div>
+                    <!-- COLOR CLAIM ACTIONS -->
+                    <div class="color-actions" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px;">
+                        <button class="button button-red" onclick="setPanelColor('red')" style="font-size: 10px; font-weight: bold; background: #dc2626;">🔴 Ô ĐỎ</button>
+                        <button class="button button-green" onclick="setPanelColor('green')" style="font-size: 10px; font-weight: bold; background: #16a34a;">🟢 Ô XANH LÁ</button>
+                        <button class="button button-white" onclick="setPanelColor('white')" style="font-size: 10px; font-weight: bold; background: #f1f5f9; color: #0f172a;">⚪ Ô TRẮNG</button>
+                        <button class="button button-blue" onclick="setPanelColor('blue')" style="font-size: 10px; font-weight: bold; background: #2563eb;">🔵 Ô XANH DƯƠNG</button>
+                        <button class="button button-gray" onclick="setPanelColor(null)" style="font-size: 10px; font-weight: bold; background: #334155;">✕ XÓA MÀU</button>
                     </div>
 
-                    <!-- QUESTION NAVIGATION BUTTONS -->
-                    <div class="q-nav-row">
-                        <button class="button button-gray" onclick="prevQuestion()">
-                            <span>⏮</span> Câu trước
+                    <!-- 4 HIDE COLOR BUTTONS -->
+                    <div class="color-hide-actions" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;">
+                        <button class="button button-red" id="btnHideRed" onclick="toggleHideColor('red')" style="font-size: 10px; padding: 4px 2px; background: #7f1d1d; border: 1px solid #991b1b;">
+                            🙈 Ẩn đỏ
                         </button>
-                        <button class="button button-green" onclick="armCurrentQuestion()">
-                            <span>🔔</span> Mở chuông câu này
+                        <button class="button button-green" id="btnHideGreen" onclick="toggleHideColor('green')" style="font-size: 10px; padding: 4px 2px; background: #14532d; border: 1px solid #166534;">
+                            🙈 Ẩn xanh lá
                         </button>
-                        <button class="button button-orange" onclick="nextQuestion()">
-                            Câu sau <span>⏭</span>
+                        <button class="button button-white" id="btnHideWhite" onclick="toggleHideColor('white')" style="font-size: 10px; padding: 4px 2px; background: #cbd5e1; color: #0f172a; border: 1px solid #94a3b8;">
+                            🙈 Ẩn trắng
+                        </button>
+                        <button class="button button-blue" id="btnHideBlue" onclick="toggleHideColor('blue')" style="font-size: 10px; padding: 4px 2px; background: #1e3a8a; border: 1px solid #1e40af;">
+                            🙈 Ẩn xanh dương
                         </button>
                     </div>
 
-                    <!-- JUMP DROPDOWN -->
-                    <div class="q-jump-row">
-                        <select class="q-select-dropdown" id="qSelectDropdown" onchange="jumpToQuestion(this.value)">
-                            <!-- Options generated dynamically -->
-                        </select>
-                        <button class="button button-gray" style="flex-shrink:0;" onclick="randomQuestion()" title="Chọn ngẫu nhiên một câu hỏi">
-                            <span>🎲</span> Ngẫu nhiên
-                        </button>
+                    <!-- BOARD ACTIONS -->
+                    <div class="board-actions" style="display: grid; grid-template-columns: 1.2fr 1.1fr 1fr 1fr; gap: 3px;">
+                        <button class="button button-orange" onclick="sendSelectedPanel()" style="font-size: 10px; background: #d97706; font-weight: bold;">🌟 HIỆN Ô</button>
+                        <button class="button button-gray" onclick="clearSelection()" style="background:#475569; font-size: 10px;" title="Bỏ chọn ô đang chọn trên màn hình">❌ HỦY CHỌN</button>
+                        <button class="button button-gray" onclick="markSelectedUsed()" style="background:#334155; font-size: 10px;">✔ ĐÃ DÙNG</button>
+                        <button class="button button-red" onclick="resetSelectedPanel()" style="background:#b91c1c; font-size: 10px;">🔄 RESET Ô</button>
                     </div>
 
-                    <!-- EXCEL FILE UPLOAD / DRAG & DROP -->
-                    <div class="excel-dropzone" id="excelDropzone" onclick="document.getElementById('excelFileInput').click()">
-                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleExcelUpload(this.files[0])">
-                        <div class="excel-dropzone-text">
-                            <span>📊</span>
-                            <span><strong>Kéo thả hoặc bấm để nhập file Excel / CSV</strong> (Không giới hạn số câu)</span>
+                    <!-- STATUS -->
+                    <div class="status-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">
+                        <div class="status-box" style="background: #0f172a; border: 1px solid #1e293b; border-radius: 4px; padding: 3px 6px; text-align: center;">
+                            <span class="status-label" style="font-size: 8px; color: #94a3b8; text-transform: uppercase;">Ô đang chọn</span>
+                            <span class="status-value" id="statusSelected" style="font-family: 'UTM Impact', Impact, sans-serif; font-size: 14px; color: #f59f00;">-</span>
+                        </div>
+                        <div class="status-box" style="background: #0f172a; border: 1px solid #1e293b; border-radius: 4px; padding: 3px 6px; text-align: center;">
+                            <span class="status-label" style="font-size: 8px; color: #94a3b8; text-transform: uppercase;">Đã dùng</span>
+                            <span class="status-value" id="statusUsed" style="font-family: 'UTM Impact', Impact, sans-serif; font-size: 14px; color: #38bdf8;">0 / 25</span>
+                        </div>
+                        <div class="status-box" style="background: #0f172a; border: 1px solid #1e293b; border-radius: 4px; padding: 3px 6px; text-align: center;">
+                            <span class="status-label" style="font-size: 8px; color: #94a3b8; text-transform: uppercase;">Còn lại</span>
+                            <span class="status-value" id="statusRemaining" style="font-family: 'UTM Impact', Impact, sans-serif; font-size: 14px; color: #4ade80;">25</span>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 25 PANELS BOARD -->
-            <section class="card">
+            <!-- SPECIAL ROUND MEDIA CONTROLLER (VÒNG THI ĐẶC BIỆT) -->
+            <section class="card" id="specialRoundBox">
                 <div class="card-header">
-                    <div class="card-title">🎯 BẢNG 25 Ô</div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <span class="card-badge" id="selectedPanelText">Chưa chọn ô</span>
-                        <button class="button button-gray" id="btnQuickDeselect" style="height:22px; padding:0 6px; font-size:10px;" onclick="clearSelection()" title="Hủy chọn ô hiện tại">Bỏ chọn</button>
+                    <div class="card-title" style="color: #f59f00;">
+                        <span>🌟</span> CÂU HỎI VÒNG ĐẶC BIỆT
+                    </div>
+                    <div style="display:flex; align-items:center; gap: 6px;">
+                        <span id="specialRoundTimeBadge" class="card-badge" style="background:#0f172a; color:#f59f00; font-family: monospace; font-size: 10px; border: 1px solid #334155;">⏱️ 20.0s</span>
+                        <span id="videoStatusBadge" class="card-badge" style="background:#0f172a; color:#94a3b8; font-size: 10px; border: 1px solid #334155;">ĐÃ ẨN</span>
                     </div>
                 </div>
 
-                <div class="card-body">
-                    <!-- 25 BUTTONS -->
-                    <div class="panel-grid" id="panelGrid"></div>
-
-                    <!-- COLOR CLAIM ACTIONS -->
-                    <div class="color-actions">
-                        <button class="button button-red" onclick="setPanelColor('red')">Ô ĐỎ</button>
-                        <button class="button button-green" onclick="setPanelColor('green')">Ô XANH LÁ</button>
-                        <button class="button button-white" onclick="setPanelColor('white')">Ô TRẮNG</button>
-                        <button class="button button-blue" onclick="setPanelColor('blue')">Ô XANH DƯƠNG</button>
-                        <button class="button button-gray" onclick="setPanelColor(null)">XÓA MÀU</button>
+                <div class="card-body" style="padding: 6px; gap: 6px;">
+                    <!-- MODE SWITCHER (3 TABS) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 3px; background: #090d14; padding: 2px; border-radius: 5px; border: 1px solid #1e293b;">
+                        <button type="button" id="btnModeLocalVideo" onclick="setSpecialRoundMode('local_video')" class="button" style="padding: 4px 2px; font-size: 10px; background: #1e293b; color: #f1f5f9; border: 1px solid #334155;">
+                            🎬 Video cục bộ
+                        </button>
+                        <button type="button" id="btnModeSlideshow" onclick="setSpecialRoundMode('slideshow')" class="button" style="padding: 4px 2px; font-size: 10px; background: transparent; color: #94a3b8; border: none;">
+                            🖼️ Chuỗi ảnh (20s)
+                        </button>
+                        <button type="button" id="btnModeStreamable" onclick="setSpecialRoundMode('streamable')" class="button" style="padding: 4px 2px; font-size: 10px; background: transparent; color: #94a3b8; border: none;">
+                            🔗 Link Web
+                        </button>
                     </div>
 
-                    <!-- BOARD ACTIONS -->
-                    <div class="board-actions" style="grid-template-columns: 1.2fr 1.2fr 1fr 1fr;">
-                        <button class="button button-orange" onclick="sendSelectedPanel()">🌟 HIỆN Ô</button>
-                        <button class="button button-gray" onclick="clearSelection()" style="background:#4b5563; border:1px solid #6b7280;" title="Bỏ chọn ô đang chọn trên màn hình">❌ HỦY CHỌN</button>
-                        <button class="button button-gray" onclick="markSelectedUsed()">ĐÃ DÙNG</button>
-                        <button class="button button-red" onclick="resetSelectedPanel()">RESET Ô</button>
+                    <!-- PANEL 1: LOCAL VIDEO UPLOAD -->
+                    <div id="secLocalVideo" style="display: block;">
+                        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                            <button class="button button-orange" type="button" onclick="document.getElementById('specialVideoFileInput').click()" style="font-size: 10px; padding: 4px 8px; background: #d97706;">
+                                📁 Chọn video từ máy (MP4 / WebM)...
+                            </button>
+                            <input type="file" id="specialVideoFileInput" accept="video/mp4, video/webm, video/*" style="display:none" onchange="handleSpecialVideoUpload(this.files[0])">
+                        </div>
+                        <div id="specialVideoInfoBox" style="display: none; margin-top: 4px; padding: 4px 6px; background: #0f172a; border-radius: 4px; border: 1px solid #1e293b; align-items: center; justify-content: space-between;">
+                            <span id="specialVideoFileName" style="font-size: 10px; color: #38bdf8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;">video.mp4</span>
+                            <button class="button button-red" type="button" onclick="removeSpecialVideo()" style="font-size: 9px; padding: 1px 5px; height: 18px;">🗑️ Xóa</button>
+                        </div>
                     </div>
 
-                    <!-- STATUS -->
-                    <div class="status-row">
-                        <div class="status-box">
-                            <span class="status-label">Ô đang chọn</span>
-                            <span class="status-value" id="statusSelected">-</span>
+                    <!-- PANEL 2: SLIDESHOW 20S -->
+                    <div id="secSlideshow" style="display: none;">
+                        <div style="display: flex; gap: 4px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 4px;">
+                            <div style="display: flex; gap: 4px; align-items: center;">
+                                <button class="button button-green" type="button" onclick="document.getElementById('specialSlidesFileInput').click()" style="font-size: 10px; padding: 4px 8px;">
+                                    📁 Tải nhiều ảnh...
+                                </button>
+                                <input type="file" id="specialSlidesFileInput" accept="image/*" multiple style="display:none" onchange="handleSpecialSlidesUpload(this.files)">
+                                <button class="button button-gray" type="button" onclick="clearSpecialSlides()" style="font-size: 9px; padding: 4px 6px; height: 22px;" id="btnClearSlides">
+                                    🗑️ Xóa hết
+                                </button>
+                            </div>
+                            <span style="font-size: 9px; color: #94a3b8;">Tuần tự 20s</span>
                         </div>
-                        <div class="status-box">
-                            <span class="status-label">Đã dùng</span>
-                            <span class="status-value" id="statusUsed">0 / 25</span>
+
+                        <!-- DURATION INFO -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: #090d14; padding: 3px 6px; border-radius: 4px; border: 1px solid #1e293b; font-size: 10px; margin-bottom: 4px;">
+                            <div>
+                                <span style="color: #94a3b8;">Số ảnh:</span> 
+                                <strong id="specialSlidesCount" style="color: #38bdf8;">0 ảnh</strong>
+                            </div>
+                            <div>
+                                <span style="color: #94a3b8;">Mỗi ảnh:</span> 
+                                <strong id="specialSlidePerTime" style="color: #34d399;">-- s</strong>
+                            </div>
                         </div>
-                        <div class="status-box">
-                            <span class="status-label">Còn lại</span>
-                            <span class="status-value" id="statusRemaining">25</span>
+
+                        <!-- SLIDES LIST -->
+                        <div id="specialSlidesList" style="display: flex; gap: 4px; overflow-x: auto; padding: 3px; min-height: 44px; align-items: center; border-radius: 4px; background: #090d14; border: 1px dashed #1e293b;">
+                            <div style="width: 100%; text-align: center; color: #64748b; font-size: 9px; padding: 6px 0;">
+                                Bấm "Tải nhiều ảnh" để thêm ảnh vào chuỗi 20s.
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- PANEL 3: STREAMABLE / WEB URL -->
+                    <div id="secStreamable" style="display: none;">
+                        <div style="display: flex; gap: 4px;">
+                            <input type="text" id="streamableUrlInput" placeholder="Nhập share link Streamable / Video Web..." 
+                                style="flex: 1; padding: 4px 6px; border-radius: 4px; border: 1px solid #1e293b; background: #090d14; color: #fff; font-size: 10px; outline: none;" />
+                            <button class="button button-blue" style="padding: 0 8px; font-size: 10px; height: 24px;" onclick="updateVideoUrl()">
+                                Cập nhật
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- LIVE 20S PROGRESS BAR -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8; margin-bottom: 2px;">
+                            <span id="specialProgressLabel">Tiến trình 20s:</span>
+                            <span id="specialCountdownLabel" style="font-family: monospace; color: #f59f00; font-weight: bold;">0.0s / 20.0s</span>
+                        </div>
+                        <div style="height: 5px; background: #1e293b; border-radius: 3px; overflow: hidden; position: relative;">
+                            <div id="specialProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #f59f00, #fbbf24); transition: width 0.08s linear;"></div>
+                        </div>
+                    </div>
+
+                    <!-- PLAYBACK & DISPLAY ACTIONS -->
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px;">
+                        <button class="button button-orange" id="btnShowVideo" style="font-size: 9px; padding: 4px 1px; background: #d97706;" onclick="showSpecialRoundMedia()" title="Hiển thị khung hình dưới ô số ở trạng thái tạm dừng">
+                            👁️ Hiện
+                        </button>
+                        <button class="button button-green" id="btnPlayVideo" style="font-size: 9px; padding: 4px 1px; background: #16a34a;" onclick="playSpecialRoundMedia()" title="Bắt đầu chạy video hoặc chuỗi ảnh 20 giây">
+                            ▶️ Phát 20s
+                        </button>
+                        <button class="button button-yellow" id="btnPauseVideo" style="font-size: 9px; padding: 4px 1px; background: #eab308; color:#0f172a;" onclick="pauseSpecialRoundMedia()" title="Tạm dừng">
+                            ⏸️ Tạm dừng
+                        </button>
+                        <button class="button button-blue" id="btnResetVideo" style="font-size: 9px; padding: 4px 1px; background: #2563eb;" onclick="resetSpecialRoundMedia()" title="Quay lại từ 0s / ảnh đầu tiên">
+                            🔄 Reset
+                        </button>
+                        <button class="button button-gray" id="btnHideVideo" style="font-size: 9px; padding: 4px 1px; background: #475569;" onclick="hideSpecialRoundMedia()" title="Ẩn media khỏi bảng số">
+                            🙈 Ẩn
+                        </button>
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 3px; border-top: 1px solid #1e293b; font-size: 9px; color: #94a3b8; flex-wrap: wrap; gap: 4px;">
+                        <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none;">
+                            <input type="checkbox" id="chkSpecialLoop" checked onchange="toggleSpecialRoundLoop(this.checked)" style="cursor: pointer; width: 12px; height: 12px; accent-color: #f59f00;">
+                            <span>Tự động lặp lại khi hết 20s</span>
+                        </label>
+                        <button class="button button-blue" type="button" onclick="projectSpecialMediaFull()" style="font-size: 9px; padding: 2px 6px; height: 20px;">
+                            🔲 Chiếu Full Projector
+                        </button>
                     </div>
                 </div>
             </section>
 
         </div>
 
-        <!-- COLUMN 2: BUZZER SYSTEM & PREVIEW -->
+        <!-- =========================================================
+             COLUMN 2: 🔔 BUZZER & 📖 TELEPROMPTER (LIVE IN-GAME FLOW)
+             ========================================================= -->
         <div class="column">
 
             <!-- BUZZER MONITOR CARD -->
             <section class="card">
                 <div class="card-header">
-                    <div class="card-title">🔔 GIÁM SÁT BUZZER</div>
-                    <span class="card-badge" id="buzzerBadge">ĐÃ KHÓA</span>
+                    <div class="card-title">🔔 GIÁM SÁT BUZZER &amp; PHÁN QUYẾT</div>
+                    <span class="card-badge" id="buzzerBadge" style="background:#7f1d1d; color:#fca5a5; font-size:10px;">ĐÃ KHÓA</span>
                 </div>
 
-                <div class="card-body">
+                <div class="card-body" style="padding: 6px; gap: 6px;">
                     <!-- STATUS BANNER -->
-                    <div class="buzzer-status-banner locked" id="buzzerBanner">
+                    <div class="buzzer-status-banner locked" id="buzzerBanner" style="padding: 6px 10px; border-radius: 6px;">
                         <div>
-                            <div class="buzzer-state-title">Trạng thái</div>
-                            <div class="buzzer-state-val" id="buzzerStateText">ĐÃ KHÓA CHUÔNG</div>
+                            <div class="buzzer-state-title" style="font-size: 9px; color: #94a3b8; text-transform: uppercase;">Trạng thái chuông</div>
+                            <div class="buzzer-state-val buzzer-state-normal" id="buzzerStateText" style="font-family: 'UTM Impact', Impact, sans-serif; font-size: 15px;">ĐÃ KHÓA CHUÔNG</div>
                         </div>
-                        <div class="buzzer-winner-info" id="buzzerWinnerDisplay">
+                        <div class="buzzer-winner-info" id="buzzerWinnerDisplay" style="font-size: 11px; font-weight: bold;">
                             Chưa có ai bấm chuông
                         </div>
                     </div>
 
                     <!-- MASTER BUZZER CONTROLS -->
-                    <div class="buzzer-master-btns">
-                        <button class="button button-green" onclick="armBuzzer()">
+                    <div class="buzzer-master-btns" style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 4px;">
+                        <button class="button button-green" onclick="armBuzzer()" style="height: 30px; font-size: 11px; background: #16a34a; font-weight: bold;">
                             <span>🔔</span> MỞ CHUÔNG [Space]
                         </button>
-                        <button class="button button-red" onclick="lockBuzzer()">
+                        <button class="button button-red" onclick="lockBuzzer()" style="height: 30px; font-size: 11px; background: #dc2626; font-weight: bold;">
                             <span>🔒</span> KHÓA
                         </button>
-                        <button class="button button-gray" onclick="resetBuzzer()">
+                        <button class="button button-gray" onclick="resetBuzzer()" style="height: 30px; font-size: 11px; background: #475569;">
                             <span>🔄</span> RESET [Del]
                         </button>
                     </div>
 
                     <!-- 4 PLAYER BUZZER BUTTONS -->
-                    <div class="buzzer-grid">
-                        <button class="buzzer-btn btn-red" id="buzzBtnRed" onclick="playerPressBuzzer('red')">
-                            <span class="buzzer-key">[1]/[Q]</span>
+                    <div class="buzzer-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;">
+                        <button class="buzzer-btn btn-red" id="buzzBtnRed" onclick="playerPressBuzzer('red')" style="padding: 6px 4px; border-radius: 5px;">
+                            <span class="buzzer-key" style="font-size: 9px; opacity: 0.8;">[1]/[Q]</span>
                             <span style="font-weight:900; font-size:13px;">ĐỎ</span>
                             <span style="font-size:10px;" id="buzzNameRed">PLAYER 1</span>
                         </button>
 
-                        <button class="buzzer-btn btn-green" id="buzzBtnGreen" onclick="playerPressBuzzer('green')">
-                            <span class="buzzer-key">[2]/[W]</span>
+                        <button class="buzzer-btn btn-green" id="buzzBtnGreen" onclick="playerPressBuzzer('green')" style="padding: 6px 4px; border-radius: 5px;">
+                            <span class="buzzer-key" style="font-size: 9px; opacity: 0.8;">[2]/[W]</span>
                             <span style="font-weight:900; font-size:13px;">XANH LÁ</span>
                             <span style="font-size:10px;" id="buzzNameGreen">PLAYER 2</span>
                         </button>
 
-                        <button class="buzzer-btn btn-white" id="buzzBtnWhite" onclick="playerPressBuzzer('white')">
-                            <span class="buzzer-key">[3]/[E]</span>
+                        <button class="buzzer-btn btn-white" id="buzzBtnWhite" onclick="playerPressBuzzer('white')" style="padding: 6px 4px; border-radius: 5px;">
+                            <span class="buzzer-key" style="font-size: 9px; opacity: 0.8;">[3]/[E]</span>
                             <span style="font-weight:900; font-size:13px;">TRẮNG</span>
                             <span style="font-size:10px;" id="buzzNameWhite">PLAYER 3</span>
                         </button>
 
-                        <button class="buzzer-btn btn-blue" id="buzzBtnBlue" onclick="playerPressBuzzer('blue')">
-                            <span class="buzzer-key">[4]/[R]</span>
+                        <button class="buzzer-btn btn-blue" id="buzzBtnBlue" onclick="playerPressBuzzer('blue')" style="padding: 6px 4px; border-radius: 5px;">
+                            <span class="buzzer-key" style="font-size: 9px; opacity: 0.8;">[4]/[R]</span>
                             <span style="font-weight:900; font-size:13px;">XANH DƯƠNG</span>
                             <span style="font-size:10px;" id="buzzNameBlue">PLAYER 4</span>
                         </button>
                     </div>
 
                     <!-- JUDGEMENT CONTROLS -->
-                    <div class="buzzer-judge-row">
-                        <button class="button button-green" onclick="judgeCorrect()">
+                    <div class="buzzer-judge-row" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 4px;">
+                        <button class="button button-green" onclick="judgeCorrect()" style="height: 32px; font-size: 11px; background: #15803d; font-weight: bold;">
                             <span>✅</span> ĐÚNG (+1 Điểm) [Enter]
                         </button>
-                        <button class="button button-red" onclick="judgeWrong()">
-                            <span>❌</span> SAI (Khóa chuông) [Esc]
+                        <button class="button button-red" onclick="judgeWrong()" style="height: 32px; font-size: 11px; background: #b91c1c; font-weight: bold;">
+                            <span>❌</span> SAI (Khóa) [Esc]
                         </button>
                     </div>
                 </div>
             </section>
 
-            <!-- PREVIEW DISPLAY (LIVE PROJECTOR STREAM) -->
+            <!-- HOST QUESTION TELEPROMPTER -->
             <section class="card">
                 <div class="card-header">
-                    <div class="card-title">🖥️ PREVIEW PROJECTOR (MÀN HÌNH MÁY CHIẾU REAL-TIME)</div>
-                    <a href="Projector.html" target="_blank" class="button button-gray" style="height:22px; padding:0 8px; font-size:11px; text-decoration:none;" title="Mở Màn hình Máy chiếu trong cửa sổ mới">Mở cửa sổ riêng ↗</a>
+                    <div class="card-title">📖 ĐỀ &amp; ĐÁP ÁN (MÁY HOST)</div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span class="db-format-pill db-format-text" id="qFormatBadge">📝 VĂN BẢN</span>
+                        <span class="card-badge" id="qBadgeStatus">CÂU 1</span>
+                    </div>
                 </div>
 
-                <div class="card-body" style="padding:6px;">
-                    <div style="position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; background: #000; border: 1.5px solid #334155; box-shadow: 0 4px 16px rgba(0,0,0,0.6);">
-                        <iframe src="Projector.html?preview=1" style="width: 100%; height: 100%; border: none; pointer-events: none; display: block;" id="projectorPreviewIframe"></iframe>
+                <div class="card-body" style="padding: 6px; gap: 6px;">
+                    <!-- MAIN TELEPROMPTER DISPLAY -->
+                    <div class="question-teleprompter" style="background: linear-gradient(180deg, #111827 0%, #0b0f17 100%); border: 1px solid #1f2a3c; border-radius: 6px; padding: 6px 8px;">
+                        <div class="q-meta-row" style="display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 4px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="q-number-tag" id="qNumberTag" style="font-family: 'UTM Impact', Impact, sans-serif; font-size: 11px; color: #f59f00; background: rgba(245, 159, 0, 0.15); padding: 1px 6px; border-radius: 3px; border: 1px solid rgba(245, 159, 0, 0.3);">CÂU HỎI 1</span>
+                                <span class="q-count-tag" id="qCountTag" style="font-size: 10px; color: #94a3b8;">1 / 27 câu</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <button class="button button-gray" style="padding: 2px 6px; font-size: 10px; height: 20px;" onclick="openEditModalForCurrentQuestion()" title="Chỉnh sửa format/media cho câu hỏi này">
+                                    ✏️ Sửa câu
+                                </button>
+                                <button class="button button-blue" style="padding: 2px 6px; font-size: 10px; height: 20px;" onclick="switchAppTab('database')" title="Xem toàn bộ database câu hỏi">
+                                    📚 Database
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- QUESTION TEXT -->
+                        <div class="q-text-box" id="qTextBox" style="font-size: 12px; font-weight: 600; line-height: 1.4; color: #f8fafc; min-height: 38px; max-height: 58px; overflow-y: auto; margin-bottom: 4px; user-select: text; padding: 2px 0;">
+                            Đang tải câu hỏi...
+                        </div>
+
+                        <!-- ANSWER BOX -->
+                        <div class="q-answer-box" style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 4px; padding: 4px 8px; display: flex; align-items: baseline; gap: 6px;">
+                            <span class="q-answer-label" style="font-size: 9px; text-transform: uppercase; font-weight: 800; color: #4ade80; letter-spacing: 0.5px; flex-shrink: 0;">ĐÁP ÁN:</span>
+                            <span class="q-answer-val" id="qAnswerVal" style="font-size: 13px; font-weight: bold; color: #22c55e; user-select: text;">-</span>
+                        </div>
+
+                        <!-- FULL-WINDOW QUESTION MEDIA CONTROLLER (IMAGE / VIDEO) -->
+                        <div class="question-media-box" id="currentQuestionMediaBox" style="display: none; margin-top: 6px; padding: 4px 6px; background: #090d14; border: 1px solid #1e293b; border-radius: 4px;">
+                            <div class="qm-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span class="qm-title" id="qmTitle" style="font-size: 10px; color: #38bdf8; font-weight: bold;">📺 MEDIA CÂU HỎI (PROJECTOR FULL)</span>
+                                <span class="card-badge" id="qmStatusBadge" style="background:#1e293b; color:#94a3b8; font-size: 9px;">ĐÃ ẨN</span>
+                            </div>
+                            <div class="qm-preview-row" style="display: flex; gap: 6px; align-items: center;">
+                                <img id="qmThumbImg" class="qm-thumb" src="" alt="Thumbnail" style="display:none; width: 40px; height: 28px; object-fit: cover; border-radius: 3px; cursor:pointer;" onclick="showCurrentQuestionMedia()">
+                                <div id="qmThumbVid" class="qm-thumb" style="display:none; width: 40px; height: 28px; align-items:center; justify-content:center; background:#0f172a; color:#f59f00; font-size:16px; border-radius: 3px; cursor:pointer;" onclick="showCurrentQuestionMedia()">🎬</div>
+                                <div style="flex: 1; overflow: hidden;">
+                                    <div id="qmMediaDesc" style="font-size: 10px; color: #fff; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Media đính kèm</div>
+                                    <div id="qmMediaHint" style="font-size: 9px; color: #94a3b8;">Bấm "Hiện Full" để phóng to trên Projector</div>
+                                </div>
+                            </div>
+                            <div class="qm-actions" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 4px;">
+                                <button class="button button-green" id="qmBtnShow" onclick="showCurrentQuestionMedia()" style="font-size: 9px; padding: 3px 2px; height: 20px;">
+                                    👁️ Hiện Full
+                                </button>
+                                <button class="button button-red" id="qmBtnHide" onclick="hideQuestionMedia()" style="font-size: 9px; padding: 3px 2px; height: 20px;">
+                                    🙈 Ẩn
+                                </button>
+                                <button class="button button-blue" onclick="openEditModalForCurrentQuestion()" style="font-size: 9px; padding: 3px 2px; height: 20px;">
+                                    ✏️ Đổi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QUESTION NAVIGATION BUTTONS -->
+                    <div class="q-nav-row" style="display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 4px;">
+                        <button class="button button-gray" onclick="prevQuestion()" style="height: 26px; font-size: 10px;">
+                            <span>⏮</span> Câu trước
+                        </button>
+                        <button class="button button-green" onclick="armCurrentQuestion()" style="height: 26px; font-size: 10px; background: #16a34a; font-weight: bold;">
+                            <span>🔔</span> Mở chuông câu này
+                        </button>
+                        <button class="button button-orange" onclick="nextQuestion()" style="height: 26px; font-size: 10px; background: #ea580c; font-weight: bold;">
+                            Câu sau <span>⏭</span>
+                        </button>
+                    </div>
+
+                    <!-- JUMP DROPDOWN -->
+                    <div class="q-jump-row" style="display: flex; gap: 4px; align-items: center;">
+                        <select class="q-select-dropdown" id="qSelectDropdown" onchange="jumpToQuestion(this.value)" style="flex: 1; height: 24px; background: #0f172a; border: 1px solid #1e293b; border-radius: 4px; color: #fff; font-size: 10px; padding: 0 4px;">
+                            <!-- Options generated dynamically -->
+                        </select>
+                        <button class="button button-gray" style="flex-shrink:0; height: 24px; font-size: 10px;" onclick="randomQuestion()" title="Chọn ngẫu nhiên một câu hỏi">
+                            <span>🎲</span> Ngẫu nhiên
+                        </button>
+                    </div>
+
+                    <!-- EXCEL FILE UPLOAD / DRAG & DROP -->
+                    <div class="excel-dropzone" id="excelDropzone" onclick="document.getElementById('excelFileInput').click()" style="border: 1px dashed #334155; background: #090d14; border-radius: 4px; padding: 6px 8px; text-align: center; cursor: pointer;">
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleExcelUpload(this.files[0])">
+                        <div class="excel-dropzone-text" style="display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 10px; color: #94a3b8;">
+                            <span>📊</span>
+                            <span><strong>Kéo thả hoặc bấm để nhập Excel / CSV</strong> (Không giới hạn số câu)</span>
+                        </div>
                     </div>
                 </div>
             </section>
 
         </div>
 
-        <!-- COLUMN 3: PLAYERS & SYSTEM -->
+        <!-- =========================================================
+             COLUMN 3: 👥 PLAYERS, SFX, PREVIEW & ROOM (MANAGEMENT)
+             ========================================================= -->
         <div class="column">
+
+            <!-- PREVIEW DISPLAY (LIVE PROJECTOR STREAM) -->
+            <section class="card">
+                <div class="card-header">
+                    <div class="card-title">🖥️ PREVIEW PROJECTOR (REAL-TIME)</div>
+                    <a href="Projector.html" target="_blank" class="button button-gray" style="height:20px; padding:0 6px; font-size:10px; text-decoration:none;" title="Mở Màn hình Máy chiếu trong cửa sổ mới">Mở cửa sổ riêng ↗</a>
+                </div>
+
+                <div class="card-body" style="padding: 4px;">
+                    <div style="position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 5px; overflow: hidden; background: #000; border: 1px solid #1e293b; box-shadow: 0 2px 8px rgba(0,0,0,0.5);">
+                        <iframe src="Projector.html?preview=1" style="width: 100%; height: 100%; border: none; pointer-events: none; display: block;" id="projectorPreviewIframe"></iframe>
+                    </div>
+                </div>
+            </section>
 
             <!-- PLAYER CONTROLS (CLEAN +/- SCORE) -->
             <section class="card">
@@ -1063,58 +490,58 @@ html, body {
                     <div class="card-title">👥 NGƯỜI CHƠI &amp; ĐIỂM SỐ</div>
                 </div>
 
-                <div class="card-body">
-                    <div class="player-list">
+                <div class="card-body" style="padding: 6px;">
+                    <div class="player-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;">
 
                         <!-- PLAYER RED -->
-                        <div class="player-card red">
-                            <div class="player-top">
-                                <div class="player-number">1</div>
-                                <input class="player-name-input" id="nameRed" value="PLAYER 1" oninput="updatePlayerName('red')">
+                        <div class="player-card red" style="background: #0f172a; border: 1px solid #1e293b; border-left: 3px solid #ef4444; border-radius: 4px; padding: 3px 5px;">
+                            <div class="player-top" style="display: flex; gap: 4px; align-items: center;">
+                                <div class="player-number" style="width: 16px; height: 16px; background: #dc2626; color: #fff; font-size: 10px; border-radius: 2px; display: flex; align-items: center; justify-content: center;">1</div>
+                                <input class="player-name-input" id="nameRed" value="PLAYER 1" oninput="updatePlayerName('red')" style="height: 20px; font-size: 10px;">
                             </div>
-                            <div class="player-controls">
-                                <button class="score-button" onclick="changeScore('red', -1)">−</button>
-                                <input type="number" class="score-input" id="scoreRed" value="0" onchange="updateScore('red')">
-                                <button class="score-button" onclick="changeScore('red', 1)">+</button>
+                            <div class="player-controls" style="margin-top: 3px; display: grid; grid-template-columns: 22px 1fr 22px; gap: 2px;">
+                                <button class="score-button" onclick="changeScore('red', -1)" style="height: 20px; font-size: 12px;">−</button>
+                                <input type="number" class="score-input" id="scoreRed" value="0" onchange="updateScore('red')" style="height: 20px; font-size: 12px;">
+                                <button class="score-button" onclick="changeScore('red', 1)" style="height: 20px; font-size: 12px;">+</button>
                             </div>
                         </div>
 
                         <!-- PLAYER GREEN -->
-                        <div class="player-card green">
-                            <div class="player-top">
-                                <div class="player-number">2</div>
-                                <input class="player-name-input" id="nameGreen" value="PLAYER 2" oninput="updatePlayerName('green')">
+                        <div class="player-card green" style="background: #0f172a; border: 1px solid #1e293b; border-left: 3px solid #22c55e; border-radius: 4px; padding: 3px 5px;">
+                            <div class="player-top" style="display: flex; gap: 4px; align-items: center;">
+                                <div class="player-number" style="width: 16px; height: 16px; background: #16a34a; color: #fff; font-size: 10px; border-radius: 2px; display: flex; align-items: center; justify-content: center;">2</div>
+                                <input class="player-name-input" id="nameGreen" value="PLAYER 2" oninput="updatePlayerName('green')" style="height: 20px; font-size: 10px;">
                             </div>
-                            <div class="player-controls">
-                                <button class="score-button" onclick="changeScore('green', -1)">−</button>
-                                <input type="number" class="score-input" id="scoreGreen" value="0" onchange="updateScore('green')">
-                                <button class="score-button" onclick="changeScore('green', 1)">+</button>
+                            <div class="player-controls" style="margin-top: 3px; display: grid; grid-template-columns: 22px 1fr 22px; gap: 2px;">
+                                <button class="score-button" onclick="changeScore('green', -1)" style="height: 20px; font-size: 12px;">−</button>
+                                <input type="number" class="score-input" id="scoreGreen" value="0" onchange="updateScore('green')" style="height: 20px; font-size: 12px;">
+                                <button class="score-button" onclick="changeScore('green', 1)" style="height: 20px; font-size: 12px;">+</button>
                             </div>
                         </div>
 
                         <!-- PLAYER WHITE -->
-                        <div class="player-card white">
-                            <div class="player-top">
-                                <div class="player-number">3</div>
-                                <input class="player-name-input" id="nameWhite" value="PLAYER 3" oninput="updatePlayerName('white')">
+                        <div class="player-card white" style="background: #0f172a; border: 1px solid #1e293b; border-left: 3px solid #f8fafc; border-radius: 4px; padding: 3px 5px;">
+                            <div class="player-top" style="display: flex; gap: 4px; align-items: center;">
+                                <div class="player-number" style="width: 16px; height: 16px; background: #f8fafc; color: #0f172a; font-size: 10px; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-weight: 900;">3</div>
+                                <input class="player-name-input" id="nameWhite" value="PLAYER 3" oninput="updatePlayerName('white')" style="height: 20px; font-size: 10px;">
                             </div>
-                            <div class="player-controls">
-                                <button class="score-button" onclick="changeScore('white', -1)">−</button>
-                                <input type="number" class="score-input" id="scoreWhite" value="0" onchange="updateScore('white')">
-                                <button class="score-button" onclick="changeScore('white', 1)">+</button>
+                            <div class="player-controls" style="margin-top: 3px; display: grid; grid-template-columns: 22px 1fr 22px; gap: 2px;">
+                                <button class="score-button" onclick="changeScore('white', -1)" style="height: 20px; font-size: 12px;">−</button>
+                                <input type="number" class="score-input" id="scoreWhite" value="0" onchange="updateScore('white')" style="height: 20px; font-size: 12px;">
+                                <button class="score-button" onclick="changeScore('white', 1)" style="height: 20px; font-size: 12px;">+</button>
                             </div>
                         </div>
 
                         <!-- PLAYER BLUE -->
-                        <div class="player-card blue">
-                            <div class="player-top">
-                                <div class="player-number">4</div>
-                                <input class="player-name-input" id="nameBlue" value="PLAYER 4" oninput="updatePlayerName('blue')">
+                        <div class="player-card blue" style="background: #0f172a; border: 1px solid #1e293b; border-left: 3px solid #3b82f6; border-radius: 4px; padding: 3px 5px;">
+                            <div class="player-top" style="display: flex; gap: 4px; align-items: center;">
+                                <div class="player-number" style="width: 16px; height: 16px; background: #2563eb; color: #fff; font-size: 10px; border-radius: 2px; display: flex; align-items: center; justify-content: center;">4</div>
+                                <input class="player-name-input" id="nameBlue" value="PLAYER 4" oninput="updatePlayerName('blue')" style="height: 20px; font-size: 10px;">
                             </div>
-                            <div class="player-controls">
-                                <button class="score-button" onclick="changeScore('blue', -1)">−</button>
-                                <input type="number" class="score-input" id="scoreBlue" value="0" onchange="updateScore('blue')">
-                                <button class="score-button" onclick="changeScore('blue', 1)">+</button>
+                            <div class="player-controls" style="margin-top: 3px; display: grid; grid-template-columns: 22px 1fr 22px; gap: 2px;">
+                                <button class="score-button" onclick="changeScore('blue', -1)" style="height: 20px; font-size: 12px;">−</button>
+                                <input type="number" class="score-input" id="scoreBlue" value="0" onchange="updateScore('blue')" style="height: 20px; font-size: 12px;">
+                                <button class="score-button" onclick="changeScore('blue', 1)" style="height: 20px; font-size: 12px;">+</button>
                             </div>
                         </div>
 
@@ -1122,17 +549,164 @@ html, body {
                 </div>
             </section>
 
-            <!-- SYSTEM CONTROLS -->
-            <section class="card">
+            <!-- SOUNDBOARD SFX CONTROLLER -->
+            <section class="card" id="soundboardCard">
                 <div class="card-header">
-                    <div class="card-title">⚙️ HỆ THỐNG</div>
+                    <div class="card-title">🎵 BẢNG ĐIỀU KHIỂN SFX</div>
+                    <button class="button button-red" onclick="triggerBroadcastSound('stop')" style="height: 20px; font-size: 9px; padding: 0 6px;">⏹️ Dừng Tất Cả</button>
                 </div>
+                <div class="card-body" style="padding: 6px; gap: 6px;">
+                    <!-- VOLUME CONTROL BAR -->
+                    <div style="background: #0f172a; padding: 6px 8px; border-radius: 5px; border: 1px solid #1e293b;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-size: 10px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 4px;">
+                                <span id="sfxVolIcon" style="font-size: 12px;">🔊</span> ÂM LƯỢNG SFX
+                            </span>
+                            <span id="sfxVolPercent" style="font-size: 10px; font-weight: bold; color: #38bdf8; font-family: monospace; background: #090d14; padding: 1px 5px; border-radius: 3px; border: 1px solid #1e293b;">100%</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <button class="button button-gray" id="btnToggleMuteSfx" onclick="toggleMuteSoundboard()" style="height: 22px; font-size: 9px; padding: 0 5px; flex-shrink: 0;" title="Bật/Tắt tiếng nhanh">🔇 Mute</button>
+                            <input type="range" class="soundboard-volume-slider" id="soundboardVolumeSlider" min="0" max="100" value="100" oninput="onSoundboardVolumeInput(this.value)" onchange="onSoundboardVolumeChange(this.value)" style="flex: 1;" title="Kéo để chỉnh âm lượng SFX / nhạc trên Projector">
+                            <div style="display: flex; gap: 2px; flex-shrink: 0;">
+                                <button class="button button-gray" onclick="setSoundboardVolume(25)" style="height: 20px; font-size: 8px; padding: 0 3px;" title="25%">25%</button>
+                                <button class="button button-gray" onclick="setSoundboardVolume(50)" style="height: 20px; font-size: 8px; padding: 0 3px;" title="50%">50%</button>
+                                <button class="button button-gray" onclick="setSoundboardVolume(100)" style="height: 20px; font-size: 8px; padding: 0 3px;" title="100%">100%</button>
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="card-body">
-                    <div class="board-actions">
-                        <button class="button button-gray" onclick="clearSelection()">BỎ CHỌN Ô</button>
-                        <button class="button button-gray" onclick="resetAllScores()">RESET ĐIỂM</button>
-                        <button class="button button-red" onclick="resetGame()">RESET GAME</button>
+                    <!-- LOCAL CUSTOM SFX -->
+                    <div style="background: #0f172a; padding: 6px 8px; border-radius: 5px; border: 1px solid #1e293b;">
+                        <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #f59f00; display: flex; align-items: center; gap: 4px;">
+                            <span>💻</span> SFX TỰ CHỌN TỪ MÁY
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label class="button button-gray" style="height: 24px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #1e293b; border-color: #334155;">
+                                📁 Chọn file âm thanh từ máy...
+                                <input type="file" id="localSfxFile" accept="audio/*" style="display: none;" onchange="handleLocalSfxSelected(event)">
+                            </label>
+                            <div id="localSfxStatus" style="font-size: 9px; color: #94a3b8; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                Chưa chọn file nào
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px;">
+                                <button class="button button-green" id="btnPlayLocalSfx" onclick="playLocalSfx()" disabled style="height: 22px; font-size: 10px; opacity: 0.5;">▶️ Phát</button>
+                                <button class="button button-red" id="btnStopLocalSfx" onclick="stopLocalSfx()" disabled style="height: 22px; font-size: 10px; opacity: 0.5;">⏹️ Dừng</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SAMPLE SFX BOARD -->
+                    <div style="background: #0f172a; padding: 6px 8px; border-radius: 5px; border: 1px solid #1e293b;">
+                        <!-- 4 Chuông thí sinh -->
+                        <div style="font-size: 9px; color: #94a3b8; font-weight: bold; margin-bottom: 2px;">CHUÔNG THÍ SINH</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-bottom: 4px;">
+                            <button class="button button-red" onclick="triggerBroadcastSound('sfx/red.wav')" style="height: 22px; font-size: 9px; padding: 0 3px;" title="sfx/red.wav">🔔 Chuông Đỏ</button>
+                            <button class="button button-green" onclick="triggerBroadcastSound('sfx/green.wav')" style="height: 22px; font-size: 9px; padding: 0 3px;" title="sfx/green.wav">🔔 Chuông Xanh Lá</button>
+                            <button class="button button-white" onclick="triggerBroadcastSound('sfx/white.wav')" style="height: 22px; font-size: 9px; padding: 0 3px; color: #000;" title="sfx/white.wav">🔔 Chuông Trắng</button>
+                            <button class="button button-blue" onclick="triggerBroadcastSound('sfx/blue.wav')" style="height: 22px; font-size: 9px; padding: 0 3px;" title="sfx/blue.wav">🔔 Chuông Xanh Dương</button>
+                        </div>
+
+                        <!-- Hiệu ứng trong trận -->
+                        <div style="font-size: 9px; color: #94a3b8; font-weight: bold; margin-bottom: 2px;">HIỆU ỨNG TRẬN ĐẤU</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-bottom: 4px;">
+                            <button class="button button-orange" onclick="triggerBroadcastSound('sfx/pqa25-signal.mp3')" style="height: 22px; font-size: 9px; padding: 0 3px;" title="sfx/pqa25-signal.mp3">🔊 Tín hiệu câu hỏi</button>
+                            <button class="button button-orange" onclick="triggerBroadcastSound('sfx/pqa25-time.mp3')" style="height: 22px; font-size: 9px; padding: 0 3px;" title="sfx/pqa25-time.mp3">⏰ Suy nghĩ 5s</button>
+                            <button class="button button-red" onclick="triggerBroadcastSound('sfx/pqa25-wrong.mp3')" style="height: 22px; font-size: 9px; padding: 0 3px;" title="sfx/pqa25-wrong.mp3">❌ Sai / Khóa chuông</button>
+                            <button class="button button-gold" onclick="triggerBroadcastSound('sfx/pqa25-attackchance.mp3')" style="height: 22px; font-size: 9px; padding: 0 3px; color: #000; background: #f59f00;" title="sfx/pqa25-attackchance.mp3">⚡ Attack Chance!</button>
+                        </div>
+                        
+                        <!-- Chung kết & Nhạc nền -->
+                        <div style="font-size: 9px; color: #94a3b8; font-weight: bold; margin-bottom: 2px;">CHUNG KẾT &amp; NHẠC CHỦ ĐỀ</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px;">
+                            <button class="button button-orange" onclick="triggerBroadcastSound('sfx/pqa25-finaltime.mp3')" style="height: 22px; font-size: 9px; padding: 0 3px;" title="sfx/pqa25-finaltime.mp3">⏱️ Final Time 1</button>
+                            <button class="button button-orange" onclick="triggerBroadcastSound('sfx/pqa25-finaltime2.mp3')" style="height: 22px; font-size: 9px; padding: 0 3px;" title="sfx/pqa25-finaltime2.mp3">⏱️ Final Time 2</button>
+                            <button class="button button-red" onclick="triggerBroadcastSound('sfx/pqa25-finalfail.mp3')" style="height: 22px; font-size: 9px; padding: 0 3px;" title="sfx/pqa25-finalfail.mp3">💥 Final Thất bại</button>
+                            <button class="button button-purple" onclick="triggerBroadcastSound('sfx/intro VN.mp3')" style="height: 22px; font-size: 9px; padding: 0 3px; background: #7e22ce;" title="sfx/intro VN.mp3">🎬 Intro VN</button>
+                            <button class="button button-blue" onclick="triggerBroadcastSound('sfx/PQA25-Theme.mp3')" style="grid-column: span 2; height: 22px; font-size: 9px; padding: 0 3px; background: #4338ca;" title="sfx/PQA25-Theme.mp3">🎵 Nhạc Chủ Đề (Theme)</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ROOM CODE & SYSTEM ACTIONS -->
+            <section class="card">
+                <div class="card-header" style="padding: 3px 8px;">
+                    <div class="card-title" style="font-size: 11px;">🔑 MÃ PHÒNG &amp; SAO CHÉP LINK ROLE</div>
+                    <span class="card-badge" id="ctrlActiveRoomBadge" style="font-size: 9px; padding: 1px 5px;">PHÒNG: 123456</span>
+                </div>
+                <div class="card-body" style="padding: 5px; gap: 4px;">
+                    <!-- Room ID & Action buttons -->
+                    <div style="display: flex; gap: 4px; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 3px;">
+                            <span style="font-size: 9px; color: var(--muted);">Mã phòng (6 số):</span>
+                            <input type="text" id="ctrlRoomId" maxlength="6" value="123456" oninput="onRolePassChange()" style="width: 54px; height: 20px; background: #090d14; border: 1px solid #1e293b; border-radius: 3px; color: #f59f00; font-weight: bold; text-align: center; font-size: 10px;">
+                        </div>
+                        <div style="display: flex; gap: 3px;">
+                            <button class="button button-gray" style="height:20px; font-size:9px; padding:0 4px;" onclick="generateRandomRoomInfo()">🎲 Random</button>
+                            <button class="button button-gold" style="height:20px; font-size:9px; padding:0 5px; color: black; background:#f59f00;" onclick="activateRoomFromController()">💾 KÍCH HOẠT</button>
+                        </div>
+                    </div>
+
+                    <!-- Domain Display / Custom Domain Option -->
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:9px; color:var(--muted); background:#090d14; padding:2px 5px; border-radius:3px; border:1px solid #1e293b;">
+                        <span style="white-space:nowrap; display:flex; align-items:center; gap:3px;">🌐 <span style="color:#94a3b8;">Domain:</span></span>
+                        <input type="text" id="ctrlCustomDomain" placeholder="Tự nhận domain hiện tại..." title="Mặc định lấy domain trang web đang chạy (Render, Vercel, Localhost...)" oninput="onRolePassChange()" style="flex:1; height:18px; background:#0f172a; border:1px solid #1e293b; border-radius:2px; color:#38bdf8; font-size:9px; padding:0 4px;">
+                    </div>
+
+                    <!-- 5 Role Click-to-Copy Buttons & Auth PIN Inputs -->
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin-top: 1px;">
+                        <!-- Host -->
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <button type="button" class="button button-purple" onclick="copyRoleLink('host')" style="height:22px; font-size:9px; padding:0 1px; background:#6366f1; border-color:#818cf8; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:2px;" title="Nhấp để sao chép link Host (MC) kèm mã auth">
+                                <span>🎤 Host 📋</span>
+                            </button>
+                            <input type="text" id="ctrlPassHost" maxlength="4" value="1234" title="Mã PIN Host" onchange="onRolePassChange()" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
+                        </div>
+
+                        <!-- Player 1 (Red) -->
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <button type="button" class="button button-red" onclick="copyRoleLink('p1')" style="height:22px; font-size:9px; padding:0 1px; background:#dc2626; border-color:#ef4444; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:2px;" title="Nhấp để sao chép link Player 1 (Đỏ) kèm mã auth">
+                                <span>🔴 P1 📋</span>
+                            </button>
+                            <input type="text" id="ctrlPassRed" maxlength="4" value="1111" title="Mã PIN Player 1 (Đỏ)" onchange="onRolePassChange()" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
+                        </div>
+
+                        <!-- Player 2 (Green) -->
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <button type="button" class="button button-green" onclick="copyRoleLink('p2')" style="height:22px; font-size:9px; padding:0 1px; background:#16a34a; border-color:#22c55e; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:2px;" title="Nhấp để sao chép link Player 2 (Xanh Lá) kèm mã auth">
+                                <span>🟢 P2 📋</span>
+                            </button>
+                            <input type="text" id="ctrlPassGreen" maxlength="4" value="2222" title="Mã PIN Player 2 (Xanh Lá)" onchange="onRolePassChange()" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
+                        </div>
+
+                        <!-- Player 3 (White) -->
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <button type="button" class="button button-white" onclick="copyRoleLink('p3')" style="height:22px; font-size:9px; padding:0 1px; background:#f8fafc; color:#0f172a; border-color:#cbd5e1; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:2px;" title="Nhấp để sao chép link Player 3 (Trắng) kèm mã auth">
+                                <span>⚪ P3 📋</span>
+                            </button>
+                            <input type="text" id="ctrlPassWhite" maxlength="4" value="3333" title="Mã PIN Player 3 (Trắng)" onchange="onRolePassChange()" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
+                        </div>
+
+                        <!-- Player 4 (Blue) -->
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <button type="button" class="button button-blue" onclick="copyRoleLink('p4')" style="height:22px; font-size:9px; padding:0 1px; background:#2563eb; border-color:#3b82f6; font-weight:900; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:2px;" title="Nhấp để sao chép link Player 4 (Xanh Dương) kèm mã auth">
+                                <span>🔵 P4 📋</span>
+                            </button>
+                            <input type="text" id="ctrlPassBlue" maxlength="4" value="4444" title="Mã PIN Player 4 (Xanh Dương)" onchange="onRolePassChange()" style="height:18px; background:#090d14; border:1px solid #1e293b; border-radius:2px; color:#fff; text-align:center; font-size:9px; font-weight:bold;">
+                        </div>
+                    </div>
+
+                    <!-- Copy All / Copy Projector Actions -->
+                    <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:3px; margin-top: 1px;">
+                        <button class="button button-purple" style="height:22px; font-size:9px; padding:0 4px; background:#475569;" onclick="copyRoleLink('projector')" title="Sao chép link máy chiếu Projector">🖥️ Link Projector</button>
+                        <button class="button button-gold" style="height:22px; font-size:9px; padding:0 4px; color:#000; background:#f59f00;" onclick="copyAllRoleLinks()" title="Sao chép toàn bộ danh sách link Host, 4 Player và Projector">📋 Sao Chép Tất Cả Link</button>
+                    </div>
+
+                    <!-- SYSTEM RESETS -->
+                    <div class="board-actions" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 2px;">
+                        <button class="button button-gray" onclick="clearSelection()" style="height: 22px; font-size: 9px;">BỎ CHỌN Ô</button>
+                        <button class="button button-gray" onclick="resetAllScores()" style="height: 22px; font-size: 9px;">RESET ĐIỂM</button>
+                        <button class="button button-red" onclick="resetGame()" style="height: 22px; font-size: 9px; background: #dc2626;">RESET GAME</button>
                     </div>
                 </div>
             </section>
@@ -1141,1103 +715,244 @@ html, body {
 
     </main>
 
+    <!-- DATABASE TAB VIEW (FULL SCREEN) -->
+    <div class="database-view" id="questionsDatabaseView" style="display: none;">
+        <!-- DB HEADER -->
+        <div class="db-header">
+            <div class="db-title-row">
+                <div class="db-title">
+                    <span>📚</span> NGÂN HÀNG &amp; QUẢN LÝ CÂU HỎI
+                </div>
+                <div class="db-stats-tags">
+                    <span class="db-stat-tag">Tổng số: <strong id="dbTotalCount">27</strong></span>
+                    <span class="db-stat-tag">📝 Văn bản: <strong id="dbTextCount">24</strong></span>
+                    <span class="db-stat-tag">🖼️ Hình ảnh: <strong id="dbImageCount">2</strong></span>
+                    <span class="db-stat-tag">🎬 Video: <strong id="dbVideoCount">1</strong></span>
+                    <span class="db-stat-tag">🎞️ Chuỗi ảnh: <strong id="dbSlideshowCount">0</strong></span>
+                </div>
+            </div>
+            <div class="db-actions-row">
+                <button class="button button-blue" onclick="openAddQuestionModal()">
+                    <span>➕</span> Thêm câu hỏi
+                </button>
+                <button class="button button-green" onclick="document.getElementById('excelFileInput').click()">
+                    <span>📊</span> Nhập Excel / CSV
+                </button>
+                <button class="button button-orange" onclick="exportQuestionsToExcel()">
+                    <span>💾</span> Xuất Excel
+                </button>
+                <button class="button button-gray" onclick="exportQuestionsJSON()">
+                    <span>💾</span> Xuất JSON
+                </button>
+                <button class="button button-gray" onclick="document.getElementById('jsonFileInput').click()">
+                    <span>📥</span> Nhập JSON
+                </button>
+                <input type="file" id="jsonFileInput" accept=".json" style="display:none" onchange="importQuestionsJSON(this.files[0])">
+                <button class="button button-gray" onclick="resetToSampleQuestions()">
+                    <span>🔄</span> Mẫu 27 câu
+                </button>
+                <button class="button button-red" onclick="clearAllQuestions()">
+                    <span>🗑️</span> Xóa tất cả
+                </button>
+            </div>
+        </div>
+
+        <!-- DB SEARCH & FILTER TOOLBAR -->
+        <div class="db-toolbar">
+            <div class="db-search-box">
+                <span style="font-size: 13px;">🔍</span>
+                <input type="text" id="dbSearchInput" class="db-search-input" placeholder="Tìm kiếm nội dung câu hỏi, đáp án, số thứ tự..." oninput="handleDbSearch(this.value)">
+            </div>
+            <div class="db-filter-group">
+                <button class="db-filter-btn active" data-filter="all" onclick="filterDatabase('all')">Tất cả (<span id="filterAllCount">27</span>)</button>
+                <button class="db-filter-btn" data-filter="text" onclick="filterDatabase('text')">📝 Văn bản (<span id="filterTextCount">24</span>)</button>
+                <button class="db-filter-btn" data-filter="image" onclick="filterDatabase('image')">🖼️ Hình ảnh (<span id="filterImageCount">2</span>)</button>
+                <button class="db-filter-btn" data-filter="video" onclick="filterDatabase('video')">🎬 Video (<span id="filterVideoCount">1</span>)</button>
+                <button class="db-filter-btn" data-filter="slideshow" onclick="filterDatabase('slideshow')">🎞️ Chuỗi ảnh (<span id="filterSlideshowCount">0</span>)</button>
+            </div>
+        </div>
+
+        <!-- DB TABLE SCROLL CONTAINER -->
+        <div class="db-table-scroll">
+            <table class="db-table">
+                <thead>
+                    <tr>
+                        <th style="width: 55px; text-align: center;">STT</th>
+                        <th style="width: 105px; text-align: center;">ĐỊNH DẠNG</th>
+                        <th style="min-width: 280px;">NỘI DUNG CÂU HỎI &amp; FILE MEDIA</th>
+                        <th style="min-width: 140px;">ĐÁP ÁN</th>
+                        <th style="width: 155px; text-align: center;">CHIẾU FULL PROJECTOR</th>
+                        <th style="width: 135px; text-align: center;">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody id="dbTableBody">
+                    <!-- Dynamic rows rendered by renderDatabaseTable() -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
 
-<script>
-
-/* =====================================================
-   SYNTHESIZER SOUND ENGINE (WEB AUDIO API)
-===================================================== */
-function getAudioCtx() {
-    if (!window.globalAudioCtx) {
-        window.globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (window.globalAudioCtx.state === 'suspended') {
-        window.globalAudioCtx.resume().catch(() => {});
-    }
-    return window.globalAudioCtx;
-}
-
-function playSound(type) {
-    try {
-        const actx = getAudioCtx();
-        if (!actx) return;
-        const now = actx.currentTime;
-
-        if (type === 'buzzer') {
-            const osc = actx.createOscillator();
-            const gain = actx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(880, now);
-            osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
-            gain.gain.setValueAtTime(0.35, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-            osc.connect(gain);
-            gain.connect(actx.destination);
-            osc.start(now);
-            osc.stop(now + 0.4);
-        } else if (type === 'correct') {
-            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
-                const osc = actx.createOscillator();
-                const gain = actx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.2, now + i * 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
-                osc.connect(gain);
-                gain.connect(actx.destination);
-                osc.start(now + i * 0.08);
-                osc.stop(now + i * 0.08 + 0.35);
-            });
-        } else if (type === 'wrong') {
-            [180, 140].forEach(freq => {
-                const osc = actx.createOscillator();
-                const gain = actx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.25, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
-                osc.connect(gain);
-                gain.connect(actx.destination);
-                osc.start(now);
-                osc.stop(now + 0.45);
-            });
-        } else if (type === 'arm') {
-            const osc = actx.createOscillator();
-            const gain = actx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, now);
-            osc.frequency.setValueAtTime(880, now + 0.08);
-            gain.gain.setValueAtTime(0.18, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            osc.connect(gain);
-            gain.connect(actx.destination);
-            osc.start(now);
-            osc.stop(now + 0.25);
-        }
-    } catch (err) {}
-}
-
-
-/* =====================================================
-   DEFAULT QUESTION BANK (SEEDED FROM USER EXCEL)
-===================================================== */
-const DEFAULT_QUESTIONS = [
-    { stt: 1, question: "Trong tác phẩm Lão Hạc của Nam Cao, Lão Hạc nuôi con vật gì?", answer: "Con chó" },
-    { stt: 2, question: "Quần thể chùa Tam Chúc thuộc tỉnh nào của Việt Nam?", answer: "Hà Nam" },
-    { stt: 3, question: "Khi bị chảy máu cam, máu có màu gì?", answer: "Màu đỏ" },
-    { stt: 4, question: "Cá mập sinh sản bằng cách đẻ trứng hay đẻ con?", answer: "Đẻ con" },
-    { stt: 5, question: "Con khỉ đầu chó hay con chó đầu khỉ có thật?", answer: "Khỉ đầu chó" },
-    { stt: 6, question: "Cầu Mỹ Thuận bắc qua sông Tiền, nối liền hai tỉnh nào?", answer: "Tiền Giang – Vĩnh Long" },
-    { stt: 7, question: "Biển số xe mang ký hiệu 60 hiện nay thuộc tỉnh nào?", answer: "Đồng Nai" },
-    { stt: 8, question: "Trong truyện cổ tích Sọ Dừa, Sọ Dừa có bao nhiêu anh em?", answer: "Không có anh em" },
-    { stt: 9, question: "Nhân vật chính trong tác phẩm Tắt đèn của Ngô Tất Tố là ai?", answer: "Chị Dậu" },
-    { stt: 10, question: "Trong hệ thập phân của toán học, 30 + 70 – 50 bằng bao nhiêu?", answer: "50" },
-    { stt: 11, question: "Cột cờ Lũng Cú thuộc tỉnh nào của Việt Nam?", answer: "Hà Giang" },
-    { stt: 12, question: "Việt Nam đã từng đăng cai tổ chức SEA Games mấy lần?", answer: "2 lần" },
-    { stt: 13, question: "Nghề mộc sử dụng nguyên liệu chính là gì?", answer: "Gỗ" },
-    { stt: 14, question: "“Anh Hai là người thích nêm mắm dặm muối nhất” – anh Hai làm nghề gì?", answer: "Đầu bếp" },
-    { stt: 15, question: "Trong tranh Đông Hồ Em bé ôm gà, em bé trong tranh là bé trai hay bé gái?", answer: "Bé trai" },
-    { stt: 16, question: "Tên gọi chính thức của Thái Lan là gì?", answer: "Vương quốc Thái Lan" },
-    { stt: 17, question: "Hoàn chỉnh thành ngữ: “Án binh bất …”", answer: "Động" },
-    { stt: 18, question: "Trong truyện Ăn khế trả vàng, loài chim nào xuất hiện?", answer: "Chim phượng hoàng" },
-    { stt: 19, question: "Quốc kỳ nước nào có hình lá phong đỏ?", answer: "Canada" },
-    { stt: 20, question: "Sân vận động Lạch Tray thuộc thành phố nào?", answer: "Hải Phòng" },
-    { stt: 21, question: "Con sông dài nhất châu Á là sông nào?", answer: "Trường Giang" },
-    { stt: 22, question: "Vân tay của cặp sinh đôi có hoàn toàn giống nhau không?", answer: "Không" },
-    { stt: 23, question: "Trong các loài: chim cánh cụt, gấu hải cẩu, cá – loài nào đẻ trứng?", answer: "Chim cánh cụt" },
-    { stt: 24, question: "Kim la bàn luôn chỉ về hai hướng nào?", answer: "Bắc – Nam" },
-    { stt: 25, question: "Tắm biển tại nơi có hai dòng hải lưu nóng – lạnh dễ gây hiện tượng gì?", answer: "Chuột rút" },
-    { stt: 26, question: "Bánh xèo truyền thống làm từ bột gạo hay bột bắp?", answer: "Bột gạo" },
-    { stt: 27, question: "Cá Dory trong phim Đi tìm Nemo mắc bệnh gì?", answer: "Mất trí nhớ ngắn hạn" }
-];
-
-let questionsList = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
-let currentQuestionIndex = 0;
-
-// Load questions from localStorage if saved
-try {
-    const savedQ = localStorage.getItem("attack25_questions");
-    if (savedQ) {
-        const parsed = JSON.parse(savedQ);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-            questionsList = parsed;
-        }
-    }
-} catch (e) {}
-
-
-/* =====================================================
-   GAME STATE
-===================================================== */
-const defaultState = {
-    selectedPanel: null,
-    panels: Array.from({ length: 25 }, (_, index) => ({
-        number: index + 1,
-        used: false,
-        color: null
-    })),
-    players: {
-        red: { name: "PLAYER 1", score: 0 },
-        green: { name: "PLAYER 2", score: 0 },
-        white: { name: "PLAYER 3", score: 0 },
-        blue: { name: "PLAYER 4", score: 0 }
-    },
-    buzzer: {
-        status: 'locked',
-        winner: null,
-        buzzTime: null,
-        pressOrder: [],
-        lockedPlayers: []
-    }
-};
-
-function ensureValidPanels(state) {
-    if (!state) return;
-    if (!state.panels || !Array.isArray(state.panels) || state.panels.length !== 25) {
-        state.panels = Array.from({ length: 25 }, (_, index) => ({
-            number: index + 1,
-            used: false,
-            color: null
-        }));
-    } else {
-        state.panels.forEach((p, idx) => {
-            if (!p || typeof p !== 'object') {
-                state.panels[idx] = { number: idx + 1, used: false, color: null };
-            } else {
-                p.number = parseInt(p.number, 10) || (idx + 1);
-            }
-        });
-    }
-}
-
-let gameState = JSON.parse(JSON.stringify(defaultState));
-
-// Restore state from localStorage
-try {
-    const saved = localStorage.getItem("attack25_gamestate");
-    if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.players && parsed.panels) {
-            gameState = Object.assign(defaultState, parsed);
-        }
-    }
-} catch (e) {}
-
-ensureValidPanels(gameState);
-
-
-/* =====================================================
-   BROADCAST & REAL-TIME SYNC
-===================================================== */
-function broadcastState(action = "update", soundEvent = null) {
-    ensureValidPanels(gameState);
-    if (window.Attack25Sync) {
-        Attack25Sync.broadcastState(gameState, action, soundEvent);
-    }
-}
-
-function broadcastQuestions() {
-    if (window.Attack25Sync) {
-        Attack25Sync.broadcastQuestions(questionsList);
-    }
-}
-
-if (window.Attack25Sync) {
-    Attack25Sync.onStateChange((state) => {
-        if (state) {
-            ensureValidPanels(state);
-            gameState = state;
-            renderAll();
-        }
-    });
-
-    Attack25Sync.onQuestionsChange((questions) => {
-        if (questions && questions.length > 0) {
-            questionsList = questions;
-            renderQuestion();
-        }
-    });
-
-    Attack25Sync.onConnectionChange((conn) => {
-        const dot = document.getElementById("connectionDot");
-        const text = document.getElementById("connectionText");
-        const isOnline = typeof conn === 'object' ? conn.connected : !!conn;
-        const mode = typeof conn === 'object' ? conn.mode : 'websocket';
-
-        if (dot) dot.style.background = isOnline ? '#2fb344' : '#e03131';
-        if (text) {
-            if (isOnline) {
-                text.textContent = 'WS REAL-TIME';
-                text.title = `WebSocket kết nối tại: ${conn.url || 'localhost:3000'}`;
-            } else {
-                text.textContent = 'ĐANG KẾT NỐI WS...';
-                text.title = 'Nhấp để cấu hình địa chỉ máy chủ WebSocket';
-            }
-        }
-    });
-
-    const connBox = document.getElementById("connectionBox");
-    if (connBox) {
-        connBox.style.cursor = 'pointer';
-        connBox.onclick = () => {
-            const current = localStorage.getItem('attack25_ws_server_host') || window.location.host || 'localhost:3000';
-            const server = prompt("Nhập địa chỉ máy chủ WebSocket (IP:PORT ví dụ: 192.168.1.10:3000 hoặc localhost:3000):", current);
-            if (server !== null) {
-                Attack25Sync.setServerHost(server.trim());
-                showToast(`Đang kết nối lại tới máy chủ: ${server.trim() || 'Mặc định'}`);
-            }
-        };
-    }
-}
-
-/* =====================================================
-   AUDIO ENGINE (WAV AUDIO FILES + SYNTHESIZER FALLBACK)
-===================================================== */
-let audioCtx = null;
-const colorWavMap = {
-    'red': 'red.wav',
-    'green': 'green.wav',
-    'white': 'white.wav',
-    'blue': 'blue.wav',
-    'buzzer_red': 'red.wav',
-    'buzzer_green': 'green.wav',
-    'buzzer_white': 'white.wav',
-    'buzzer_blue': 'blue.wav',
-    'buzz_red': 'red.wav',
-    'buzz_green': 'green.wav',
-    'buzz_white': 'white.wav',
-    'buzz_blue': 'blue.wav'
-};
-
-function getAudioContext() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-    return audioCtx;
-}
-
-function playSound(type) {
-    const wavFile = colorWavMap[type];
-    if (wavFile) {
-        try {
-            const audio = new Audio(wavFile);
-            audio.volume = 1.0;
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => playSynthTone(type));
-            }
-            return;
-        } catch (e) {
-            playSynthTone(type);
-            return;
-        }
-    }
-    playSynthTone(type);
-}
-
-function playSynthTone(type) {
-    try {
-        const ctx = getAudioContext();
-        const now = ctx.currentTime;
-
-        if (type === 'buzzer' || type === 'buzzer_red' || type === 'red') {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(660, now);
-            osc.frequency.exponentialRampToValueAtTime(330, now + 0.35);
-            gain.gain.setValueAtTime(0.35, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now);
-            osc.stop(now + 0.4);
-        } else if (type === 'buzzer_green' || type === 'green') {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(587.33, now);
-            osc.frequency.setValueAtTime(880, now + 0.1);
-            gain.gain.setValueAtTime(0.35, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now);
-            osc.stop(now + 0.4);
-        } else if (type === 'buzzer_white' || type === 'white') {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(1046.50, now);
-            osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.35);
-            gain.gain.setValueAtTime(0.4, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now);
-            osc.stop(now + 0.4);
-        } else if (type === 'buzzer_blue' || type === 'blue') {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(523.25, now);
-            osc.frequency.setValueAtTime(1046.50, now + 0.1);
-            gain.gain.setValueAtTime(0.35, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now);
-            osc.stop(now + 0.4);
-        } else if (type === 'correct') {
-            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.2, now + i * 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now + i * 0.08);
-                osc.stop(now + i * 0.08 + 0.35);
-            });
-        } else if (type === 'wrong') {
-            [180, 140].forEach(freq => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.25, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.45);
-            });
-        } else if (type === 'arm') {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, now);
-            osc.frequency.setValueAtTime(880, now + 0.08);
-            gain.gain.setValueAtTime(0.18, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now);
-            osc.stop(now + 0.25);
-        }
-    } catch (e) {}
-}
-
-
-/* =====================================================
-   QUESTION MANAGEMENT & TELEPROMPTER LOGIC
-===================================================== */
-function renderQuestion() {
-    if (!questionsList || questionsList.length === 0) {
-        document.getElementById('qNumberTag').textContent = 'CHƯA CÓ CÂU HỎI';
-        document.getElementById('qCountTag').textContent = '0 / 0 câu';
-        document.getElementById('qTextBox').textContent = 'Hãy nhập file Excel hoặc dán câu hỏi vào hệ thống.';
-        document.getElementById('qAnswerVal').textContent = '-';
-        document.getElementById('qBadgeStatus').textContent = '0 CÂU';
-        return;
-    }
-
-    if (currentQuestionIndex < 0) currentQuestionIndex = 0;
-    if (currentQuestionIndex >= questionsList.length) currentQuestionIndex = questionsList.length - 1;
-
-    const q = questionsList[currentQuestionIndex];
-    const stt = q.stt || (currentQuestionIndex + 1);
-
-    document.getElementById('qNumberTag').textContent = `CÂU HỎI ${stt}`;
-    document.getElementById('qCountTag').textContent = `${currentQuestionIndex + 1} / ${questionsList.length} câu`;
-    document.getElementById('qTextBox').textContent = q.question || 'Nội dung câu hỏi rỗng';
-    document.getElementById('qAnswerVal').textContent = q.answer || 'Chưa có đáp án';
-    document.getElementById('qBadgeStatus').textContent = `CÂU ${stt}`;
-
-    // Update Dropdown
-    const select = document.getElementById('qSelectDropdown');
-    select.innerHTML = '';
-    questionsList.forEach((item, idx) => {
-        const opt = document.createElement('option');
-        opt.value = idx;
-        const itemStt = item.stt || (idx + 1);
-        const shortQ = item.question ? item.question.substring(0, 45) + (item.question.length > 45 ? '...' : '') : '';
-        opt.textContent = `Câu ${itemStt}: ${shortQ}`;
-        opt.selected = idx === currentQuestionIndex;
-        select.appendChild(opt);
-    });
-}
-
-function prevQuestion() {
-    if (currentQuestionIndex > 0) {
-        currentQuestionIndex--;
-        renderQuestion();
-        resetBuzzer();
-    } else {
-        showToast("Đang ở câu hỏi đầu tiên.");
-    }
-}
-
-function nextQuestion() {
-    if (currentQuestionIndex < questionsList.length - 1) {
-        currentQuestionIndex++;
-        renderQuestion();
-        resetBuzzer();
-    } else {
-        showToast("Đã đến câu hỏi cuối cùng.");
-    }
-}
-
-function jumpToQuestion(idx) {
-    currentQuestionIndex = parseInt(idx, 10);
-    renderQuestion();
-    resetBuzzer();
-}
-
-function randomQuestion() {
-    if (questionsList.length <= 1) return;
-    let nextIdx = Math.floor(Math.random() * questionsList.length);
-    if (nextIdx === currentQuestionIndex) {
-        nextIdx = (nextIdx + 1) % questionsList.length;
-    }
-    currentQuestionIndex = nextIdx;
-    renderQuestion();
-    resetBuzzer();
-    showToast(`Đã chọn ngẫu nhiên câu số ${questionsList[currentQuestionIndex].stt || (currentQuestionIndex + 1)}`);
-}
-
-function armCurrentQuestion() {
-    armBuzzer();
-}
-
-
-/* =====================================================
-   EXCEL IMPORT LOGIC (SHEETJS & CSV)
-===================================================== */
-function handleExcelUpload(file) {
-    if (!file) return;
-
-    const reader = new FileReader();
-    const isBinary = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
-
-    reader.onload = function(e) {
-        try {
-            let data = e.target.result;
-            let workbook;
-
-            if (typeof XLSX !== 'undefined') {
-                if (isBinary) {
-                    workbook = XLSX.read(data, { type: 'binary' });
-                } else {
-                    workbook = XLSX.read(data, { type: 'string' });
-                }
-
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-                parseRawRows(rawRows);
-            } else {
-                // Fallback CSV parser
-                parseCSVText(data);
-            }
-        } catch (err) {
-            console.error("Excel parse error:", err);
-            showToast("Lỗi khi đọc file Excel: " + err.message);
-        }
-    };
-
-    if (isBinary) {
-        reader.readAsBinaryString(file);
-    } else {
-        reader.readAsText(file, "UTF-8");
-    }
-}
-
-function parseRawRows(rawRows) {
-    if (!rawRows || rawRows.length < 1) {
-        showToast("File Excel rỗng hoặc không đúng định dạng.");
-        return;
-    }
-
-    const parsedQuestions = [];
-    let startRow = 0;
-
-    // Check if first row is header
-    const firstRowStr = JSON.stringify(rawRows[0]).toLowerCase();
-    if (firstRowStr.includes('stt') || firstRowStr.includes('câu hỏi') || firstRowStr.includes('đáp án') || firstRowStr.includes('question')) {
-        startRow = 1;
-    }
-
-    for (let i = startRow; i < rawRows.length; i++) {
-        const row = rawRows[i];
-        if (!row || row.length === 0) continue;
-
-        // Try to identify STT, Question, Answer columns
-        let stt = i + 1;
-        let question = '';
-        let answer = '';
-
-        if (row.length === 1) {
-            question = String(row[0]).trim();
-        } else if (row.length === 2) {
-            question = String(row[0]).trim();
-            answer = String(row[1]).trim();
-        } else {
-            // Column 0 is STT, Column 1 is Question, Column 2 is Answer
-            stt = parseInt(row[0], 10) || (i + 1);
-            question = String(row[1] || '').trim();
-            answer = String(row[2] || '').trim();
-        }
-
-        if (question && question.length > 0 && !question.toLowerCase().startsWith('câu hỏi (đã')) {
-            parsedQuestions.push({ stt, question, answer });
-        }
-    }
-
-    if (parsedQuestions.length > 0) {
-        questionsList = parsedQuestions;
-        currentQuestionIndex = 0;
-        try {
-            localStorage.setItem("attack25_questions", JSON.stringify(questionsList));
-        } catch (e) {}
-
-        renderQuestion();
-        broadcastQuestions();
-        showToast(`✅ Đã nhập thành công ${parsedQuestions.length} câu hỏi từ Excel!`);
-    } else {
-        showToast("Không tìm thấy câu hỏi hợp lệ trong file Excel.");
-    }
-}
-
-function parseCSVText(csvText) {
-    const lines = csvText.split(/\r?\n/);
-    const rawRows = lines.map(line => line.split(','));
-    parseRawRows(rawRows);
-}
-
-// Drag and drop setup
-const dropzone = document.getElementById('excelDropzone');
-['dragenter', 'dragover'].forEach(eventName => {
-    dropzone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropzone.classList.add('dragover');
-    }, false);
-});
-['dragleave', 'drop'].forEach(eventName => {
-    dropzone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropzone.classList.remove('dragover');
-    }, false);
-});
-dropzone.addEventListener('drop', (e) => {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    if (files.length > 0) {
-        handleExcelUpload(files[0]);
-    }
-}, false);
-
-
-/* =====================================================
-   BUZZER SYSTEM LOGIC
-===================================================== */
-let buzzerArmTime = null;
-
-function armBuzzer() {
-    gameState.buzzer.status = 'armed';
-    gameState.buzzer.winner = null;
-    gameState.buzzer.buzzTime = null;
-    gameState.buzzer.pressOrder = [];
-    buzzerArmTime = performance.now();
-
-    playSound('arm');
-    renderBuzzerUI();
-    broadcastState('buzzer_armed', 'arm');
-    showToast('🔔 ĐÃ MỞ CHUÔNG - Thí sinh có thể bấm chuông!');
-}
-
-function lockBuzzer() {
-    gameState.buzzer.status = 'locked';
-    renderBuzzerUI();
-    broadcastState('buzzer_locked');
-    showToast('🔒 ĐÃ KHÓA CHUÔNG.');
-}
-
-function resetBuzzer() {
-    gameState.buzzer.status = 'locked';
-    gameState.buzzer.winner = null;
-    gameState.buzzer.buzzTime = null;
-    gameState.buzzer.pressOrder = [];
-    gameState.buzzer.lockedPlayers = [];
-    renderBuzzerUI();
-    broadcastState('buzzer_reset');
-    showToast('🔄 ĐÃ RESET CHUÔNG.');
-}
-
-function playerPressBuzzer(color) {
-    if (gameState.buzzer.status !== 'armed') {
-        if (gameState.buzzer.status === 'locked') {
-            showToast(`⚠️ Chuông đang khóa! Chưa thể bấm.`);
-        }
-        return;
-    }
-
-    if (gameState.buzzer.lockedPlayers.includes(color)) {
-        showToast(`⚠️ ${gameState.players[color].name} đang bị phạt khóa chuông!`);
-        return;
-    }
-
-    const elapsed = buzzerArmTime ? ((performance.now() - buzzerArmTime) / 1000).toFixed(3) : 0;
-
-    if (!gameState.buzzer.winner) {
-        gameState.buzzer.status = 'buzzed';
-        gameState.buzzer.winner = color;
-        gameState.buzzer.buzzTime = elapsed;
-        gameState.buzzer.pressOrder = [{ player: color, time: elapsed }];
-
-        playSound('buzzer');
-        renderBuzzerUI();
-        broadcastState('buzzer_hit', 'buzzer');
-        showToast(`🔔 ${gameState.players[color].name} GIÀNH QUYỀN TRẢ LỜI (${elapsed}s)!`);
-    } else {
-        if (!gameState.buzzer.pressOrder.some(p => p.player === color)) {
-            gameState.buzzer.pressOrder.push({ player: color, time: elapsed });
-            renderBuzzerUI();
-            broadcastState('buzzer_queue');
-        }
-    }
-}
-
-function judgeCorrect() {
-    if (!gameState.buzzer.winner) {
-        showToast('Chưa có ai bấm chuông để chấm đúng!');
-        return;
-    }
-
-    const winner = gameState.buzzer.winner;
-    changeScore(winner, 1);
-    playSound('correct');
-    showToast(`✅ CHÍNH XÁC! +1 Điểm cho ${gameState.players[winner].name}`);
-
-    gameState.buzzer.status = 'locked';
-    renderBuzzerUI();
-    broadcastState('judge_correct', 'correct');
-}
-
-function judgeWrong() {
-    if (!gameState.buzzer.winner) {
-        showToast('Chưa có ai bấm chuông để chấm sai!');
-        return;
-    }
-
-    const wrongPlayer = gameState.buzzer.winner;
-    playSound('wrong');
-    showToast(`❌ SAI RỒI! Khóa chuông ${gameState.players[wrongPlayer].name}`);
-
-    if (!gameState.buzzer.lockedPlayers.includes(wrongPlayer)) {
-        gameState.buzzer.lockedPlayers.push(wrongPlayer);
-    }
-
-    gameState.buzzer.winner = null;
-    gameState.buzzer.buzzTime = null;
-
-    if (gameState.buzzer.lockedPlayers.length >= 4) {
-        gameState.buzzer.status = 'locked';
-        showToast('Tất cả người chơi đều đã trả lời sai!');
-    } else {
-        gameState.buzzer.status = 'armed';
-        buzzerArmTime = performance.now();
-    }
-
-    renderBuzzerUI();
-    broadcastState('judge_wrong', 'wrong');
-}
-
-function renderBuzzerUI() {
-    const b = gameState.buzzer;
-    const banner = document.getElementById('buzzerBanner');
-    const stateText = document.getElementById('buzzerStateText');
-    const badge = document.getElementById('buzzerBadge');
-    const winnerDisplay = document.getElementById('buzzerWinnerDisplay');
-
-    banner.className = 'buzzer-status-banner ' + b.status;
-
-    if (b.status === 'armed') {
-        badge.textContent = 'ĐANG MỞ CHUÔNG';
-        badge.style.color = '#2fb344';
-        badge.style.borderColor = '#2fb344';
-        stateText.textContent = 'SẴN SÀNG BẤM CHUÔNG';
-        winnerDisplay.innerHTML = '<span style="color:#2fb344;">Đang chờ thí sinh...</span>';
-    } else if (b.status === 'buzzed' && b.winner) {
-        const pName = gameState.players[b.winner].name;
-        badge.textContent = 'ĐÃ BẤM CHUÔNG';
-        badge.style.color = '#f59f00';
-        badge.style.borderColor = '#f59f00';
-        stateText.textContent = pName.toUpperCase();
-        winnerDisplay.innerHTML = `<span style="color:#ffd43b; font-size:13px;">#1: ${pName} (+${b.buzzTime}s)</span>`;
-    } else {
-        badge.textContent = 'ĐÃ KHÓA';
-        badge.style.color = '#e03131';
-        badge.style.borderColor = '#e03131';
-        stateText.textContent = 'ĐÃ KHÓA CHUÔNG';
-        winnerDisplay.textContent = 'Nhấn Mở Chuông để bắt đầu';
-    }
-
-    // Player buzzer buttons
-    ['red', 'green', 'white', 'blue'].forEach(color => {
-        const btn = document.getElementById('buzzBtn' + capitalize(color));
-        const nameEl = document.getElementById('buzzName' + capitalize(color));
-        nameEl.textContent = gameState.players[color].name;
-
-        btn.classList.remove('buzzer-winner', 'buzzer-locked-player');
-
-        const oldTag = btn.querySelector('.buzzer-rank-tag');
-        if (oldTag) oldTag.remove();
-
-        if (b.winner === color) {
-            btn.classList.add('buzzer-winner');
-            const tag = document.createElement('span');
-            tag.className = 'buzzer-rank-tag';
-            tag.textContent = '#1';
-            btn.appendChild(tag);
-        } else {
-            const rankIdx = b.pressOrder.findIndex(p => p.player === color);
-            if (rankIdx > 0) {
-                const tag = document.createElement('span');
-                tag.className = 'buzzer-rank-tag';
-                tag.textContent = '#' + (rankIdx + 1);
-                btn.appendChild(tag);
-            }
-        }
-
-        if (b.lockedPlayers.includes(color)) {
-            btn.classList.add('buzzer-locked-player');
-        }
-    });
-}
-
-
-/* =====================================================
-   KEYBOARD SHORTCUTS
-===================================================== */
-window.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-        return;
-    }
-
-    const key = e.key.toLowerCase();
-
-    if (key === ' ' || e.code === 'Space') {
-        e.preventDefault();
-        if (gameState.buzzer.status === 'armed') lockBuzzer();
-        else armBuzzer();
-    } else if (key === 'delete' || key === 'backspace') {
-        e.preventDefault();
-        resetBuzzer();
-    } else if (key === '1' || key === 'q') {
-        playerPressBuzzer('red');
-    } else if (key === '2' || key === 'w') {
-        playerPressBuzzer('green');
-    } else if (key === '3' || key === 'e') {
-        playerPressBuzzer('white');
-    } else if (key === '4' || key === 'r') {
-        playerPressBuzzer('blue');
-    } else if (key === 'enter') {
-        judgeCorrect();
-    } else if (key === 'escape') {
-        judgeWrong();
-    } else if (key === 'arrowleft') {
-        prevQuestion();
-    } else if (key === 'arrowright') {
-        nextQuestion();
-    }
-});
-
-
-/* =====================================================
-   BOARD & PANEL LOGIC
-===================================================== */
-function createPanelButtons() {
-    const panelGrid = document.getElementById("panelGrid");
-    if (!panelGrid) return;
-
-    if (!gameState.panels || !Array.isArray(gameState.panels) || gameState.panels.length === 0) {
-        gameState.panels = Array.from({ length: 25 }, (_, index) => ({
-            number: index + 1,
-            used: false,
-            color: null
-        }));
-    }
-
-    panelGrid.innerHTML = "";
-
-    gameState.panels.forEach(panel => {
-        const button = document.createElement("button");
-        button.className = "panel-button";
-        button.textContent = panel.number;
-        button.dataset.number = panel.number;
-        button.id = "btn-panel-" + panel.number;
-        button.onclick = () => selectPanel(panel.number);
-        panelGrid.appendChild(button);
-    });
-}
-
-function selectPanel(number) {
-    if (gameState.selectedPanel === number) {
-        gameState.selectedPanel = null;
-    } else {
-        gameState.selectedPanel = number;
-    }
-    renderPanels();
-    broadcastState("selectPanel");
-}
-
-function recalculateScoresFromBoard() {
-    ['red', 'green', 'white', 'blue'].forEach(color => {
-        const count = gameState.panels.filter(p => p.color === color).length;
-        gameState.players[color].score = count;
-        const scoreEl = document.getElementById("score" + capitalize(color));
-        if (scoreEl && document.activeElement !== scoreEl) {
-            scoreEl.value = count;
-        }
-    });
-    updatePreviewScores();
-}
-
-function setPanelColor(color) {
-    if (gameState.selectedPanel === null) {
-        showToast("Hãy chọn một ô trên bảng trước.");
-        return;
-    }
-
-    const selectedNum = parseInt(gameState.selectedPanel, 10);
-    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
-    if (panel) {
-        panel.color = color;
-        recalculateScoresFromBoard();
-        renderPanels();
-        broadcastState("setColor");
-        const cText = color ? color.toUpperCase() : 'MẶC ĐỊNH';
-        showToast(`Đã gán ô ${panel.number} -> ${cText}`);
-    }
-}
-
-function sendSelectedPanel() {
-    if (gameState.selectedPanel === null) {
-        showToast("Hãy chọn một ô trên bảng trước.");
-        return;
-    }
-    const selectedNum = parseInt(gameState.selectedPanel, 10);
-    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
-    if (panel) {
-        panel.used = false;
-        renderPanels();
-        broadcastState("showPanel");
-        showToast(`Đang hiển thị ô ${panel.number}`);
-    }
-}
-
-function markSelectedUsed() {
-    if (gameState.selectedPanel === null) {
-        showToast("Hãy chọn một ô trên bảng trước.");
-        return;
-    }
-    const selectedNum = parseInt(gameState.selectedPanel, 10);
-    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
-    if (panel) {
-        panel.used = true;
-        renderPanels();
-        broadcastState("markUsed");
-        showToast(`Đã đánh dấu ô ${panel.number} là đã dùng`);
-    }
-}
-
-function resetSelectedPanel() {
-    if (gameState.selectedPanel === null) {
-        showToast("Hãy chọn một ô trước.");
-        return;
-    }
-    const selectedNum = parseInt(gameState.selectedPanel, 10);
-    const panel = gameState.panels.find(item => parseInt(item.number, 10) === selectedNum);
-    if (panel) {
-        panel.used = false;
-        panel.color = null;
-        recalculateScoresFromBoard();
-        renderPanels();
-        broadcastState("resetPanel");
-        showToast(`Đã reset ô ${panel.number}`);
-    }
-}
-
-function clearSelection() {
-    if (gameState.selectedPanel === null) {
-        showToast("Hiện tại không có ô nào đang được chọn.");
-        return;
-    }
-    const prev = gameState.selectedPanel;
-    gameState.selectedPanel = null;
-    renderPanels();
-    broadcastState("clearSelection");
-    showToast(`❌ Đã hủy lựa chọn ô ${prev}`);
-}
-
-function renderPanels() {
-    ensureValidPanels(gameState);
-    const pGrid = document.getElementById("panelGrid");
-    if (pGrid && pGrid.children.length !== 25) {
-        createPanelButtons();
-    }
-
-    recalculateScoresFromBoard();
-    const selected = gameState.selectedPanel ? parseInt(gameState.selectedPanel, 10) : null;
-
-    document.querySelectorAll(".panel-button").forEach(button => {
-        const number = parseInt(button.dataset.number, 10);
-        const panel = gameState.panels.find(item => parseInt(item.number, 10) === number);
-        if (!panel) return;
-
-        button.classList.toggle("active", number === selected);
-        button.classList.toggle("used", !!panel.used);
-
-        button.classList.remove("panel-red", "panel-green", "panel-white", "panel-blue");
-        if (panel.color) {
-            button.classList.add("panel-" + panel.color);
-        }
-    });
-
-    document.getElementById("selectedPanelText").textContent =
-        selected === null ? "Chưa chọn ô" : "Đang chọn ô " + selected;
-
-    document.getElementById("statusSelected").textContent =
-        selected === null ? "-" : selected;
-
-    const usedCount = gameState.panels.filter(panel => panel.used).length;
-    document.getElementById("statusUsed").textContent = usedCount + " / 25";
-    document.getElementById("statusRemaining").textContent = 25 - usedCount;
-
-    // Update names and scores in form inputs
-    ['red', 'green', 'white', 'blue'].forEach(color => {
-        const p = gameState.players[color];
-        if (p) {
-            const nameEl = document.getElementById("name" + capitalize(color));
-            const scoreEl = document.getElementById("score" + capitalize(color));
-            if (nameEl && document.activeElement !== nameEl) nameEl.value = p.name;
-            if (scoreEl && document.activeElement !== scoreEl) scoreEl.value = p.score;
-        }
-    });
-
-    updatePreviewScores();
-}
-
-
-/* =====================================================
-   PLAYER & SCORE CONTROLS
-===================================================== */
-function updatePlayerName(color) {
-    const input = document.getElementById("name" + capitalize(color));
-    gameState.players[color].name = input.value;
-    renderBuzzerUI();
-    broadcastState("updatePlayer");
-}
-
-function changeScore(color, amount) {
-    const player = gameState.players[color];
-    player.score = Math.max(0, player.score + amount);
-    document.getElementById("score" + capitalize(color)).value = player.score;
-    updatePreviewScores();
-    broadcastState("updateScore");
-}
-
-function updateScore(color) {
-    const input = document.getElementById("score" + capitalize(color));
-    let score = Number(input.value);
-    if (isNaN(score) || score < 0) score = 0;
-    gameState.players[color].score = score;
-    input.value = score;
-    updatePreviewScores();
-    broadcastState("updateScore");
-}
-
-function updatePreviewScores() {
-    const r = document.getElementById("previewScoreRed");
-    const g = document.getElementById("previewScoreGreen");
-    const w = document.getElementById("previewScoreWhite");
-    const b = document.getElementById("previewScoreBlue");
-    if (r) r.textContent = gameState.players.red.score;
-    if (g) g.textContent = gameState.players.green.score;
-    if (w) w.textContent = gameState.players.white.score;
-    if (b) b.textContent = gameState.players.blue.score;
-}
-
-function resetAllScores() {
-    ['red', 'green', 'white', 'blue'].forEach(color => {
-        gameState.players[color].score = 0;
-        document.getElementById("score" + capitalize(color)).value = 0;
-    });
-    updatePreviewScores();
-    broadcastState("resetScores");
-    showToast("Đã reset toàn bộ điểm số về 0.");
-}
-
-function resetGame() {
-    gameState.selectedPanel = null;
-    gameState.panels.forEach(panel => {
-        panel.used = false;
-        panel.color = null;
-    });
-    resetBuzzer();
-    resetAllScores();
-    renderPanels();
-    broadcastState("resetGame");
-    showToast("Đã reset toàn bộ trò chơi.");
-}
-
-
-/* =====================================================
-   TOAST & HELPERS
-===================================================== */
-function showToast(msg) {
-    const container = document.getElementById("toastContainer");
-    const toast = document.createElement("div");
-    toast.className = "toast";
-    toast.textContent = msg;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 300);
-    }, 2500);
-}
-
-function capitalize(text) {
-    return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-function renderAll() {
-    renderQuestion();
-    renderPanels();
-    renderBuzzerUI();
-}
-
-
-/* =====================================================
-   INITIALIZE
-===================================================== */
-renderAll();
-broadcastState("sync");
-
-</script>
+<!-- QUESTION EDITOR MODAL -->
+<div class="modal-overlay" id="questionModal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title" id="modalTitle">
+                <span>✏️</span> Chỉnh sửa câu hỏi
+            </div>
+            <button class="modal-close-btn" onclick="closeQuestionModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="modalEditIndex" value="-1">
+
+            <div style="display: grid; grid-template-columns: 110px 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label class="form-label">SỐ THỨ TỰ (STT):</label>
+                    <input type="number" id="modalStt" class="form-input" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CHỌN ĐỊNH DẠNG CÂU HỎI:</label>
+                    <div class="format-picker-grid">
+                        <div class="format-option-card selected" id="formatOptText" onclick="selectModalFormat('text')">
+                            <span class="icon">📝</span>
+                            <span class="name">VĂN BẢN</span>
+                            <span class="desc">Chỉ chữ &amp; đáp án</span>
+                        </div>
+                        <div class="format-option-card" id="formatOptImage" onclick="selectModalFormat('image')">
+                            <span class="icon">🖼️</span>
+                            <span class="name">HÌNH HỌA</span>
+                            <span class="desc">Ảnh tải lên / link</span>
+                        </div>
+                        <div class="format-option-card" id="formatOptVideo" onclick="selectModalFormat('video')">
+                            <span class="icon">🎬</span>
+                            <span class="name">VIDEO</span>
+                            <span class="desc">Video MP4 / link</span>
+                        </div>
+                        <div class="format-option-card" id="formatOptSlideshow" onclick="selectModalFormat('slideshow')">
+                            <span class="icon">🎞️</span>
+                            <span class="name">CHUỖI ẢNH (20s)</span>
+                            <span class="desc">Chiếu tuần tự 20s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">NỘI DUNG CÂU HỎI:</label>
+                <textarea id="modalQuestionText" class="form-textarea" rows="3" placeholder="Nhập nội dung câu hỏi..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">ĐÁP ÁN:</label>
+                <input type="text" id="modalAnswer" class="form-input" placeholder="Nhập đáp án chính xác...">
+            </div>
+
+            <!-- IMAGE MEDIA SECTION -->
+            <div id="modalImageSection" class="media-upload-container" style="display: none;">
+                <div class="form-label" style="color: #34d399;">🖼️ ĐÍNH KÈM HÌNH ẢNH (HIỆN FULL CỬA SỔ PROJECTOR):</div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <button class="button button-green" type="button" onclick="document.getElementById('modalImageFileInput').click()">
+                        📁 Chọn file ảnh từ máy tính...
+                    </button>
+                    <input type="file" id="modalImageFileInput" accept="image/*" style="display:none" onchange="handleModalImageUpload(this.files[0])">
+                    <span style="color: #94a3b8; font-size: 10px;">(Hỗ trợ PNG, JPG, WEBP, GIF, SVG)</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">HOẶC NHẬP / DÁN URL ẢNH TRỰC TUYẾN:</label>
+                    <input type="text" id="modalImageUrlInput" class="form-input" placeholder="https://example.com/image.png" oninput="handleModalImageUrlInput(this.value)">
+                </div>
+                <!-- Image Preview -->
+                <div id="modalImagePreviewBox" class="media-preview-box" style="display: none;">
+                    <img id="modalImagePreview" class="media-preview-img" src="" alt="Xem trước">
+                    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; overflow: hidden;">
+                        <span id="modalImageInfo" style="color: #f1f5f9; font-size: 11px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Tên file: image.png</span>
+                        <span style="color: #34d399; font-size: 10px;">✓ Sẵn sàng chiếu Full trên Projector</span>
+                    </div>
+                    <button class="button button-red" type="button" onclick="removeModalMedia()">
+                        🗑️ Xóa ảnh
+                    </button>
+                </div>
+            </div>
+
+            <!-- VIDEO MEDIA SECTION -->
+            <div id="modalVideoSection" class="media-upload-container" style="display: none;">
+                <div class="form-label" style="color: #f59f00;">🎬 ĐÍNH KÈM VIDEO (HIỆN FULL CỬA SỔ PROJECTOR):</div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <button class="button button-orange" type="button" onclick="document.getElementById('modalVideoFileInput').click()">
+                        📁 Chọn file video từ máy tính...
+                    </button>
+                    <input type="file" id="modalVideoFileInput" accept="video/mp4, video/webm, video/*" style="display:none" onchange="handleModalVideoUpload(this.files[0])">
+                    <span style="color: #94a3b8; font-size: 10px;">(Hỗ trợ MP4, WebM)</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">HOẶC LINK STREAMABLE / YOUTUBE / VIDEO URL:</label>
+                    <input type="text" id="modalVideoUrlInput" class="form-input" placeholder="https://streamable.com/xyz hoặc https://youtube.com/watch?v=..." oninput="handleModalVideoUrlInput(this.value)">
+                </div>
+                <!-- Video Preview -->
+                <div id="modalVideoPreviewBox" class="media-preview-box" style="display: none;">
+                    <video id="modalVideoPreview" class="media-preview-video" controls playsinline src=""></video>
+                    <iframe id="modalFramePreview" style="display:none; width: 160px; height: 90px; border:none; border-radius:4px;" src=""></iframe>
+                    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; overflow: hidden;">
+                        <span id="modalVideoInfo" style="color: #f1f5f9; font-size: 11px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Video link / file</span>
+                        <span style="color: #f59f00; font-size: 10px;">✓ Sẵn sàng phát Full trên Projector</span>
+                    </div>
+                    <button class="button button-red" type="button" onclick="removeModalMedia()">
+                        🗑️ Xóa video
+                    </button>
+                </div>
+            </div>
+
+            <!-- SLIDESHOW MEDIA SECTION -->
+            <div id="modalSlideshowSection" class="media-upload-container" style="display: none;">
+                <div class="form-label" style="color: #38bdf8;">🎞️ ĐÍNH KÈM CHUỖI ẢNH (CHIẾU LẦN LƯỢT TỔNG 20 GIÂY):</div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <button class="button button-blue" type="button" onclick="document.getElementById('modalSlidesFileInput').click()">
+                        📁 Tải nhiều ảnh cùng lúc...
+                    </button>
+                    <input type="file" id="modalSlidesFileInput" accept="image/*" multiple style="display:none" onchange="handleModalSlidesUpload(this.files)">
+                    <button class="button button-red" type="button" onclick="clearModalSlides()">
+                        🗑️ Xóa hết ảnh
+                    </button>
+                    <span style="color: #94a3b8; font-size: 10px;">(Hệ thống tự động chia đều thời lượng trong 20s)</span>
+                </div>
+                <!-- Slideshow timing summary -->
+                <div style="display: flex; align-items: center; justify-content: space-between; background: #0f172a; padding: 6px 10px; border-radius: 5px; border: 1px solid #1e293b; font-size: 11px; margin-top: 4px;">
+                    <div>
+                        <span style="color: #94a3b8;">Tổng thời lượng:</span> <strong style="color: #f59f00;">20s</strong>
+                        <span style="color: #64748b; margin: 0 6px;">|</span>
+                        <span style="color: #94a3b8;">Số ảnh:</span> <strong id="modalSlidesCount" style="color: #38bdf8;">0 ảnh</strong>
+                    </div>
+                    <div>
+                        <span style="color: #94a3b8;">Mỗi ảnh chiếu:</span> <strong id="modalSlidePerTime" style="color: #34d399;">-- s</strong>
+                    </div>
+                </div>
+                <!-- Slides thumbnails carousel -->
+                <div id="modalSlidesList" style="display: flex; gap: 6px; overflow-x: auto; padding: 6px; min-height: 60px; border-radius: 5px; background: #0b0f17; border: 1px dashed #334155; align-items: center; margin-top: 4px;">
+                    <div style="width: 100%; text-align: center; color: #64748b; font-size: 11px;">Chưa chọn ảnh nào. Bấm "Tải nhiều ảnh" để thêm ảnh vào chuỗi 20s.</div>
+                </div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button class="button button-gray" onclick="closeQuestionModal()">Hủy</button>
+            <button class="button button-blue" onclick="saveQuestionModal(false)">
+                💾 Lưu câu hỏi
+            </button>
+            <button class="button button-green" onclick="saveQuestionModal(true)">
+                👁️ Lưu &amp; Chiếu Full ngay lên Projector
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODULAR JAVASCRIPT FILES (EACH FILE < 2000 LINES) -->
+<script src="controller-state.js"></script>
+<script src="controller-questions.js"></script>
+<script src="controller-game.js"></script>
 
 </body>
 </html>
