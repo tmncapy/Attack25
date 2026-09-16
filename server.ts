@@ -83,7 +83,7 @@ interface RoomData {
 }
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const PORT = 3000;
 
 // Increase body limit for large base64 uploads (media, sounds, questions)
 app.use(express.json({ limit: '100mb' }));
@@ -725,10 +725,18 @@ async function startServer() {
     ws.on('error', () => {});
   });
 
-  // Serve dist static assets if available (production build)
-  const distPath = path.join(process.cwd(), 'dist');
-  if (fs.existsSync(distPath)) {
-    app.use(express.static(distPath));
+  // Serve dist static assets or Vite middleware
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'custom'
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+    }
   }
 
   server.listen(PORT, '0.0.0.0', () => {

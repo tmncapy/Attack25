@@ -1,14 +1,12 @@
 {
-  "name": "react-example",
+  "name": "attack-25",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-    "postinstall": "node -e \"const fs=require('fs'),cp=require('child_process');if(!fs.existsSync('dist/server.cjs')){console.log('Postinstall: building project...');cp.execSync('yarn build||npm run build',{stdio:'inherit'});}\"",
-    "start": "node -e \"const fs=require('fs'),cp=require('child_process');if(!fs.existsSync('dist/server.cjs')){console.log('Start: building project...');cp.execSync('yarn build||npm run build',{stdio:'inherit'});}\" && node dist/server.cjs",
-    "start:node": "node server.js",
+    "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
