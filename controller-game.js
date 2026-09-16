@@ -361,16 +361,24 @@ function clearSelection() {
 let specialCountdownInterval = null;
 
 function setSpecialRoundMode(mode) {
+    if (!gameState.video) gameState.video = {};
+    if (mode === 'slideshow') mode = 'slides';
     gameState.video.mode = mode;
     renderSpecialRoundUI();
     broadcastState("setSpecialMode");
 }
 
-async function handleSpecialVideoUpload(event) {
-    const file = event.target.files[0];
+async function handleSpecialVideoUpload(fileOrEvent) {
+    let file = null;
+    if (fileOrEvent && fileOrEvent.target && fileOrEvent.target.files) {
+        file = fileOrEvent.target.files[0];
+    } else if (fileOrEvent instanceof File || (fileOrEvent && fileOrEvent.name)) {
+        file = fileOrEvent;
+    }
     if (file) {
         showToast("⏳ Đang tải video lên...");
         const result = await uploadMediaFileToServer(file);
+        if (!gameState.video) gameState.video = {};
         gameState.video.url = result.url;
         gameState.video.videoName = result.name;
         gameState.video.mode = 'local_video';
@@ -378,9 +386,12 @@ async function handleSpecialVideoUpload(event) {
         broadcastState("setSpecialMedia");
         showToast(`✅ Đã nạp Video: ${result.name}`);
     }
+    const input = document.getElementById('specialVideoFileInput');
+    if (input) input.value = '';
 }
 
 function removeSpecialVideo() {
+    if (!gameState.video) gameState.video = {};
     gameState.video.url = '';
     gameState.video.videoName = '';
     renderSpecialRoundUI();
@@ -388,11 +399,17 @@ function removeSpecialVideo() {
     showToast("Đã xóa video Vòng Đặc Biệt.");
 }
 
-async function handleSpecialSlidesUpload(event) {
-    const files = Array.from(event.target.files);
+async function handleSpecialSlidesUpload(filesOrEvent) {
+    let files = [];
+    if (filesOrEvent && filesOrEvent.target && filesOrEvent.target.files) {
+        files = Array.from(filesOrEvent.target.files);
+    } else if (filesOrEvent && (filesOrEvent instanceof FileList || Array.isArray(filesOrEvent))) {
+        files = Array.from(filesOrEvent);
+    }
     if (files.length === 0) return;
 
     showToast(`⏳ Đang xử lý ${files.length} ảnh slide...`);
+    if (!gameState.video) gameState.video = {};
     if (!Array.isArray(gameState.video.images)) {
         gameState.video.images = [];
     }
@@ -409,9 +426,13 @@ async function handleSpecialSlidesUpload(event) {
     renderSpecialRoundUI();
     broadcastState("setSpecialMedia");
     showToast(`✅ Đã thêm ${files.length} slide! Tổng: ${gameState.video.images.length}`);
+
+    const input = document.getElementById('specialSlidesFileInput');
+    if (input) input.value = '';
 }
 
 function removeSpecialSlide(idx) {
+    if (!gameState.video) gameState.video = {};
     if (Array.isArray(gameState.video.images)) {
         gameState.video.images.splice(idx, 1);
         renderSpecialRoundUI();
@@ -420,6 +441,7 @@ function removeSpecialSlide(idx) {
 }
 
 function clearSpecialSlides() {
+    if (!gameState.video) gameState.video = {};
     gameState.video.images = [];
     renderSpecialRoundUI();
     broadcastState("setSpecialMedia");
@@ -427,7 +449,7 @@ function clearSpecialSlides() {
 }
 
 function updateVideoUrl() {
-    const input = document.getElementById("videoUrlInput");
+    const input = document.getElementById("streamableUrlInput") || document.getElementById("videoUrlInput");
     if (!input) return;
     const url = input.value.trim();
     if (!url) {
@@ -436,6 +458,7 @@ function updateVideoUrl() {
     }
     const embedUrl = parseStreamableUrl(url);
     const finalEmbedUrl = parseYouTubeEmbedUrl(embedUrl);
+    if (!gameState.video) gameState.video = {};
     gameState.video.url = url;
     gameState.video.embedUrl = finalEmbedUrl;
     gameState.video.mode = 'streamable';
@@ -509,22 +532,27 @@ function hideSpecialRoundMedia() {
     showToast("⏹️ Đã tắt Media Vòng Đặc Biệt trên Projector");
 }
 
-function toggleSpecialRoundLoop() {
-    gameState.video.loop = !gameState.video.loop;
+function toggleSpecialRoundLoop(checked) {
+    if (!gameState.video) gameState.video = {};
+    if (typeof checked === 'boolean') {
+        gameState.video.loop = checked;
+    } else {
+        gameState.video.loop = !gameState.video.loop;
+    }
     renderSpecialRoundUI();
     broadcastState("setSpecialMedia");
     showToast(`Lặp lại: ${gameState.video.loop ? 'BẬT' : 'TẮT'}`);
 }
 
 function validateHasSpecialMedia() {
-    const mode = gameState.video.mode || 'local_video';
-    if (mode === 'slides') {
+    const mode = (gameState.video && gameState.video.mode) ? gameState.video.mode : 'local_video';
+    if (mode === 'slides' || mode === 'slideshow') {
         return Array.isArray(gameState.video.images) && gameState.video.images.length > 0;
     }
     if (mode === 'streamable') {
         return !!(gameState.video.embedUrl || gameState.video.url);
     }
-    return !!gameState.video.url;
+    return !!(gameState.video && gameState.video.url);
 }
 
 function projectSpecialMediaFull() {
@@ -534,7 +562,7 @@ function projectSpecialMediaFull() {
 
 function startSpecialRoundProgressLoop() {
     if (specialCountdownInterval) clearInterval(specialCountdownInterval);
-    const totalDuration = gameState.video.totalDuration || 20;
+    const totalDuration = (gameState.video && gameState.video.totalDuration) || 20;
 
     specialCountdownInterval = setInterval(() => {
         if (!gameState.video.playing || !gameState.video.startTime) {
@@ -565,77 +593,152 @@ function startSpecialRoundProgressLoop() {
 }
 
 function updateSpecialProgressBarUI(current, total) {
-    const bar = document.getElementById("specialProgressFill");
-    const text = document.getElementById("specialTimeText");
-    if (!bar || !text) return;
-
-    const percent = Math.min(100, Math.max(0, (current / total) * 100));
-    bar.style.width = percent + "%";
-    text.textContent = `${current.toFixed(1)}s / ${total}s`;
+    const bar = document.getElementById("specialProgressBar") || document.getElementById("specialProgressFill");
+    const text = document.getElementById("specialCountdownLabel") || document.getElementById("specialTimeText");
+    if (bar) {
+        const percent = Math.min(100, Math.max(0, (current / total) * 100));
+        bar.style.width = percent + "%";
+    }
+    if (text) {
+        text.textContent = `${current.toFixed(1)}s / ${total.toFixed(1)}s`;
+    }
 }
 
 function renderSpecialRoundUI() {
-    const vState = gameState.video || {};
-    const curMode = vState.mode || 'local_video';
+    if (!gameState.video) {
+        gameState.video = {
+            mode: 'local_video',
+            url: '',
+            videoName: '',
+            images: [],
+            visible: false,
+            playing: false,
+            loop: true,
+            totalDuration: 20
+        };
+    }
+    const vState = gameState.video;
+    let curMode = vState.mode || 'local_video';
+    if (curMode === 'slideshow') curMode = 'slides';
 
-    ['local_video', 'slides', 'streamable'].forEach(m => {
-        const tab = document.getElementById(`specialTab_${m}`);
-        const panel = document.getElementById(`specialPanel_${m}`);
-        if (tab) {
-            if (m === curMode) tab.classList.add('active');
-            else tab.classList.remove('active');
+    // 3 Mode tabs & panels
+    const modesConfig = [
+        {
+            key: 'local_video',
+            tabIds: ['btnModeLocalVideo', 'specialTab_local_video'],
+            secIds: ['secLocalVideo', 'specialPanel_local_video']
+        },
+        {
+            key: 'slides',
+            tabIds: ['btnModeSlideshow', 'specialTab_slides'],
+            secIds: ['secSlideshow', 'specialPanel_slides']
+        },
+        {
+            key: 'streamable',
+            tabIds: ['btnModeStreamable', 'specialTab_streamable'],
+            secIds: ['secStreamable', 'specialPanel_streamable']
         }
-        if (panel) {
-            panel.style.display = (m === curMode) ? 'block' : 'none';
-        }
+    ];
+
+    modesConfig.forEach(m => {
+        const isActive = (m.key === curMode);
+        m.tabIds.forEach(tid => {
+            const tab = document.getElementById(tid);
+            if (tab) {
+                if (isActive) {
+                    tab.classList.add('active');
+                    tab.style.background = '#1e293b';
+                    tab.style.color = '#f1f5f9';
+                    tab.style.border = '1px solid #334155';
+                } else {
+                    tab.classList.remove('active');
+                    tab.style.background = 'transparent';
+                    tab.style.color = '#94a3b8';
+                    tab.style.border = 'none';
+                }
+            }
+        });
+        m.secIds.forEach(sid => {
+            const sec = document.getElementById(sid);
+            if (sec) {
+                sec.style.display = isActive ? 'block' : 'none';
+            }
+        });
     });
 
-    const vNameTag = document.getElementById('specialLocalVideoName');
-    if (vNameTag) {
-        vNameTag.textContent = vState.videoName || (vState.url ? 'Video đã chọn' : 'Chưa có video');
+    // Panel 1: Local Video Info Box
+    const vInfoBox = document.getElementById('specialVideoInfoBox');
+    const vNameTag = document.getElementById('specialVideoFileName') || document.getElementById('specialLocalVideoName');
+    if (vState.url && (curMode === 'local_video')) {
+        if (vInfoBox) vInfoBox.style.display = 'flex';
+        if (vNameTag) vNameTag.textContent = vState.videoName || 'video.mp4';
+    } else {
+        if (vInfoBox) vInfoBox.style.display = 'none';
     }
 
+    // Panel 2: Slideshow 20s
     const slidesList = document.getElementById('specialSlidesList');
+    const slidesCount = Array.isArray(vState.images) ? vState.images.length : 0;
+    const slidesCountEl = document.getElementById('specialSlidesCount');
+    const slidePerTimeEl = document.getElementById('specialSlidePerTime');
+
+    if (slidesCountEl) slidesCountEl.textContent = `${slidesCount} ảnh`;
+    if (slidePerTimeEl) {
+        slidePerTimeEl.textContent = slidesCount > 0 ? `${(20 / slidesCount).toFixed(1)}s` : '-- s';
+    }
+
     if (slidesList) {
-        if (Array.isArray(vState.images) && vState.images.length > 0) {
+        if (slidesCount > 0) {
             slidesList.innerHTML = vState.images.map((img, idx) => `
-                <div class="special-slide-card">
-                    <img src="${img.url || img}" alt="Slide ${idx + 1}" />
-                    <span class="special-slide-idx">#${idx + 1}</span>
-                    <button class="special-slide-del" onclick="removeSpecialSlide(${idx})">×</button>
+                <div style="position:relative; width:48px; height:36px; flex-shrink:0; border-radius:4px; overflow:hidden; border:1px solid #334155; background:#000;">
+                    <img src="${img.url || img}" style="width:100%; height:100%; object-fit:cover;" alt="Slide ${idx + 1}" />
+                    <span style="position:absolute; bottom:1px; left:2px; font-size:8px; font-weight:bold; color:#fff; text-shadow:0 0 3px #000; background:rgba(0,0,0,0.6); padding:0 3px; border-radius:2px;">#${idx + 1}</span>
+                    <button type="button" onclick="removeSpecialSlide(${idx})" style="position:absolute; top:1px; right:1px; width:14px; height:14px; line-height:12px; font-size:10px; border-radius:50%; background:#ef4444; color:#fff; border:none; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center;">×</button>
                 </div>
             `).join('');
         } else {
-            slidesList.innerHTML = `<span style="font-size:10px; color:#64748b; padding:6px 0;">Chưa có ảnh slide nào. Hãy chọn nhiều file ảnh để nạp.</span>`;
+            slidesList.innerHTML = `<div style="width: 100%; text-align: center; color: #64748b; font-size: 9px; padding: 6px 0;">Bấm "Tải nhiều ảnh" để thêm ảnh vào chuỗi 20s.</div>`;
         }
     }
 
-    const urlInp = document.getElementById('videoUrlInput');
+    // Panel 3: Streamable / Web URL
+    const urlInp = document.getElementById('streamableUrlInput') || document.getElementById('videoUrlInput');
     if (urlInp && vState.url && document.activeElement !== urlInp) {
         urlInp.value = vState.url;
     }
 
+    // Loop
+    const chkLoop = document.getElementById('chkSpecialLoop');
+    if (chkLoop) {
+        chkLoop.checked = (vState.loop !== false);
+    }
     const loopBtn = document.getElementById('btnSpecialToggleLoop');
     if (loopBtn) {
         loopBtn.textContent = vState.loop ? "🔁 Lặp lại: BẬT" : "➡️ Lặp lại: TẮT";
         loopBtn.style.background = vState.loop ? "#0284c7" : "#334155";
     }
 
-    const playBtn = document.getElementById('btnSpecialPlay');
-    if (playBtn) {
-        if (vState.playing) {
-            playBtn.textContent = "⏸️ Tạm dừng";
-            playBtn.style.background = "#d97706";
+    // Playback Action Buttons
+    const showBtn = document.getElementById('btnShowVideo') || document.getElementById('btnSpecialShow');
+    if (showBtn) {
+        if (vState.visible) {
+            showBtn.textContent = "👁️ Đang hiện";
+            showBtn.style.background = "#2563eb";
         } else {
-            playBtn.textContent = "▶️ Phát (20s)";
-            playBtn.style.background = "#15803d";
+            showBtn.textContent = "👁️ Hiện";
+            showBtn.style.background = "#d97706";
         }
     }
 
-    const showBtn = document.getElementById('btnSpecialShow');
-    if (showBtn) {
-        showBtn.textContent = vState.visible ? "👁️ Đang chiếu" : "📺 Chiếu Projector";
-        showBtn.style.background = vState.visible ? "#2563eb" : "#1e293b";
+    const playBtn = document.getElementById('btnPlayVideo') || document.getElementById('btnSpecialPlay');
+    if (playBtn) {
+        if (vState.playing) {
+            playBtn.textContent = "⏸️ Đang phát 20s";
+            playBtn.style.background = "#15803d";
+        } else {
+            playBtn.textContent = "▶️ Phát 20s";
+            playBtn.style.background = "#16a34a";
+        }
     }
 }
 
