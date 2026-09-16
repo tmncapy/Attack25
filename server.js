@@ -21,6 +21,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', express.static(uploadsDir));
 app.use('/SFX', express.static(path.join(__dirname, 'SFX')));
+app.use('/sfx', express.static(path.join(__dirname, 'SFX')));
 
 // Upload media endpoint for local videos and slideshow images
 app.post('/api/upload-media', (req, res) => {
