@@ -841,9 +841,9 @@
         <div class="modal-body">
             <input type="hidden" id="modalEditIndex" value="-1">
 
-            <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px;">
+            <div style="display: grid; grid-template-columns: 80px 1fr; gap: 8px;">
                 <div class="form-group">
-                    <label class="form-label">SỐ THỨ TỰ (STT):</label>
+                    <label class="form-label">SỐ THỨ TỰ:</label>
                     <input type="number" id="modalStt" class="form-input" min="1" value="1">
                 </div>
                 <div class="form-group">
@@ -856,13 +856,18 @@
                         </div>
                         <div class="format-option-card" id="formatOptImage" onclick="selectModalFormat('image')">
                             <span class="icon">🖼️</span>
-                            <span class="name">HÌNH HỌA</span>
-                            <span class="desc">Ảnh tải lên / link</span>
+                            <span class="name">HÌNH ẢNH</span>
+                            <span class="desc">Ảnh tải / link</span>
                         </div>
                         <div class="format-option-card" id="formatOptVideo" onclick="selectModalFormat('video')">
                             <span class="icon">🎬</span>
                             <span class="name">VIDEO</span>
-                            <span class="desc">Video MP4 / link</span>
+                            <span class="desc">MP4 / YouTube</span>
+                        </div>
+                        <div class="format-option-card" id="formatOptAudio" onclick="selectModalFormat('audio')">
+                            <span class="icon">🎵</span>
+                            <span class="name">ÂM THANH</span>
+                            <span class="desc">MP3 / Audio</span>
                         </div>
                         <div class="format-option-card" id="formatOptSlideshow" onclick="selectModalFormat('slideshow')">
                             <span class="icon">🎞️</span>
@@ -890,7 +895,7 @@
                     <button class="button button-green" type="button" onclick="document.getElementById('modalImageFileInput').click()">
                         📁 Chọn file ảnh từ máy...
                     </button>
-                    <input type="file" id="modalImageFileInput" accept="image/*" style="display:none" onchange="handleModalImageUpload(this.files[0])">
+                    <input type="file" id="modalImageFileInput" accept="image/*" style="display:none" onchange="handleModalImageUpload(event)">
                     <span style="color: #94a3b8; font-size: 9px;">(PNG, JPG, WEBP, GIF)</span>
                 </div>
                 <div class="form-group">
@@ -904,7 +909,7 @@
                         <span id="modalImageInfo" style="color: #f1f5f9; font-size: 10px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Tên file: image.png</span>
                         <span style="color: #34d399; font-size: 9px;">✓ Sẵn sàng chiếu Full trên Projector</span>
                     </div>
-                    <button class="button button-red" type="button" onclick="removeModalMedia()" style="font-size: 9px; padding: 2px 6px;">
+                    <button class="button button-red" type="button" onclick="removeModalMedia('image')" style="font-size: 9px; padding: 2px 6px;">
                         🗑️ Xóa
                     </button>
                 </div>
@@ -917,11 +922,11 @@
                     <button class="button button-orange" type="button" onclick="document.getElementById('modalVideoFileInput').click()">
                         📁 Chọn file video MP4...
                     </button>
-                    <input type="file" id="modalVideoFileInput" accept="video/mp4, video/webm, video/*" style="display:none" onchange="handleModalVideoUpload(this.files[0])">
+                    <input type="file" id="modalVideoFileInput" accept="video/mp4, video/webm, video/*" style="display:none" onchange="handleModalVideoUpload(event)">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">HOẶC LINK STREAMABLE / WEB VIDEO:</label>
-                    <input type="text" id="modalVideoUrlInput" class="form-input" placeholder="https://streamable.com/xyz..." oninput="handleModalVideoUrlInput(this.value)">
+                    <label class="form-label">HOẶC LINK YOUTUBE / STREAMABLE / MP4:</label>
+                    <input type="text" id="modalVideoUrlInput" class="form-input" placeholder="https://youtube.com/watch?v=... hoặc streamable..." oninput="handleModalVideoUrlInput(this.value)">
                 </div>
                 <!-- Video Preview -->
                 <div id="modalVideoPreviewBox" class="media-preview-box" style="display: none;">
@@ -931,7 +936,34 @@
                         <span id="modalVideoInfo" style="color: #f1f5f9; font-size: 10px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Video</span>
                         <span style="color: #f59f00; font-size: 9px;">✓ Sẵn sàng phát Full</span>
                     </div>
-                    <button class="button button-red" type="button" onclick="removeModalMedia()" style="font-size: 9px; padding: 2px 6px;">
+                    <button class="button button-red" type="button" onclick="removeModalMedia('video')" style="font-size: 9px; padding: 2px 6px;">
+                        🗑️ Xóa
+                    </button>
+                </div>
+            </div>
+
+            <!-- AUDIO MEDIA SECTION -->
+            <div id="modalAudioSection" class="media-upload-container" style="display: none;">
+                <div class="form-label" style="color: #f472b6;">🎵 ĐÍNH KÈM ÂM THANH / BÀI HÁT / NGHE:</div>
+                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                    <button class="button button-purple" type="button" onclick="document.getElementById('modalAudioFileInput').click()">
+                        📁 Chọn file âm thanh MP3/WAV...
+                    </button>
+                    <input type="file" id="modalAudioFileInput" accept="audio/*, audio/mp3, audio/wav, audio/ogg" style="display:none" onchange="handleModalAudioUpload(event)">
+                    <span style="color: #94a3b8; font-size: 9px;">(MP3, WAV, AAC, OGG, M4A)</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">HOẶC DÁN URL AUDIO:</label>
+                    <input type="text" id="modalAudioUrlInput" class="form-input" placeholder="https://example.com/audio.mp3" oninput="handleModalAudioUrlInput(this.value)">
+                </div>
+                <!-- Audio Preview -->
+                <div id="modalAudioPreviewBox" class="media-preview-box" style="display: none;">
+                    <audio id="modalAudioPreview" controls style="height: 32px; width: 220px; outline: none;"></audio>
+                    <div style="display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: hidden;">
+                        <span id="modalAudioInfo" style="color: #f1f5f9; font-size: 10px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Tên file audio</span>
+                        <span style="color: #f472b6; font-size: 9px;">✓ Sẵn sàng phát trên Projector</span>
+                    </div>
+                    <button class="button button-red" type="button" onclick="removeModalMedia('audio')" style="font-size: 9px; padding: 2px 6px;">
                         🗑️ Xóa
                     </button>
                 </div>
@@ -944,7 +976,7 @@
                     <button class="button button-blue" type="button" onclick="document.getElementById('modalSlidesFileInput').click()">
                         📁 Tải nhiều ảnh...
                     </button>
-                    <input type="file" id="modalSlidesFileInput" accept="image/*" multiple style="display:none" onchange="handleModalSlidesUpload(this.files)">
+                    <input type="file" id="modalSlidesFileInput" accept="image/*" multiple style="display:none" onchange="handleModalSlidesUpload(event)">
                     <button class="button button-red" type="button" onclick="clearModalSlides()">
                         🗑️ Xóa hết
                     </button>

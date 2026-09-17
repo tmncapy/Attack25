@@ -1042,28 +1042,152 @@ html, body {
 
 .format-picker-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 4px;
 }
 .format-option-card {
     background: #0f172a;
     border: 1px solid #1e293b;
     border-radius: 4px;
-    padding: 6px 4px;
+    padding: 6px 3px;
     text-align: center;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2px;
+    transition: all 0.15s ease;
+}
+.format-option-card:hover {
+    border-color: #475569;
+    background: #162032;
 }
 .format-option-card.selected {
     background: #1e3a8a;
     border-color: #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
 }
 .format-option-card .icon { font-size: 16px; }
-.format-option-card .name { font-size: 9.5px; color: #fff; }
-.format-option-card .desc { font-size: 8px; color: #94a3b8; }
+.format-option-card .name { font-size: 9px; font-weight: bold; color: #fff; }
+.format-option-card .desc { font-size: 7.5px; color: #94a3b8; }
+
+.media-upload-container {
+    background: #0c121e;
+    border: 1px solid #1e293b;
+    border-radius: 5px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.media-preview-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #090d14;
+    border: 1px solid #2a374a;
+    border-radius: 4px;
+    padding: 6px 8px;
+}
+
+.media-preview-img {
+    width: 64px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid #334155;
+}
+
+.media-preview-video {
+    width: 110px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid #334155;
+    background: #000;
+}
+
+.modal-slide-card {
+    position: relative;
+    width: 54px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid #334155;
+}
+
+.modal-slide-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modal-slide-card .slide-num {
+    position: absolute;
+    bottom: 1px;
+    left: 2px;
+    font-size: 7.5px;
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    padding: 0 2px;
+    border-radius: 2px;
+    font-weight: bold;
+}
+
+.modal-slide-card .slide-del {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 14px;
+    height: 14px;
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 9px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+}
+
+.db-format-pill {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 8.5px;
+    font-weight: bold;
+}
+
+.db-format-text { background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+.db-format-image { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+.db-format-video { background: rgba(245, 159, 0, 0.15); color: #f59f00; border: 1px solid rgba(245, 159, 0, 0.3); }
+.db-format-audio { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
+.db-format-slides { background: rgba(124, 58, 237, 0.15); color: #a78bfa; border: 1px solid rgba(124, 58, 237, 0.3); }
+
+.db-thumb {
+    width: 28px;
+    height: 20px;
+    object-fit: cover;
+    border-radius: 2px;
+    border: 1px solid #334155;
+}
+
+.db-thumb-video, .db-thumb-audio {
+    width: 28px;
+    height: 20px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
 
 .modal-footer {
     padding: 8px 12px;

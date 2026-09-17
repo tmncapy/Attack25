@@ -283,6 +283,7 @@ function renderDatabaseTable() {
     const textCount = questionsList.filter(q => !q.type || q.type === 'text').length;
     const imageCount = questionsList.filter(q => q.type === 'image').length;
     const videoCount = questionsList.filter(q => q.type === 'video').length;
+    const audioCount = questionsList.filter(q => q.type === 'audio').length;
     const slidesCount = questionsList.filter(q => q.type === 'slides').length;
 
     // Header stats
@@ -317,7 +318,7 @@ function renderDatabaseTable() {
 
     if (dbFilter !== 'all') {
         if (dbFilter === 'media') {
-            filtered = filtered.filter(q => q.type === 'image' || q.type === 'video' || q.type === 'slides');
+            filtered = filtered.filter(q => q.type === 'image' || q.type === 'video' || q.type === 'audio' || q.type === 'slides');
         } else if (dbFilter === 'slides' || dbFilter === 'slideshow') {
             filtered = filtered.filter(q => q.type === 'slides');
         } else {
@@ -355,6 +356,18 @@ function renderDatabaseTable() {
                         <img src="${q.mediaUrl}" class="db-thumb" onclick="openEditQuestionModal(${q.originalIdx})" title="Nhấp để sửa/xem ảnh" style="cursor:pointer;" />
                         <button class="button ${isShowingOnProj ? 'button-green' : 'button-blue'}" style="height:22px; font-size:9px; padding:0 6px;" onclick="showQuestionMediaFromDb(${q.originalIdx})">
                             ${isShowingOnProj ? '✅ Đang chiếu' : '📺 Chiếu Full'}
+                        </button>
+                    </div>
+                `;
+            }
+        } else if (q.type === 'audio') {
+            formatBadge = `<span class="db-format-pill db-format-audio">🎵 Âm thanh</span>`;
+            if (q.mediaUrl) {
+                mediaCell = `
+                    <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <div class="db-thumb-audio" onclick="openEditQuestionModal(${q.originalIdx})" style="cursor:pointer;" title="Nhấp để sửa/nghe audio">🎵</div>
+                        <button class="button ${isShowingOnProj ? 'button-green' : 'button-purple'}" style="height:22px; font-size:9px; padding:0 6px;" onclick="showQuestionMediaFromDb(${q.originalIdx})">
+                            ${isShowingOnProj ? '✅ Đang phát' : '🎵 Phát Audio'}
                         </button>
                     </div>
                 `;
@@ -523,27 +536,46 @@ let modalMediaData = {
     imageName: '',
     videoUrl: '',
     videoName: '',
+    audioUrl: '',
+    audioName: '',
     slides: [],
     totalDuration: 20
 };
 
 function selectModalFormat(format) {
+    if (format === 'slideshow') format = 'slides';
     modalMediaData.mode = format;
-    ['text', 'image', 'video', 'slides'].forEach(f => {
-        const card = document.getElementById(`formatCard_${f}`);
+
+    const optMap = {
+        'text': 'formatOptText',
+        'image': 'formatOptImage',
+        'video': 'formatOptVideo',
+        'audio': 'formatOptAudio',
+        'slides': 'formatOptSlideshow',
+        'slideshow': 'formatOptSlideshow'
+    };
+
+    ['text', 'image', 'video', 'audio', 'slideshow'].forEach(f => {
+        const cardId = optMap[f] || `formatOpt${f.charAt(0).toUpperCase() + f.slice(1)}`;
+        const card = document.getElementById(cardId);
         if (card) {
-            if (f === format) card.classList.add('selected');
-            else card.classList.remove('selected');
+            if (f === format || (format === 'slides' && f === 'slideshow')) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
         }
     });
 
     const secImg = document.getElementById('modalImageSection');
     const secVid = document.getElementById('modalVideoSection');
-    const secSlides = document.getElementById('modalSlidesSection');
+    const secAud = document.getElementById('modalAudioSection');
+    const secSlides = document.getElementById('modalSlideshowSection') || document.getElementById('modalSlidesSection');
 
-    if (secImg) secImg.style.display = format === 'image' ? 'flex' : 'none';
-    if (secVid) secVid.style.display = format === 'video' ? 'flex' : 'none';
-    if (secSlides) secSlides.style.display = format === 'slides' ? 'flex' : 'none';
+    if (secImg) secImg.style.display = (format === 'image') ? 'flex' : 'none';
+    if (secVid) secVid.style.display = (format === 'video') ? 'flex' : 'none';
+    if (secAud) secAud.style.display = (format === 'audio') ? 'flex' : 'none';
+    if (secSlides) secSlides.style.display = (format === 'slides' || format === 'slideshow') ? 'flex' : 'none';
 }
 
 function openAddQuestionModal() {
@@ -554,24 +586,50 @@ function openAddQuestionModal() {
         imageName: '',
         videoUrl: '',
         videoName: '',
+        audioUrl: '',
+        audioName: '',
         slides: [],
         totalDuration: 20
     };
 
-    document.getElementById('modalTitle').textContent = 'Thêm câu hỏi mới';
-    document.getElementById('modalStt').value = questionsList.length + 1;
-    document.getElementById('modalQuestionText').value = '';
-    document.getElementById('modalAnswerText').value = '';
-    document.getElementById('modalDuration').value = 20;
+    const titleEl = document.getElementById('modalTitle');
+    if (titleEl) titleEl.innerHTML = '<span>➕</span> Thêm câu hỏi mới';
+
+    const editIdxEl = document.getElementById('modalEditIndex');
+    if (editIdxEl) editIdxEl.value = -1;
+
+    const sttEl = document.getElementById('modalStt');
+    if (sttEl) sttEl.value = questionsList.length + 1;
+
+    const qTextEl = document.getElementById('modalQuestionText');
+    if (qTextEl) qTextEl.value = '';
+
+    const ansEl = document.getElementById('modalAnswer') || document.getElementById('modalAnswerText');
+    if (ansEl) ansEl.value = '';
+
+    const imgUrlEl = document.getElementById('modalImageUrlInput');
+    if (imgUrlEl) imgUrlEl.value = '';
+    const vidUrlEl = document.getElementById('modalVideoUrlInput');
+    if (vidUrlEl) vidUrlEl.value = '';
+    const audUrlEl = document.getElementById('modalAudioUrlInput');
+    if (audUrlEl) audUrlEl.value = '';
 
     resetModalMediaPreviews();
     selectModalFormat('text');
-    document.getElementById('questionModal').style.display = 'flex';
+
+    const modal = document.getElementById('questionModal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function openEditQuestionModal(idx) {
+    if (idx === undefined || idx < 0 || idx >= questionsList.length) {
+        idx = currentQuestionIndex;
+    }
     const q = questionsList[idx];
-    if (!q) return;
+    if (!q) {
+        showToast("⚠️ Không tìm thấy câu hỏi!");
+        return;
+    }
 
     modalMediaData = {
         mode: q.type || 'text',
@@ -580,28 +638,50 @@ function openEditQuestionModal(idx) {
         imageName: (q.type === 'image' ? q.mediaName : '') || '',
         videoUrl: (q.type === 'video' ? q.mediaUrl : '') || '',
         videoName: (q.type === 'video' ? q.mediaName : '') || '',
+        audioUrl: (q.type === 'audio' ? q.mediaUrl : '') || '',
+        audioName: (q.type === 'audio' ? q.mediaName : '') || '',
         slides: Array.isArray(q.images) ? JSON.parse(JSON.stringify(q.images)) : [],
         totalDuration: q.totalDuration || 20
     };
 
-    document.getElementById('modalTitle').textContent = `Chỉnh sửa Câu ${q.stt || (idx + 1)}`;
-    document.getElementById('modalStt').value = q.stt || (idx + 1);
-    document.getElementById('modalQuestionText').value = q.question || '';
-    document.getElementById('modalAnswerText').value = q.answer || '';
-    document.getElementById('modalDuration').value = q.totalDuration || 20;
+    const titleEl = document.getElementById('modalTitle');
+    if (titleEl) titleEl.innerHTML = `<span>✏️</span> Chỉnh sửa Câu ${q.stt || (idx + 1)}`;
+
+    const editIdxEl = document.getElementById('modalEditIndex');
+    if (editIdxEl) editIdxEl.value = idx;
+
+    const sttEl = document.getElementById('modalStt');
+    if (sttEl) sttEl.value = q.stt || (idx + 1);
+
+    const qTextEl = document.getElementById('modalQuestionText');
+    if (qTextEl) qTextEl.value = q.question || '';
+
+    const ansEl = document.getElementById('modalAnswer') || document.getElementById('modalAnswerText');
+    if (ansEl) ansEl.value = q.answer || '';
+
+    const imgUrlEl = document.getElementById('modalImageUrlInput');
+    if (imgUrlEl) imgUrlEl.value = (q.type === 'image' ? q.mediaUrl : '') || '';
+    const vidUrlEl = document.getElementById('modalVideoUrlInput');
+    if (vidUrlEl) vidUrlEl.value = (q.type === 'video' ? q.mediaUrl : '') || '';
+    const audUrlEl = document.getElementById('modalAudioUrlInput');
+    if (audUrlEl) audUrlEl.value = (q.type === 'audio' ? q.mediaUrl : '') || '';
 
     resetModalMediaPreviews();
 
     if (q.type === 'image' && q.mediaUrl) {
-        showModalImagePreview(q.mediaUrl, q.mediaName || 'Ảnh hiện tại');
+        showModalImagePreview(q.mediaUrl, q.mediaName || 'Ảnh câu hỏi');
     } else if (q.type === 'video' && q.mediaUrl) {
-        showModalVideoPreview(q.mediaUrl, q.mediaName || 'Video hiện tại');
-    } else if (q.type === 'slides' && Array.isArray(q.images)) {
+        showModalVideoPreview(q.mediaUrl, q.mediaName || 'Video câu hỏi');
+    } else if (q.type === 'audio' && q.mediaUrl) {
+        showModalAudioPreview(q.mediaUrl, q.mediaName || 'Audio câu hỏi');
+    } else if ((q.type === 'slides' || q.type === 'slideshow') && Array.isArray(q.images)) {
         renderModalSlidesList();
     }
 
     selectModalFormat(q.type || 'text');
-    document.getElementById('questionModal').style.display = 'flex';
+
+    const modal = document.getElementById('questionModal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function openEditModalForCurrentQuestion() {
@@ -609,26 +689,40 @@ function openEditModalForCurrentQuestion() {
 }
 
 function closeQuestionModal() {
-    document.getElementById('questionModal').style.display = 'none';
+    const modal = document.getElementById('questionModal');
+    if (modal) modal.style.display = 'none';
 }
 
 function resetModalMediaPreviews() {
-    const imgPrev = document.getElementById('modalImagePreview');
-    const vidPrev = document.getElementById('modalVideoPreview');
-    const slidesList = document.getElementById('modalSlidesList');
+    const imgBox = document.getElementById('modalImagePreviewBox');
+    const imgTag = document.getElementById('modalImagePreview') || document.getElementById('modalPreviewImgTag');
+    if (imgBox) imgBox.style.display = 'none';
+    if (imgTag) imgTag.src = '';
 
-    if (imgPrev) imgPrev.style.display = 'none';
-    if (vidPrev) vidPrev.style.display = 'none';
-    if (slidesList) slidesList.innerHTML = '';
+    const vidBox = document.getElementById('modalVideoPreviewBox');
+    const vidTag = document.getElementById('modalVideoPreview') || document.getElementById('modalPreviewVideoTag');
+    const frameTag = document.getElementById('modalFramePreview');
+    if (vidBox) vidBox.style.display = 'none';
+    if (vidTag) { vidTag.pause(); vidTag.src = ''; }
+    if (frameTag) { frameTag.src = ''; frameTag.style.display = 'none'; }
+
+    const audBox = document.getElementById('modalAudioPreviewBox');
+    const audTag = document.getElementById('modalAudioPreview');
+    if (audBox) audBox.style.display = 'none';
+    if (audTag) { audTag.pause(); audTag.src = ''; }
+
+    renderModalSlidesList();
 }
 
-async function handleModalImageUpload(event) {
-    const file = event.target.files[0];
+async function handleModalImageUpload(eOrFile) {
+    const file = eOrFile && eOrFile.target ? eOrFile.target.files[0] : eOrFile;
     if (file) {
         showToast("⏳ Đang tải ảnh lên...");
         const result = await uploadMediaFileToServer(file);
         modalMediaData.imageUrl = result.url;
         modalMediaData.imageName = result.name;
+        const imgUrlInput = document.getElementById('modalImageUrlInput');
+        if (imgUrlInput) imgUrlInput.value = result.url;
         showModalImagePreview(result.url, result.name);
         showToast(`✅ Đã tải ảnh: ${result.name}`);
     }
@@ -636,30 +730,33 @@ async function handleModalImageUpload(event) {
 
 function handleModalImageUrlInput(url) {
     if (url && url.trim()) {
-        modalMediaData.imageUrl = url.trim();
-        modalMediaData.imageName = 'Link hình ảnh';
-        showModalImagePreview(url.trim(), 'Link hình ảnh');
+        const cleanUrl = url.trim();
+        modalMediaData.imageUrl = cleanUrl;
+        modalMediaData.imageName = 'URL hình ảnh';
+        showModalImagePreview(cleanUrl, 'Link hình ảnh');
     }
 }
 
 function showModalImagePreview(url, name) {
-    const prev = document.getElementById('modalImagePreview');
-    const img = document.getElementById('modalPreviewImgTag');
-    const nameTag = document.getElementById('modalImageNameTag');
-    if (prev && img) {
+    const box = document.getElementById('modalImagePreviewBox');
+    const img = document.getElementById('modalImagePreview') || document.getElementById('modalPreviewImgTag');
+    const info = document.getElementById('modalImageInfo');
+    if (box && img) {
         img.src = url;
-        if (nameTag) nameTag.textContent = name || 'Ảnh đã chọn';
-        prev.style.display = 'flex';
+        if (info) info.textContent = `Tên file: ${name || 'image.png'}`;
+        box.style.display = 'flex';
     }
 }
 
-async function handleModalVideoUpload(event) {
-    const file = event.target.files[0];
+async function handleModalVideoUpload(eOrFile) {
+    const file = eOrFile && eOrFile.target ? eOrFile.target.files[0] : eOrFile;
     if (file) {
         showToast("⏳ Đang tải video lên...");
         const result = await uploadMediaFileToServer(file);
         modalMediaData.videoUrl = result.url;
         modalMediaData.videoName = result.name;
+        const vidUrlInput = document.getElementById('modalVideoUrlInput');
+        if (vidUrlInput) vidUrlInput.value = result.url;
         showModalVideoPreview(result.url, result.name);
         showToast(`✅ Đã tải video: ${result.name}`);
     }
@@ -670,24 +767,77 @@ function handleModalVideoUrlInput(url) {
         let finalUrl = parseStreamableUrl(url.trim());
         finalUrl = parseYouTubeEmbedUrl(finalUrl);
         modalMediaData.videoUrl = finalUrl;
-        modalMediaData.videoName = 'Link video web';
+        modalMediaData.videoName = 'URL video web';
         showModalVideoPreview(finalUrl, 'Link video');
     }
 }
 
 function showModalVideoPreview(url, name) {
-    const prev = document.getElementById('modalVideoPreview');
-    const vid = document.getElementById('modalPreviewVideoTag');
-    const nameTag = document.getElementById('modalVideoNameTag');
-    if (prev && vid) {
-        vid.src = url;
-        if (nameTag) nameTag.textContent = name || 'Video đã chọn';
-        prev.style.display = 'flex';
+    const box = document.getElementById('modalVideoPreviewBox');
+    const vid = document.getElementById('modalVideoPreview') || document.getElementById('modalPreviewVideoTag');
+    const frame = document.getElementById('modalFramePreview');
+    const info = document.getElementById('modalVideoInfo');
+
+    if (!box) return;
+
+    if (url.includes('streamable.com/e/') || url.includes('youtube.com/embed/')) {
+        if (vid) { vid.style.display = 'none'; vid.src = ''; }
+        if (frame) {
+            frame.src = url;
+            frame.style.display = 'block';
+        }
+    } else {
+        if (frame) { frame.style.display = 'none'; frame.src = ''; }
+        if (vid) {
+            vid.src = url;
+            vid.style.display = 'block';
+        }
+    }
+    if (info) info.textContent = `Video: ${name || 'video.mp4'}`;
+    box.style.display = 'flex';
+}
+
+async function handleModalAudioUpload(eOrFile) {
+    const file = eOrFile && eOrFile.target ? eOrFile.target.files[0] : eOrFile;
+    if (file) {
+        showToast("⏳ Đang tải audio lên...");
+        const result = await uploadMediaFileToServer(file);
+        modalMediaData.audioUrl = result.url;
+        modalMediaData.audioName = result.name;
+        const audUrlInput = document.getElementById('modalAudioUrlInput');
+        if (audUrlInput) audUrlInput.value = result.url;
+        showModalAudioPreview(result.url, result.name);
+        showToast(`✅ Đã tải audio: ${result.name}`);
     }
 }
 
-async function handleModalSlidesUpload(event) {
-    const files = Array.from(event.target.files);
+function handleModalAudioUrlInput(url) {
+    if (url && url.trim()) {
+        const cleanUrl = url.trim();
+        modalMediaData.audioUrl = cleanUrl;
+        modalMediaData.audioName = 'URL audio';
+        showModalAudioPreview(cleanUrl, 'Link Audio');
+    }
+}
+
+function showModalAudioPreview(url, name) {
+    const box = document.getElementById('modalAudioPreviewBox');
+    const aud = document.getElementById('modalAudioPreview');
+    const info = document.getElementById('modalAudioInfo');
+    if (box && aud) {
+        aud.src = url;
+        if (info) info.textContent = `Audio: ${name || 'audio.mp3'}`;
+        box.style.display = 'flex';
+    }
+}
+
+async function handleModalSlidesUpload(eOrFiles) {
+    let files = [];
+    if (eOrFiles && eOrFiles.target) {
+        files = Array.from(eOrFiles.target.files);
+    } else if (eOrFiles && eOrFiles.length !== undefined) {
+        files = Array.from(eOrFiles);
+    }
     if (files.length === 0) return;
 
     showToast(`⏳ Đang xử lý ${files.length} ảnh slide...`);
@@ -704,10 +854,19 @@ async function handleModalSlidesUpload(event) {
 
 function renderModalSlidesList() {
     const container = document.getElementById('modalSlidesList');
+    const countEl = document.getElementById('modalSlidesCount');
+    const perTimeEl = document.getElementById('modalSlidePerTime');
+
+    const totalSlides = modalMediaData.slides.length;
+    if (countEl) countEl.textContent = totalSlides;
+    if (perTimeEl) {
+        perTimeEl.textContent = totalSlides > 0 ? `${(20 / totalSlides).toFixed(1)}s` : '--s';
+    }
+
     if (!container) return;
 
-    if (modalMediaData.slides.length === 0) {
-        container.innerHTML = `<span style="font-size:10px; color:#64748b; padding:8px 0;">Chưa có ảnh slide nào được thêm.</span>`;
+    if (totalSlides === 0) {
+        container.innerHTML = `<div style="width: 100%; text-align: center; color: #64748b; font-size: 9.5px; padding: 8px 0;">Chưa chọn ảnh nào</div>`;
         return;
     }
 
@@ -715,7 +874,7 @@ function renderModalSlidesList() {
         <div class="modal-slide-card">
             <img src="${s.url}" alt="Slide ${idx + 1}" />
             <span class="slide-num">#${idx + 1}</span>
-            <button class="slide-del" onclick="removeModalSlide(${idx})" title="Xóa slide này">×</button>
+            <button class="slide-del" type="button" onclick="removeModalSlide(${idx})" title="Xóa slide này">✕</button>
         </div>
     `).join('');
 }
@@ -728,33 +887,53 @@ function removeModalSlide(idx) {
 function clearModalSlides() {
     modalMediaData.slides = [];
     renderModalSlidesList();
+    showToast("Đã xóa tất cả slide.");
 }
 
-function removeModalMedia() {
-    modalMediaData.imageUrl = '';
-    modalMediaData.imageName = '';
-    modalMediaData.videoUrl = '';
-    modalMediaData.videoName = '';
+function removeModalMedia(type) {
+    if (type === 'image' || (!type && modalMediaData.mode === 'image')) {
+        modalMediaData.imageUrl = '';
+        modalMediaData.imageName = '';
+        const el = document.getElementById('modalImageUrlInput');
+        if (el) el.value = '';
+    } else if (type === 'video' || (!type && modalMediaData.mode === 'video')) {
+        modalMediaData.videoUrl = '';
+        modalMediaData.videoName = '';
+        const el = document.getElementById('modalVideoUrlInput');
+        if (el) el.value = '';
+    } else if (type === 'audio' || (!type && modalMediaData.mode === 'audio')) {
+        modalMediaData.audioUrl = '';
+        modalMediaData.audioName = '';
+        const el = document.getElementById('modalAudioUrlInput');
+        if (el) el.value = '';
+    }
     resetModalMediaPreviews();
     showToast("Đã xóa file đính kèm.");
 }
 
-function saveQuestionModal() {
-    const stt = parseInt(document.getElementById('modalStt').value, 10) || (questionsList.length + 1);
-    const questionText = document.getElementById('modalQuestionText').value.trim();
-    const answerText = document.getElementById('modalAnswerText').value.trim();
-    const duration = parseInt(document.getElementById('modalDuration').value, 10) || 20;
+function saveQuestionModal(showOnProjector = false) {
+    const sttEl = document.getElementById('modalStt');
+    const qTextEl = document.getElementById('modalQuestionText');
+    const ansEl = document.getElementById('modalAnswer') || document.getElementById('modalAnswerText');
+
+    const stt = parseInt(sttEl ? sttEl.value : (questionsList.length + 1), 10) || (questionsList.length + 1);
+    const questionText = (qTextEl ? qTextEl.value : '').trim();
+    const answerText = (ansEl ? ansEl.value : '').trim();
 
     if (!questionText) {
         showToast("⚠️ Vui lòng nhập nội dung câu hỏi!");
+        if (qTextEl) qTextEl.focus();
         return;
     }
     if (!answerText) {
-        showToast("⚠️ Vui lòng nhập câu trả lời!");
+        showToast("⚠️ Vui lòng nhập đáp án!");
+        if (ansEl) ansEl.focus();
         return;
     }
 
     let itemType = modalMediaData.mode;
+    if (itemType === 'slideshow') itemType = 'slides';
+
     let mediaUrl = '';
     let mediaName = '';
     let images = [];
@@ -765,9 +944,14 @@ function saveQuestionModal() {
     } else if (itemType === 'video') {
         mediaUrl = modalMediaData.videoUrl;
         mediaName = modalMediaData.videoName;
+    } else if (itemType === 'audio') {
+        mediaUrl = modalMediaData.audioUrl;
+        mediaName = modalMediaData.audioName;
     } else if (itemType === 'slides') {
         images = JSON.parse(JSON.stringify(modalMediaData.slides));
     }
+
+    const editIdx = modalMediaData.editIndex;
 
     const newQ = {
         stt: stt,
@@ -777,14 +961,17 @@ function saveQuestionModal() {
         mediaUrl: mediaUrl,
         mediaName: mediaName,
         images: images,
-        totalDuration: duration
+        totalDuration: 20
     };
 
-    if (modalMediaData.editIndex >= 0 && modalMediaData.editIndex < questionsList.length) {
-        questionsList[modalMediaData.editIndex] = newQ;
+    let targetIndex = editIdx;
+
+    if (editIdx >= 0 && editIdx < questionsList.length) {
+        questionsList[editIdx] = newQ;
         showToast(`✅ Đã cập nhật Câu ${stt}!`);
     } else {
         questionsList.push(newQ);
+        targetIndex = questionsList.length - 1;
         showToast(`✅ Đã thêm Câu ${stt}!`);
     }
 
@@ -792,6 +979,12 @@ function saveQuestionModal() {
     closeQuestionModal();
     renderDatabaseTable();
     renderQuestion();
+
+    if (showOnProjector && targetIndex >= 0) {
+        currentQuestionIndex = targetIndex;
+        gameState.currentQuestionIndex = currentQuestionIndex;
+        showCurrentQuestionMedia();
+    }
 }
 
 /* =====================================================
