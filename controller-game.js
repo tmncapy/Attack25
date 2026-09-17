@@ -72,10 +72,17 @@ function judgeCorrect() {
     const winnerColor = gameState.buzzer.winner;
     const winnerName = gameState.players[winnerColor]?.name || winnerColor;
 
+    if (gameState.players && gameState.players[winnerColor]) {
+        gameState.players[winnerColor].score = (gameState.players[winnerColor].score || 0) + 1;
+        const input = document.getElementById("score" + capitalize(winnerColor));
+        if (input) input.value = gameState.players[winnerColor].score;
+        updatePreviewScores();
+    }
+
     gameState.buzzer.status = 'locked';
     renderBuzzerUI();
     broadcastState("judgeCorrect", 'correct');
-    showToast(`✅ ${winnerName} TRẢ LỜI ĐÚNG!`);
+    showToast(`✅ ${winnerName} TRẢ LỜI ĐÚNG! (+1 Điểm)`);
 }
 
 function judgeWrong() {
@@ -100,37 +107,71 @@ function judgeWrong() {
 }
 
 function renderBuzzerUI() {
-    const banner = document.getElementById("buzzerStatusBanner");
-    const valText = document.getElementById("buzzerStateVal");
-    const winnerInfo = document.getElementById("buzzerWinnerInfo");
+    const banner = document.getElementById("buzzerBanner") || document.getElementById("buzzerStatusBanner");
+    const valText = document.getElementById("buzzerStateText") || document.getElementById("buzzerStateVal");
+    const winnerInfo = document.getElementById("buzzerWinnerDisplay") || document.getElementById("buzzerWinnerInfo");
+    const badge = document.getElementById("buzzerBadge");
     const bzState = gameState.buzzer || {};
+
+    const status = bzState.status || 'locked';
 
     if (banner) {
         banner.className = 'buzzer-status-banner';
-        if (bzState.status === 'armed') banner.classList.add('armed');
-        else if (bzState.status === 'locked') banner.classList.add('locked');
-        else if (bzState.status === 'buzzed') banner.classList.add('buzzed');
+        if (status === 'armed') {
+            banner.classList.add('armed');
+        } else if (status === 'buzzed') {
+            banner.classList.add('buzzed');
+        } else {
+            banner.classList.add('locked');
+        }
+    }
+
+    if (badge) {
+        if (status === 'armed') {
+            badge.textContent = 'ĐANG MỞ';
+            badge.style.background = '#14532d';
+            badge.style.color = '#86efac';
+        } else if (status === 'buzzed') {
+            badge.textContent = 'ĐÃ BẤM';
+            badge.style.background = '#78350f';
+            badge.style.color = '#fde047';
+        } else {
+            badge.textContent = 'ĐÃ KHÓA';
+            badge.style.background = '#7f1d1d';
+            badge.style.color = '#fca5a5';
+        }
     }
 
     if (valText) {
-        if (bzState.status === 'armed') valText.textContent = '🟢 ĐANG MỞ CHUÔNG';
-        else if (bzState.status === 'locked') valText.textContent = '🔒 ĐANG KHÓA';
-        else if (bzState.status === 'buzzed') valText.textContent = '🔔 ĐÃ BẤM CHUÔNG!';
-        else valText.textContent = '---';
+        if (status === 'armed') {
+            valText.textContent = '🟢 ĐANG MỞ CHUÔNG';
+        } else if (status === 'buzzed') {
+            valText.textContent = '🔔 ĐÃ BẤM CHUÔNG!';
+        } else {
+            valText.textContent = '🔒 ĐÃ KHÓA CHUÔNG';
+        }
     }
 
     if (winnerInfo) {
-        if (bzState.winner) {
+        if (status === 'buzzed' && bzState.winner) {
             const pName = gameState.players[bzState.winner]?.name || bzState.winner;
-            winnerInfo.innerHTML = `<span style="color:#ffd43b;">${pName}</span> <span style="font-size:9px; color:#94a3b8;">(+${bzState.buzzTime || '0.00'}s)</span>`;
+            winnerInfo.innerHTML = `<span style="color:#ffd43b; font-weight:bold;">${escapeHtml(pName)}</span> <span style="font-size:9.5px; color:#94a3b8;">(+${bzState.buzzTime || '0.00'}s)</span>`;
+        } else if (status === 'armed') {
+            winnerInfo.innerHTML = '<span style="color:#4ade80; font-weight:bold;">Sẵn sàng nhận tín hiệu...</span>';
         } else {
-            winnerInfo.textContent = '';
+            winnerInfo.textContent = 'Chưa có ai bấm chuông';
         }
     }
 
     ['red', 'green', 'white', 'blue'].forEach(color => {
-        const btn = document.getElementById(`buzzerBtn_${color}`);
+        const btn = document.getElementById('buzzBtn' + capitalize(color)) || document.getElementById(`buzzerBtn_${color}`);
         const rankTag = document.getElementById(`buzzerRank_${color}`);
+        const nameEl = document.getElementById('buzzName' + capitalize(color));
+
+        if (nameEl && gameState.players && gameState.players[color]) {
+            nameEl.textContent = gameState.players[color].name || color.toUpperCase();
+        }
+
         if (!btn) return;
 
         btn.classList.remove('buzzer-winner', 'buzzer-locked-player');
@@ -565,8 +606,8 @@ function startSpecialRoundProgressLoop() {
 }
 
 function updateSpecialProgressBarUI(current, total) {
-    const bar = document.getElementById("specialProgressFill");
-    const text = document.getElementById("specialTimeText");
+    const bar = document.getElementById("specialProgressFill") || document.getElementById("specialProgressBar");
+    const text = document.getElementById("specialTimeText") || document.getElementById("specialCountdownLabel");
     if (!bar || !text) return;
 
     const percent = Math.min(100, Math.max(0, (current / total) * 100));
@@ -578,21 +619,50 @@ function renderSpecialRoundUI() {
     const vState = gameState.video || {};
     const curMode = vState.mode || 'local_video';
 
-    ['local_video', 'slides', 'streamable'].forEach(m => {
-        const tab = document.getElementById(`specialTab_${m}`);
-        const panel = document.getElementById(`specialPanel_${m}`);
+    // Tabs and Panels (supports both specialTab_* and btnMode* naming)
+    const modeMap = {
+        'local_video': { btn: 'btnModeLocalVideo', sec: 'secLocalVideo', tab: 'specialTab_local_video', panel: 'specialPanel_local_video' },
+        'slideshow': { btn: 'btnModeSlideshow', sec: 'secSlideshow', tab: 'specialTab_slides', panel: 'specialPanel_slides' },
+        'slides': { btn: 'btnModeSlideshow', sec: 'secSlideshow', tab: 'specialTab_slides', panel: 'specialPanel_slides' },
+        'streamable': { btn: 'btnModeStreamable', sec: 'secStreamable', tab: 'specialTab_streamable', panel: 'specialPanel_streamable' }
+    };
+
+    ['local_video', 'slideshow', 'streamable'].forEach(m => {
+        const info = modeMap[m];
+        const isCurrent = (curMode === m || (m === 'slideshow' && curMode === 'slides'));
+        
+        const btn = document.getElementById(info.btn);
+        if (btn) {
+            btn.style.background = isCurrent ? '#2563eb' : '#334155';
+            btn.style.borderColor = isCurrent ? '#60a5fa' : 'transparent';
+        }
+        const sec = document.getElementById(info.sec);
+        if (sec) {
+            sec.style.display = isCurrent ? 'block' : 'none';
+        }
+        const tab = document.getElementById(info.tab);
         if (tab) {
-            if (m === curMode) tab.classList.add('active');
+            if (isCurrent) tab.classList.add('active');
             else tab.classList.remove('active');
         }
+        const panel = document.getElementById(info.panel);
         if (panel) {
-            panel.style.display = (m === curMode) ? 'block' : 'none';
+            panel.style.display = isCurrent ? 'block' : 'none';
         }
     });
 
-    const vNameTag = document.getElementById('specialLocalVideoName');
+    const vNameTag = document.getElementById('specialLocalVideoName') || document.getElementById('specialVideoFileName');
+    const vInfoBox = document.getElementById('specialVideoInfoBox');
     if (vNameTag) {
-        vNameTag.textContent = vState.videoName || (vState.url ? 'Video đã chọn' : 'Chưa có video');
+        vNameTag.textContent = vState.videoName || (vState.url ? 'Video đã nạp' : 'Chưa có video');
+    }
+    if (vInfoBox) {
+        vInfoBox.style.display = (vState.videoName || vState.url) ? 'flex' : 'none';
+    }
+
+    const slidesCountTag = document.getElementById('specialSlidesCount');
+    if (slidesCountTag) {
+        slidesCountTag.textContent = `${Array.isArray(vState.images) ? vState.images.length : 0} ảnh`;
     }
 
     const slidesList = document.getElementById('specialSlidesList');
@@ -610,9 +680,14 @@ function renderSpecialRoundUI() {
         }
     }
 
-    const urlInp = document.getElementById('videoUrlInput');
+    const urlInp = document.getElementById('videoUrlInput') || document.getElementById('streamableUrlInput');
     if (urlInp && vState.url && document.activeElement !== urlInp) {
         urlInp.value = vState.url;
+    }
+
+    const loopChk = document.getElementById('chkSpecialLoop');
+    if (loopChk) {
+        loopChk.checked = !!vState.loop;
     }
 
     const loopBtn = document.getElementById('btnSpecialToggleLoop');
