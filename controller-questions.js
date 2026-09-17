@@ -990,16 +990,35 @@ function saveQuestionModal(showOnProjector = false) {
 /* =====================================================
    EXCEL / CSV / JSON IMPORT & EXPORT
 ===================================================== */
-function handleExcelUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+function handleExcelUpload(eOrFile) {
+    let file = null;
+    if (eOrFile && eOrFile.target && eOrFile.target.files) {
+        file = eOrFile.target.files[0];
+    } else if (eOrFile instanceof File) {
+        file = eOrFile;
+    } else if (eOrFile && eOrFile.files) {
+        file = eOrFile.files[0];
+    } else if (eOrFile && eOrFile[0]) {
+        file = eOrFile[0];
+    }
+
+    if (!file) {
+        showToast("⚠️ Vui lòng chọn một file Excel (.xlsx, .xls) hoặc CSV!");
+        return;
+    }
 
     const fileName = file.name.toLowerCase();
+
+    // Reset input value so re-uploading same file triggers change event
+    const fileInput = document.getElementById('excelFileInput');
+    if (fileInput) fileInput.value = '';
 
     if (fileName.endsWith('.json')) {
         importQuestionsJSON(file);
         return;
     }
+
+    showToast("⏳ Đang nạp dữ liệu từ file " + file.name + "...");
 
     const reader = new FileReader();
 
@@ -1017,15 +1036,15 @@ function handleExcelUpload(event) {
     } else {
         reader.onload = function(e) {
             try {
-                const data = new Uint8Array(e.target.result);
                 if (typeof XLSX === 'undefined') {
-                    showToast("⚠️ Thư viện XLSX chưa sẵn sàng. Vui lòng thử lại!");
+                    showToast("⚠️ Thư viện XLSX chưa sẵn sàng. Vui lòng thử lại sau giây lát!");
                     return;
                 }
+                const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
                 parseRawRows(jsonRows);
             } catch (err) {
                 showToast("⚠️ Lỗi phân tích file Excel: " + err.message);
@@ -1033,6 +1052,18 @@ function handleExcelUpload(event) {
         };
         reader.readAsArrayBuffer(file);
     }
+}
+
+function isMediaUrl(str) {
+    if (!str) return false;
+    const s = String(str).trim().toLowerCase();
+    if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:') || s.startsWith('/uploads/')) {
+        return true;
+    }
+    if (s.match(/\.(jpg|jpeg|png|gif|webp|mp4|webm|mp3|wav|ogg|avi|mov)$/i)) {
+        return true;
+    }
+    return false;
 }
 
 function parseRawRows(rows) {
@@ -1044,57 +1075,124 @@ function parseRawRows(rows) {
     let parsedQuestions = [];
     let startRow = 0;
 
-    if (rows.length > 0) {
-        const firstRowStr = JSON.stringify(rows[0]).toLowerCase();
-        if (firstRowStr.includes('câu') || firstRowStr.includes('đáp án') || firstRowStr.includes('question') || firstRowStr.includes('answer')) {
-            startRow = 1;
+    // Detect Header Row & Mapping in first 5 rows
+    let colMap = { stt: -1, question: -1, answer: -1, media: -1, type: -1 };
+    let hasHeader = false;
+
+    for (let r = 0; r < Math.min(rows.length, 5); r++) {
+        const rowArr = rows[r];
+        if (!rowArr || rowArr.length < 2) continue;
+        const rowStr = rowArr.map(c => String(c || '').toLowerCase()).join(' ');
+
+        if (rowStr.includes('câu') || rowStr.includes('question') || rowStr.includes('đáp án') || rowStr.includes('answer') || rowStr.includes('stt') || rowStr.includes('nội dung')) {
+            hasHeader = true;
+            startRow = r + 1;
+
+            rowArr.forEach((cell, colIdx) => {
+                const cText = String(cell || '').toLowerCase().trim();
+                if (cText.includes('stt') || cText.includes('câu số') || cText === 'no' || cText === 'num' || cText === '#') {
+                    colMap.stt = colIdx;
+                } else if (cText.includes('câu hỏi') || cText.includes('question') || cText.includes('nội dung') || cText === 'q' || cText.includes('đề bài')) {
+                    colMap.question = colIdx;
+                } else if (cText.includes('đáp án') || cText.includes('answer') || cText.includes('kết quả') || cText === 'a' || cText === 'ans' || cText.includes('trả lời')) {
+                    colMap.answer = colIdx;
+                } else if (cText.includes('link') || cText.includes('media') || cText.includes('url') || cText.includes('ảnh') || cText.includes('video') || cText.includes('audio')) {
+                    colMap.media = colIdx;
+                } else if (cText.includes('loại') || cText.includes('type') || cText.includes('định dạng') || cText.includes('format')) {
+                    colMap.type = colIdx;
+                }
+            });
+            break;
         }
     }
 
+    // Process Data Rows
     for (let i = startRow; i < rows.length; i++) {
         const row = rows[i];
-        if (!row || row.length < 2) continue;
+        if (!row || row.length === 0) continue;
 
-        let stt = i + 1 - startRow;
+        const cleanedRow = row.map(c => (c !== undefined && c !== null) ? String(c).trim() : '');
+        
+        // Skip empty row
+        if (cleanedRow.every(c => c === '')) continue;
+
+        let stt = 0;
         let qText = '';
         let aText = '';
-        let mType = 'text';
         let mUrl = '';
+        let mType = 'text';
 
-        if (row.length === 2) {
-            qText = String(row[0] || '').trim();
-            aText = String(row[1] || '').trim();
-        } else if (row.length >= 3) {
-            if (!isNaN(parseInt(row[0], 10))) {
-                stt = parseInt(row[0], 10);
-                qText = String(row[1] || '').trim();
-                aText = String(row[2] || '').trim();
-                if (row[3]) mUrl = String(row[3]).trim();
-                if (row[4]) mType = String(row[4]).trim().toLowerCase();
+        if (hasHeader && colMap.question >= 0) {
+            if (colMap.stt >= 0 && cleanedRow[colMap.stt]) {
+                const pStt = parseInt(cleanedRow[colMap.stt], 10);
+                if (!isNaN(pStt)) stt = pStt;
+            }
+            if (colMap.question >= 0) qText = cleanedRow[colMap.question] || '';
+            if (colMap.answer >= 0) aText = cleanedRow[colMap.answer] || '';
+            if (colMap.media >= 0) mUrl = cleanedRow[colMap.media] || '';
+            if (colMap.type >= 0) mType = cleanedRow[colMap.type] || 'text';
+        } else {
+            // Position-based heuristic
+            const firstNum = parseInt(cleanedRow[0], 10);
+            if (!isNaN(firstNum) && String(firstNum) === cleanedRow[0]) {
+                stt = firstNum;
+                qText = cleanedRow[1] || '';
+                aText = cleanedRow[2] || '';
+                if (cleanedRow[3]) mUrl = cleanedRow[3];
+                if (cleanedRow[4]) mType = cleanedRow[4];
             } else {
-                qText = String(row[0] || '').trim();
-                aText = String(row[1] || '').trim();
-                if (row[2]) mUrl = String(row[2]).trim();
-                if (row[3]) mType = String(row[3]).trim().toLowerCase();
+                qText = cleanedRow[0] || '';
+                aText = cleanedRow[1] || '';
+                if (cleanedRow[2]) mUrl = cleanedRow[2];
+                if (cleanedRow[3]) mType = cleanedRow[3];
             }
         }
 
-        if (mUrl && !mType) {
-            if (mUrl.match(/\.(mp4|webm|avi|mov)$/i) || mUrl.includes('streamable') || mUrl.includes('youtube')) {
+        // SMART RECOVERY FOR SHIFTED ANSWERS:
+        // If aText is empty (e.g. cell placed in Col D/E as in row 21, 24, 25, 28, 30 of Excel screenshot)
+        if (!aText) {
+            for (let c = 0; c < cleanedRow.length; c++) {
+                const val = cleanedRow[c];
+                if (!val) continue;
+                if (c === colMap.stt || c === colMap.question) continue;
+                if (stt > 0 && String(stt) === val) continue;
+                if (val === qText) continue;
+
+                if (isMediaUrl(val)) {
+                    if (!mUrl) mUrl = val;
+                } else {
+                    aText = val;
+                    break;
+                }
+            }
+        }
+
+        // Auto-detect media type if mUrl is present
+        if (mUrl) {
+            const urlLower = mUrl.toLowerCase();
+            if (urlLower.match(/\.(mp4|webm|avi|mov)$/i) || urlLower.includes('streamable.com') || urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
                 mType = 'video';
-            } else {
+            } else if (urlLower.match(/\.(mp3|wav|ogg|aac|m4a)$/i)) {
+                mType = 'audio';
+            } else if (urlLower.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) || urlLower.startsWith('data:image')) {
+                mType = 'image';
+            } else if (!mType || mType === 'text') {
                 mType = 'image';
             }
+        }
+
+        if (!stt) {
+            stt = parsedQuestions.length + 1;
         }
 
         if (qText) {
             parsedQuestions.push({
                 stt: stt,
-                type: mType || 'text',
+                type: (mType || 'text').toLowerCase(),
                 question: qText,
-                answer: aText,
+                answer: aText || '(Chưa có đáp án)',
                 mediaUrl: mUrl,
-                mediaName: mUrl ? 'Link đính kèm' : ''
+                mediaName: mUrl ? 'File đính kèm' : ''
             });
         }
     }

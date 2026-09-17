@@ -96,6 +96,14 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', express.static(uploadsDir));
 app.use('/SFX', express.static(path.join(process.cwd(), 'SFX')));
+app.get('/vendor/xlsx.full.min.js', (req: Request, res: Response) => {
+  const xlsxPath = path.join(process.cwd(), 'node_modules', 'xlsx', 'dist', 'xlsx.full.min.js');
+  if (fs.existsSync(xlsxPath)) {
+    res.sendFile(xlsxPath);
+  } else {
+    res.status(404).send('Not found');
+  }
+});
 
 // Upload media endpoint for local videos, audio and slideshow images
 app.post('/api/upload-media', (req: Request, res: Response) => {
