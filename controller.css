@@ -274,69 +274,74 @@ html, body {
 .button-gold { background: #f59f00; color: #000; }
 .button-yellow { background: #eab308; color: #0f172a; }
 
-/* 25-PANEL BOARD (COMPACT 5x5) */
+/* 25-PANEL BOARD (COMPACT TABLE 5x5) */
 .panel-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 2px;
-    margin-bottom: 2px;
+    grid-template-rows: repeat(5, 1fr);
+    gap: 1px;
+    background: #2b3648;
+    border: 2px solid #2b3648;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 3px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
 .panel-button {
-    aspect-ratio: 1.05 / 1;
-    min-height: 24px;
+    aspect-ratio: 1.1 / 1;
+    min-height: 22px;
     max-height: 32px;
-    border: 1px solid #2a374a;
-    border-radius: 3px;
-    background: linear-gradient(135deg, #1b2434, #0f172a);
+    border: none;
+    border-radius: 0;
+    background: #0d131f;
     color: #f8fafc;
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 900;
     cursor: pointer;
-    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.1s ease, box-shadow 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     user-select: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
     padding: 0;
+    margin: 0;
+    box-shadow: none;
 }
 
 .panel-button:hover {
-    transform: translateY(-1px);
-    border-color: #f59f00;
-    box-shadow: 0 2px 5px rgba(245, 159, 0, 0.35);
+    background: #1e293b;
+    color: #f59f00;
+    z-index: 2;
 }
 
 .panel-button.active {
     background: #ffffff !important;
     color: #000000 !important;
-    border-color: #38bdf8 !important;
-    box-shadow: 0 0 8px #38bdf8, inset 0 0 2px #fff !important;
-    transform: scale(1.03);
+    box-shadow: inset 0 0 0 2px #38bdf8, 0 0 8px rgba(56, 189, 248, 0.8) !important;
     z-index: 5;
+    font-weight: 900;
 }
 
 .panel-button.used {
-    background: #252e3d !important;
-    color: #55657d !important;
-    border-color: #1a2230 !important;
-    opacity: .55;
+    background: #161e2b !important;
+    color: #4b586e !important;
     text-decoration: line-through;
+    opacity: 0.6;
 }
 
 .panel-button.active.used {
     background: #ffffff !important;
-    color: #000 !important;
+    color: #000000 !important;
     opacity: 1;
     text-decoration: none;
 }
 
-.panel-button.panel-red { background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #fff !important; border-color: #f87171 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
-.panel-button.panel-green { background: linear-gradient(135deg, #22c55e, #16a34a) !important; color: #fff !important; border-color: #4ade80 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
-.panel-button.panel-white { background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important; color: #0f172a !important; border-color: #ffffff !important; text-shadow: none; }
-.panel-button.panel-blue { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; color: #fff !important; border-color: #60a5fa !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.panel-button.panel-red { background: linear-gradient(135deg, #ef4444, #b91c1c) !important; color: #fff !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.panel-button.panel-green { background: linear-gradient(135deg, #22c55e, #15803d) !important; color: #fff !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+.panel-button.panel-white { background: linear-gradient(135deg, #ffffff, #e2e8f0) !important; color: #0f172a !important; text-shadow: none; }
+.panel-button.panel-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important; color: #fff !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
 
 .panel-button.color-hidden {
     opacity: 0.35 !important;

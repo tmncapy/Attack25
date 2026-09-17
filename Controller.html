@@ -55,14 +55,15 @@
                 <button class="topbar-media-hide-btn" onclick="hideQuestionMedia()" style="background: #ef4444; color: #fff; border: none; border-radius: 2px; padding: 1px 4px; font-size: 8.5px; cursor: pointer;">Ẩn Media</button>
             </div>
             
-            <!-- Quick Link Buttons -->
+            <!-- Quick Link Buttons & Copy Actions -->
             <div style="display: flex; gap: 2px; align-items: center;">
-                <a id="navLinkHost" href="/Host.html?roomid=123456&auth=1234" target="_blank" class="button button-gray" style="height:20px; padding:0 5px; text-decoration:none; color:#fff; font-size:9.5px;" title="Mở máy MC">🎤 Host</a>
-                <a id="navLinkP1" href="/player1.html?roomid=123456&auth=1111" target="_blank" class="button button-red" style="height:20px; padding:0 4px; text-decoration:none; color:#fff; font-size:9.5px;" title="Mở chuông Player 1">🔴 P1</a>
-                <a id="navLinkP2" href="/player2.html?roomid=123456&auth=2222" target="_blank" class="button button-green" style="height:20px; padding:0 4px; text-decoration:none; color:#fff; font-size:9.5px;" title="Mở chuông Player 2">🟢 P2</a>
-                <a id="navLinkP3" href="/player3.html?roomid=123456&auth=3333" target="_blank" class="button button-white" style="height:20px; padding:0 4px; text-decoration:none; color:#111; font-size:9.5px;" title="Mở chuông Player 3">⚪ P3</a>
-                <a id="navLinkP4" href="/player4.html?roomid=123456&auth=4444" target="_blank" class="button button-blue" style="height:20px; padding:0 4px; text-decoration:none; color:#fff; font-size:9.5px;" title="Mở chuông Player 4">🔵 P4</a>
-                <a id="navLinkProj" href="/Projector.html?roomid=123456" target="_blank" class="button button-orange" style="height:20px; padding:0 5px; text-decoration:none; color:#fff; font-size:9.5px;" title="Mở màn hình Projector">🖥️ Proj</a>
+                <button type="button" class="button button-gold" onclick="copyAllRoleLinks()" style="height:20px; padding:0 5px; font-size:9px; font-weight:bold; color:#000; background:#f59f00;" title="Sao chép toàn bộ link gửi thí sinh và MC">📋 Copy Link</button>
+                <a id="navLinkHost" href="/Host.html?roomid=123456&auth=1234" target="_blank" class="button button-gray" style="height:20px; padding:0 4px; text-decoration:none; color:#fff; font-size:9px;" title="Mở máy MC">🎤 Host</a>
+                <a id="navLinkP1" href="/player1.html?roomid=123456&auth=1111" target="_blank" class="button button-red" style="height:20px; padding:0 4px; text-decoration:none; color:#fff; font-size:9px;" title="Mở chuông Player 1">🔴 P1</a>
+                <a id="navLinkP2" href="/player2.html?roomid=123456&auth=2222" target="_blank" class="button button-green" style="height:20px; padding:0 4px; text-decoration:none; color:#fff; font-size:9px;" title="Mở chuông Player 2">🟢 P2</a>
+                <a id="navLinkP3" href="/player3.html?roomid=123456&auth=3333" target="_blank" class="button button-white" style="height:20px; padding:0 4px; text-decoration:none; color:#111; font-size:9px;" title="Mở chuông Player 3">⚪ P3</a>
+                <a id="navLinkP4" href="/player4.html?roomid=123456&auth=4444" target="_blank" class="button button-blue" style="height:20px; padding:0 4px; text-decoration:none; color:#fff; font-size:9px;" title="Mở chuông Player 4">🔵 P4</a>
+                <a id="navLinkProj" href="/Projector.html?roomid=123456" target="_blank" class="button button-orange" style="height:20px; padding:0 4px; text-decoration:none; color:#fff; font-size:9px;" title="Mở màn hình Projector">🖥️ Proj</a>
             </div>
 
             <!-- Sync Connection Status -->
@@ -471,14 +472,25 @@
                 </div>
             </section>
 
-            <!-- PLAYER CONTROLS (CLEAN 2x2 GRID SCORE) -->
+            <!-- PLAYER CONTROLS (CLEAN 2x2 GRID SCORE & 1-CLICK PLAYER LINKS) -->
             <section class="card">
                 <div class="card-header">
-                    <div class="card-title">👥 NGƯỜI CHƠI &amp; ĐIỂM SỐ</div>
-                    <button class="button button-gray" onclick="resetAllScores()" style="height:18px; font-size:8.5px; padding:0 4px;">Reset Điểm</button>
+                    <div class="card-title">👥 NGƯỜI CHƠI &amp; LINK THAM GIA</div>
+                    <div style="display:flex; gap:3px; align-items:center;">
+                        <button class="button button-gold" onclick="copyAllRoleLinks()" style="height:18px; font-size:8px; padding:0 4px; color:#000; background:#f59f00; font-weight:bold;" title="Sao chép toàn bộ link gửi thí sinh">📋 Chép tất cả link</button>
+                        <button class="button button-gray" onclick="resetAllScores()" style="height:18px; font-size:8px; padding:0 3px;">Reset Điểm</button>
+                    </div>
                 </div>
 
                 <div class="card-body" style="padding: 3px;">
+                    <!-- QUICK 1-CLICK COPY PLAYER LINKS BAR -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-bottom: 2px; background: #090d14; padding: 2px; border-radius: 3px; border: 1px solid #1e293b;">
+                        <button type="button" class="button button-red" onclick="copyRoleLink('p1')" style="height: 18px; font-size: 8px; padding: 0 1px;" title="Sao chép link Player 1 (Đỏ)">📋 Link P1</button>
+                        <button type="button" class="button button-green" onclick="copyRoleLink('p2')" style="height: 18px; font-size: 8px; padding: 0 1px;" title="Sao chép link Player 2 (Xanh Lá)">📋 Link P2</button>
+                        <button type="button" class="button button-white" onclick="copyRoleLink('p3')" style="height: 18px; font-size: 8px; padding: 0 1px; color:#0f172a;" title="Sao chép link Player 3 (Trắng)">📋 Link P3</button>
+                        <button type="button" class="button button-blue" onclick="copyRoleLink('p4')" style="height: 18px; font-size: 8px; padding: 0 1px;" title="Sao chép link Player 4 (Xanh Dương)">📋 Link P4</button>
+                    </div>
+
                     <div class="player-list">
 
                         <!-- PLAYER RED -->
@@ -486,6 +498,7 @@
                             <div class="player-top">
                                 <div class="player-number" style="background: #dc2626; color: #fff;">1</div>
                                 <input class="player-name-input" id="nameRed" value="PLAYER 1" oninput="updatePlayerName('red')">
+                                <button type="button" onclick="copyRoleLink('p1')" class="button button-gray" style="height:16px; font-size:7.5px; padding:0 3px;" title="Sao chép link Player 1">📋</button>
                             </div>
                             <div class="player-controls">
                                 <button class="score-button" onclick="changeScore('red', -1)">−</button>
@@ -499,6 +512,7 @@
                             <div class="player-top">
                                 <div class="player-number" style="background: #16a34a; color: #fff;">2</div>
                                 <input class="player-name-input" id="nameGreen" value="PLAYER 2" oninput="updatePlayerName('green')">
+                                <button type="button" onclick="copyRoleLink('p2')" class="button button-gray" style="height:16px; font-size:7.5px; padding:0 3px;" title="Sao chép link Player 2">📋</button>
                             </div>
                             <div class="player-controls">
                                 <button class="score-button" onclick="changeScore('green', -1)">−</button>
@@ -512,6 +526,7 @@
                             <div class="player-top">
                                 <div class="player-number" style="background: #f8fafc; color: #0f172a;">3</div>
                                 <input class="player-name-input" id="nameWhite" value="PLAYER 3" oninput="updatePlayerName('white')">
+                                <button type="button" onclick="copyRoleLink('p3')" class="button button-gray" style="height:16px; font-size:7.5px; padding:0 3px;" title="Sao chép link Player 3">📋</button>
                             </div>
                             <div class="player-controls">
                                 <button class="score-button" onclick="changeScore('white', -1)">−</button>
@@ -525,6 +540,7 @@
                             <div class="player-top">
                                 <div class="player-number" style="background: #2563eb; color: #fff;">4</div>
                                 <input class="player-name-input" id="nameBlue" value="PLAYER 4" oninput="updatePlayerName('blue')">
+                                <button type="button" onclick="copyRoleLink('p4')" class="button button-gray" style="height:16px; font-size:7.5px; padding:0 3px;" title="Sao chép link Player 4">📋</button>
                             </div>
                             <div class="player-controls">
                                 <button class="score-button" onclick="changeScore('blue', -1)">−</button>
