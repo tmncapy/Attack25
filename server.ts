@@ -83,7 +83,7 @@ interface RoomData {
 }
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Increase body limit for large base64 uploads (media, sounds, questions)
 app.use(express.json({ limit: '100mb' }));
@@ -737,6 +737,7 @@ async function startServer() {
     if (fs.existsSync(distPath)) {
       app.use(express.static(distPath));
     }
+    app.use(express.static(process.cwd()));
   }
 
   server.listen(PORT, '0.0.0.0', () => {
