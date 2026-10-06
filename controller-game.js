@@ -1032,24 +1032,51 @@ activateRoomFromController();
 
 (function fetchInitialServerState() {
     const currentRoom = (document.getElementById('ctrlRoomId') && document.getElementById('ctrlRoomId').value) || '123456';
-    fetch('/api/state?roomid=' + encodeURIComponent(currentRoom))
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-            if (data && data.state) {
-                ensureValidPanels(data.state);
-                gameState = data.state;
-                if (data.state.currentQuestionIndex !== undefined) {
-                    currentQuestionIndex = data.state.currentQuestionIndex;
+    
+    function applyLoadedState(data) {
+        if (!data) return;
+        if (data.state) {
+            ensureValidPanels(data.state);
+            gameState = data.state;
+            if (data.state.currentQuestionIndex !== undefined) {
+                currentQuestionIndex = data.state.currentQuestionIndex;
+            }
+            renderAll();
+        }
+        if (data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
+            questionsList = data.questions;
+            renderQuestion();
+            renderDatabaseTable();
+        }
+    }
+
+    if (window.Attack25Sync && typeof Attack25Sync.getState === 'function') {
+        Attack25Sync.getState(currentRoom).then(applyLoadedState).catch(() => {});
+    }
+
+    // Secondary fallback fetch for standalone / offline / PHP environments
+    const basePath = (typeof getAppBasePath === 'function') ? getAppBasePath() : './';
+    const candidateUrls = [
+        (basePath === '/' ? '/api/state' : basePath + 'api/state') + '?roomid=' + encodeURIComponent(currentRoom),
+        '/api/state?roomid=' + encodeURIComponent(currentRoom),
+        (basePath === '/' ? '/api.php' : basePath + 'api.php') + '?action=state&roomid=' + encodeURIComponent(currentRoom),
+        './api.php?action=state&roomid=' + encodeURIComponent(currentRoom)
+    ];
+
+    (async function probeState() {
+        for (const url of candidateUrls) {
+            try {
+                const res = await fetch(url);
+                if (res && res.ok) {
+                    const data = await res.json();
+                    if (data && data.state) {
+                        applyLoadedState(data);
+                        break;
+                    }
                 }
-                renderAll();
-            }
-            if (data && data.questions && data.questions.length > 0) {
-                questionsList = data.questions;
-                renderQuestion();
-                renderDatabaseTable();
-            }
-        })
-        .catch(() => {});
+            } catch (e) {}
+        }
+    })();
 })();
 
 /* =====================================================

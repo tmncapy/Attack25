@@ -187,6 +187,40 @@ if ($action === 'verify-room' || $action === 'verify') {
     exit();
 }
 
+if ($action === 'create-room' || $action === 'createroom') {
+    $newRoomId = $body['roomId'] ?? $body['roomid'] ?? $_GET['roomId'] ?? $_GET['roomid'] ?? $roomId;
+    $newPasswords = $body['passwords'] ?? [];
+    if (!empty($newPasswords) && is_array($newPasswords)) {
+        $room['passwords'] = array_merge($room['passwords'], $newPasswords);
+        saveRoom($roomId, $room);
+    }
+    echo json_encode([
+        'success' => true,
+        'roomId' => $roomId,
+        'passwords' => $room['passwords']
+    ]);
+    exit();
+}
+
+if ($action === 'upload-media' || $action === 'uploadmedia') {
+    $fileName = $body['fileName'] ?? '';
+    $dataUrl = $body['dataUrl'] ?? '';
+    if ($fileName && $dataUrl && preg_match('/^data:([A-Za-z0-9-+\/]+);base64,(.+)$/', $dataUrl, $matches)) {
+        $bin = base64_decode($matches[2]);
+        $ext = pathinfo($fileName, PATHINFO_EXTENSION) ?: 'bin';
+        $safeName = time() . '_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', pathinfo($fileName, PATHINFO_FILENAME)) . '.' . $ext;
+        @file_put_contents($dataDir . '/' . $safeName, $bin);
+        echo json_encode([
+            'success' => true,
+            'url' => 'uploads/' . $safeName,
+            'fileName' => $fileName
+        ]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Invalid dataUrl or fileName']);
+    }
+    exit();
+}
+
 if ($action === 'state' || $action === 'get_state' || $_SERVER['REQUEST_METHOD'] === 'GET') {
     recalculateScores($room['state']);
     echo json_encode([

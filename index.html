@@ -231,33 +231,68 @@
                 return;
             }
 
-            try {
-                const res = await fetch('/api/verify-room', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ role, roomId, auth })
-                });
+            function getAppBase() {
+                const p = window.location.pathname;
+                const idx = p.lastIndexOf('/');
+                return idx <= 0 ? './' : p.substring(0, idx + 1);
+            }
 
-                const data = await res.json();
+            const base = getAppBase();
+            const candidateUrls = [
+                (base.endsWith('/') ? base : base + '/') + 'api/verify-room',
+                '/api/verify-room',
+                (base.endsWith('/') ? base : base + '/') + 'api.php?action=verify-room',
+                '/api.php?action=verify-room'
+            ];
 
-                if (data && data.success) {
-                    try {
-                        localStorage.setItem('attack25_active_roomid', roomId);
-                        localStorage.setItem('attack25_active_auth', auth);
-                    } catch (e) {}
+            let verified = false;
+            let errMsg = 'Sai mã phòng hoặc mật khẩu!';
 
-                    let page = 'Host.html';
-                    if (role === 'player1') page = 'player1.html';
-                    if (role === 'player2') page = 'player2.html';
-                    if (role === 'player3') page = 'player3.html';
-                    if (role === 'player4') page = 'player4.html';
-
-                    window.location.href = `/${page}?roomid=${encodeURIComponent(roomId)}&auth=${encodeURIComponent(auth)}`;
-                } else {
-                    showError((data && data.message) ? data.message : 'Đăng nhập không thành công. Sai mã phòng hoặc mật khẩu!');
+            for (const apiUrl of candidateUrls) {
+                try {
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role, roomId, auth })
+                    });
+                    if (res && res.ok) {
+                        const data = await res.json();
+                        if (data && data.success) {
+                            verified = true;
+                            break;
+                        } else if (data && data.message) {
+                            errMsg = data.message;
+                        }
+                    }
+                } catch (e) {
+                    // Try next candidate
                 }
-            } catch (err) {
-                showError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối!');
+            }
+
+            // Fallback for offline/local file:/// or disconnected network with standard default passwords
+            if (!verified && (window.location.protocol === 'file:' || !navigator.onLine)) {
+                const defaultPass = { host: '1234', player1: '1111', player2: '2222', player3: '3333', player4: '4444' };
+                if (auth === '1234' || defaultPass[role] === auth) {
+                    verified = true;
+                }
+            }
+
+            if (verified) {
+                try {
+                    localStorage.setItem('attack25_active_roomid', roomId);
+                    localStorage.setItem('attack25_active_auth', auth);
+                } catch (e) {}
+
+                let page = 'Host.html';
+                if (role === 'player1') page = 'player1.html';
+                if (role === 'player2') page = 'player2.html';
+                if (role === 'player3') page = 'player3.html';
+                if (role === 'player4') page = 'player4.html';
+
+                const targetPath = (base.endsWith('/') ? base : base + '/') + page;
+                window.location.href = `${targetPath}?roomid=${encodeURIComponent(roomId)}&auth=${encodeURIComponent(auth)}`;
+            } else {
+                showError(errMsg);
             }
         });
     </script>

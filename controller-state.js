@@ -594,26 +594,39 @@ async function uploadMediaFileToServer(file) {
         const reader = new FileReader();
         reader.onload = async function(e) {
             const dataUrl = e.target.result;
-            try {
-                const res = await fetch('/api/upload-media', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        fileName: file.name,
-                        dataUrl: dataUrl
-                    })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.url) {
-                        resolve({ url: data.url, name: file.name, dataUrl });
-                        return;
+            const basePath = (typeof getAppBasePath === 'function') ? getAppBasePath() : './';
+            const endpoints = [
+                (basePath === '/' ? '/api/upload-media' : basePath + 'api/upload-media'),
+                '/api/upload-media',
+                (basePath === '/' ? '/api.php' : basePath + 'api.php') + '?action=upload-media',
+                './api.php?action=upload-media'
+            ];
+
+            let uploaded = false;
+            for (const ep of endpoints) {
+                try {
+                    const res = await fetch(ep, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            fileName: file.name,
+                            dataUrl: dataUrl
+                        })
+                    });
+                    if (res && res.ok) {
+                        const data = await res.json();
+                        if (data && data.url) {
+                            resolve({ url: data.url, name: file.name, dataUrl });
+                            uploaded = true;
+                            break;
+                        }
                     }
-                }
-            } catch (err) {
-                console.warn("Upload to server failed, using local dataUrl:", err);
+                } catch (err) {}
             }
-            resolve({ url: dataUrl, name: file.name, dataUrl });
+
+            if (!uploaded) {
+                resolve({ url: dataUrl, name: file.name, dataUrl });
+            }
         };
         reader.readAsDataURL(file);
     });

@@ -57,9 +57,30 @@
     AddType application/json .json
 </IfModule>
 
-# CORS Headers for cross-domain and multi-device connections
+# CORS Headers & Anti-Caching for instant updates on all domains
 <IfModule mod_headers.c>
     Header set Access-Control-Allow-Origin "*"
     Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
     Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+
+    # Disable browser & proxy caching for HTML, CSS, JS, JSON to ensure code updates appear instantly
+    <FilesMatch "\.(html|htm|js|css|json)$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    # Fallback to api.php for PHP hosting environments where mod_proxy is not loaded
+    <IfModule !mod_proxy.c>
+        RewriteRule ^api/state/?$ api.php?action=state [NC,L,QSA]
+        RewriteRule ^api/sync-action/?$ api.php?action=sync-action [NC,L,QSA]
+        RewriteRule ^api/verify-room/?$ api.php?action=verify-room [NC,L,QSA]
+        RewriteRule ^api/create-room/?$ api.php?action=create-room [NC,L,QSA]
+        RewriteRule ^api/upload-media/?$ api.php?action=upload-media [NC,L,QSA]
+        RewriteRule ^state/?$ api.php?action=state [NC,L,QSA]
+        RewriteRule ^sync-action/?$ api.php?action=sync-action [NC,L,QSA]
+        RewriteRule ^verify-room/?$ api.php?action=verify-room [NC,L,QSA]
+    </IfModule>
 </IfModule>

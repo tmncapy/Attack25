@@ -17,9 +17,254 @@
 <script src="socket.io.js"></script>
 <script src="howler.js"></script>
 <!-- Universal Real-time Synchronizer (Relative path for file:/// and web) -->
-<script src="sync-client.js?v=20260920b"></script>
+<script src="sync-client.js?v=20261006_domain"></script>
 
-<link rel="stylesheet" href="controller.css">
+<link rel="stylesheet" href="controller.css?v=20261006_domain">
+
+<!-- Self-Contained Resilient Styling for Universal Hosting & Local Deployment -->
+<style id="attack25-embedded-styles">
+    /* Ensure page is always scrollable on small laptops / mobile */
+    html, body {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+    .app {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        min-height: 100vh;
+    }
+    .workspace-grid {
+        min-height: 0;
+    }
+    .column {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        scrollbar-width: thin;
+        scrollbar-color: #3b82f6 #0f172a;
+    }
+    .column::-webkit-scrollbar {
+        width: 6px;
+    }
+    .column::-webkit-scrollbar-track {
+        background: #0b111a;
+    }
+    .column::-webkit-scrollbar-thumb {
+        background: #2563eb;
+        border-radius: 3px;
+    }
+
+    /* GIAO DIỆN CHỌN MÀU - STICKY & HIGH VISIBILITY */
+    .color-picker-banner {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 50 !important;
+        background: linear-gradient(180deg, #1b263b 0%, #0f172a 100%) !important;
+        border: 2px solid #334155 !important;
+        border-radius: 6px !important;
+        padding: 5px 6px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+        margin-bottom: 4px !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .color-picker-banner.has-selection {
+        border-color: #f59f00 !important;
+        box-shadow: 0 0 16px rgba(245, 159, 0, 0.5), inset 0 0 0 1px rgba(245, 159, 0, 0.3) !important;
+    }
+    .color-banner-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        font-size: 10px !important;
+    }
+    .color-banner-title {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        color: #f1f5f9 !important;
+        font-weight: 800 !important;
+        font-size: 10.5px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.3px !important;
+    }
+    .color-target-pill {
+        padding: 2px 7px !important;
+        border-radius: 4px !important;
+        background: #0b111a !important;
+        color: #94a3b8 !important;
+        font-size: 9.5px !important;
+        font-weight: 700 !important;
+        border: 1px solid #1e293b !important;
+        white-space: nowrap !important;
+        transition: all 0.2s ease !important;
+    }
+    .color-target-pill.active {
+        background: #f59f00 !important;
+        color: #000000 !important;
+        border-color: #fbbf24 !important;
+        font-weight: 900 !important;
+        box-shadow: 0 0 8px rgba(245, 159, 0, 0.6) !important;
+        animation: pulse-gold 1.5s infinite !important;
+    }
+    @keyframes pulse-gold {
+        0%, 100% { box-shadow: 0 0 4px rgba(245, 159, 0, 0.5); }
+        50% { box-shadow: 0 0 12px rgba(245, 159, 0, 0.9); }
+    }
+    .color-actions {
+        display: grid !important;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 3px !important;
+    }
+    .btn-color-pick {
+        height: 31px !important;
+        border: none !important;
+        border-radius: 4px !important;
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        cursor: pointer !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 2px !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.7) !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+        transition: transform 0.1s ease, filter 0.15s ease, box-shadow 0.15s ease !important;
+        user-select: none !important;
+        padding: 0 2px !important;
+    }
+    .btn-color-pick:hover {
+        filter: brightness(1.2) !important;
+        transform: translateY(-1px) !important;
+    }
+    .btn-color-pick:active {
+        transform: translateY(1px) !important;
+    }
+    .btn-color-pick small {
+        font-size: 8px !important;
+        opacity: 0.85 !important;
+        font-weight: normal !important;
+        margin-left: 2px !important;
+    }
+    .btn-color-red {
+        background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+        border: 1px solid #f87171 !important;
+    }
+    .btn-color-red:hover { box-shadow: 0 0 10px rgba(239, 68, 68, 0.7) !important; }
+    .btn-color-green {
+        background: linear-gradient(135deg, #22c55e 0%, #15803d 100%) !important;
+        border: 1px solid #4ade80 !important;
+    }
+    .btn-color-green:hover { box-shadow: 0 0 10px rgba(34, 197, 94, 0.7) !important; }
+    .btn-color-white {
+        background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%) !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
+        text-shadow: none !important;
+    }
+    .btn-color-white:hover { box-shadow: 0 0 10px rgba(255, 255, 255, 0.8) !important; }
+    .btn-color-blue {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+        border: 1px solid #60a5fa !important;
+    }
+    .btn-color-blue:hover { box-shadow: 0 0 10px rgba(59, 130, 246, 0.7) !important; }
+    .btn-color-clear {
+        background: linear-gradient(135deg, #334155 0%, #1e293b 100%) !important;
+        border: 1px solid #475569 !important;
+        color: #cbd5e1 !important;
+    }
+    .btn-color-clear:hover { box-shadow: 0 0 8px rgba(100, 116, 139, 0.6) !important; }
+
+    /* 25-PANEL MATRIX GRID */
+    .panel-grid {
+        display: grid !important;
+        grid-template-columns: repeat(5, 1fr) !important;
+        grid-template-rows: repeat(5, 1fr) !important;
+        gap: 2px !important;
+        background: #1e293b !important;
+        border: 2px solid #2b3648 !important;
+        border-radius: 4px !important;
+        overflow: hidden !important;
+        margin-bottom: 3px !important;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+    }
+    .panel-button {
+        height: 30px !important;
+        min-height: 24px !important;
+        max-height: 34px !important;
+        border: 1px solid #141b29 !important;
+        border-radius: 2px !important;
+        background: #0d131f !important;
+        color: #f8fafc !important;
+        font-family: "UTM Impact", Impact, sans-serif !important;
+        font-size: 14px !important;
+        font-weight: 900 !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        user-select: none !important;
+        transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease !important;
+    }
+    .panel-button:hover {
+        background: #1e293b !important;
+        color: #f59f00 !important;
+        z-index: 2 !important;
+        transform: scale(1.02) !important;
+    }
+    .panel-button.active {
+        background: #f59f00 !important;
+        color: #000000 !important;
+        box-shadow: inset 0 0 0 2px #ffffff, 0 0 10px rgba(245, 159, 0, 0.9) !important;
+        z-index: 5 !important;
+        font-weight: 900 !important;
+    }
+    .panel-button.panel-red { background: linear-gradient(135deg, #ef4444, #b91c1c) !important; color: #fff !important; }
+    .panel-button.panel-green { background: linear-gradient(135deg, #22c55e, #15803d) !important; color: #fff !important; }
+    .panel-button.panel-white { background: linear-gradient(135deg, #ffffff, #e2e8f0) !important; color: #0f172a !important; text-shadow: none !important; }
+    .panel-button.panel-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important; color: #fff !important; }
+    .panel-button.used {
+        background: #161e2b !important;
+        color: #4b586e !important;
+        text-decoration: line-through !important;
+        opacity: 0.6 !important;
+    }
+    .panel-button.active.used {
+        background: #f59f00 !important;
+        color: #000000 !important;
+        opacity: 1 !important;
+        text-decoration: none !important;
+    }
+
+    /* QUICK COLOR CONTEXT MENU */
+    .quick-color-menu {
+        position: fixed !important;
+        z-index: 10000 !important;
+        background: #0f172a !important;
+        border: 1.5px solid #38bdf8 !important;
+        border-radius: 6px !important;
+        padding: 4px !important;
+        display: flex !important;
+        gap: 4px !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 12px rgba(56, 189, 248, 0.4) !important;
+    }
+    .quick-color-menu button {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 4px !important;
+        border: none !important;
+        cursor: pointer !important;
+        font-size: 13px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+</style>
 </head>
 
 <body>
@@ -964,9 +1209,9 @@
 </div>
 
 <!-- MODULAR JAVASCRIPT FILES (EACH FILE < 2000 LINES) -->
-<script src="controller-state.js?v=20260920"></script>
-<script src="controller-questions.js?v=20260920"></script>
-<script src="controller-game.js?v=20260920"></script>
+<script src="controller-state.js?v=20261006_domain"></script>
+<script src="controller-questions.js?v=20261006_domain"></script>
+<script src="controller-game.js?v=20261006_domain"></script>
 
 </body>
 </html>
