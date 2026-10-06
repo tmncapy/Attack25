@@ -251,10 +251,78 @@ function createPanelButtons() {
         btn.id = "btn" + panel.number;
         btn.className = "panel-button";
         btn.textContent = panel.number;
-        btn.onclick = () => selectPanel(panel.number);
+        btn.title = `Ô số ${panel.number} (Nhấp chuột trái để chọn, nhấp chuột phải để mở menu màu nhanh)`;
+        
+        btn.onclick = () => {
+            closeQuickColorMenu();
+            selectPanel(panel.number);
+        };
+
+        btn.oncontextmenu = (e) => {
+            e.preventDefault();
+            selectPanel(panel.number);
+            showQuickColorMenu(e.clientX, e.clientY, panel.number);
+        };
+
         grid.appendChild(btn);
     });
 }
+
+/* Quick Floating Color Menu on Right-Click or Quick-Action */
+let activeQuickColorMenu = null;
+
+function closeQuickColorMenu() {
+    if (activeQuickColorMenu && activeQuickColorMenu.parentNode) {
+        activeQuickColorMenu.parentNode.removeChild(activeQuickColorMenu);
+    }
+    activeQuickColorMenu = null;
+}
+
+function showQuickColorMenu(x, y, panelNumber) {
+    closeQuickColorMenu();
+
+    const menu = document.createElement("div");
+    menu.className = "quick-color-menu";
+    menu.id = "quickColorMenu";
+
+    const colors = [
+        { key: 'red', emoji: '🔴', label: 'Đỏ', bg: '#dc2626' },
+        { key: 'green', emoji: '🟢', label: 'Xanh', bg: '#16a34a' },
+        { key: 'white', emoji: '⚪', label: 'Trắng', bg: '#ffffff', color: '#000' },
+        { key: 'blue', emoji: '🔵', label: 'Lam', bg: '#2563eb' },
+        { key: null, emoji: '✕', label: 'Xóa', bg: '#334155' }
+    ];
+
+    colors.forEach(c => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.style.background = c.bg;
+        if (c.color) b.style.color = c.color;
+        b.textContent = c.emoji;
+        b.title = c.label;
+        b.onclick = (ev) => {
+            ev.stopPropagation();
+            closeQuickColorMenu();
+            setPanelColor(c.key);
+        };
+        menu.appendChild(b);
+    });
+
+    // Position menu near cursor but within window
+    const safeX = Math.min(Math.max(10, x - 60), window.innerWidth - 180);
+    const safeY = Math.min(Math.max(10, y - 45), window.innerHeight - 50);
+    menu.style.left = safeX + "px";
+    menu.style.top = safeY + "px";
+
+    document.body.appendChild(menu);
+    activeQuickColorMenu = menu;
+}
+
+document.addEventListener("click", (e) => {
+    if (activeQuickColorMenu && !activeQuickColorMenu.contains(e.target)) {
+        closeQuickColorMenu();
+    }
+});
 
 function selectPanel(num) {
     if (gameState.selectedPanel === num) {
@@ -284,7 +352,10 @@ function recalculateScoresFromBoard() {
 }
 
 function applyOthelloFlips(targetIndex, newColor) {
-    if (targetIndex < 0 || targetIndex >= 25 || !newColor) return;
+    if (targetIndex < 0 || targetIndex >= 25 || !newColor) return 0;
+
+    const chkAuto = document.getElementById("chkAutoOthello");
+    if (chkAuto && !chkAuto.checked) return 0;
 
     const row = Math.floor(targetIndex / 5);
     const col = targetIndex % 5;
@@ -334,7 +405,12 @@ function applyOthelloFlips(targetIndex, newColor) {
 
 function setPanelColor(color) {
     if (!gameState.selectedPanel) {
-        showToast("⚠️ Vui lòng chọn một ô số trước!");
+        showToast("⚠️ Vui lòng bấm chọn một ô số (1 - 25) trên bảng trước!");
+        const banner = document.getElementById("colorPickerBanner");
+        if (banner) {
+            banner.classList.add("shake-attention");
+            setTimeout(() => banner.classList.remove("shake-attention"), 500);
+        }
         return;
     }
 
@@ -348,12 +424,20 @@ function setPanelColor(color) {
     recalculateScoresFromBoard();
     renderPanels();
 
-    broadcastState("colorChange", colorWavMap[color] || 'set_color');
+    broadcastState("colorChange", (color && colorWavMap[color]) ? colorWavMap[color] : 'set_color');
+
+    const colorNameMap = {
+        'red': 'ĐỎ',
+        'green': 'XANH LÁ',
+        'white': 'TRẮNG',
+        'blue': 'XANH DƯƠNG'
+    };
+    const colName = color ? (colorNameMap[color] || color.toUpperCase()) : 'MẶC ĐỊNH (XÓA MÀU)';
 
     if (flipped > 0) {
-        showToast(`🎨 Đã lật ${flipped} ô sang màu ${color.toUpperCase()}!`);
+        showToast(`🎨 Đã gán ô ${target.number} và lật ${flipped} ô sang màu ${colName}!`);
     } else {
-        showToast(`🎨 Ô ${target.number} đã đổi thành màu ${color.toUpperCase()}`);
+        showToast(`🎨 Ô ${target.number} đã đổi thành màu ${colName}`);
     }
 }
 
@@ -394,8 +478,20 @@ function resetSelectedPanel() {
 
 function clearSelection() {
     gameState.selectedPanel = null;
+    closeQuickColorMenu();
     renderPanels();
     broadcastState("clearSelection");
+}
+
+function toggleSpecialRoundCard() {
+    const body = document.getElementById("specialRoundBody");
+    const icon = document.getElementById("specialToggleIcon");
+    if (!body) return;
+    const isHidden = body.style.display === "none";
+    body.style.display = isHidden ? "flex" : "none";
+    if (icon) {
+        icon.textContent = isHidden ? "▲ (Thu gọn)" : "▼ (Mở rộng)";
+    }
 }
 
 /* =====================================================
@@ -780,6 +876,67 @@ function renderPanels() {
         selVal.textContent = gameState.selectedPanel || "---";
     }
 
+    // Synchronize Primary Color Selection Toolbar & Status Indicators
+    const selNum = gameState.selectedPanel;
+    const banner = document.getElementById("colorPickerBanner");
+    const targetPill = document.getElementById("colorTargetPill");
+    const selectedBadge = document.getElementById("selectedPanelText");
+    const statusSel = document.getElementById("statusSelected");
+    const statusUsedEl = document.getElementById("statusUsed");
+    const statusRemEl = document.getElementById("statusRemaining");
+    const btnQuickDeselect = document.getElementById("btnQuickDeselect");
+
+    if (selNum) {
+        if (banner) banner.classList.add("has-selection");
+        if (targetPill) {
+            targetPill.className = "color-target-pill active";
+            targetPill.innerHTML = `👉 ĐANG CHỌN <strong>Ô ${selNum}</strong> - BẤM MÀU ĐỂ GÁN:`;
+        }
+        if (selectedBadge) {
+            selectedBadge.textContent = `Đang chọn: Ô ${selNum}`;
+            selectedBadge.style.background = "#d97706";
+            selectedBadge.style.color = "#ffffff";
+        }
+        if (statusSel) statusSel.textContent = `Ô ${selNum}`;
+        if (btnQuickDeselect) {
+            btnQuickDeselect.style.background = "#d97706";
+            btnQuickDeselect.style.color = "#ffffff";
+        }
+    } else {
+        if (banner) banner.classList.remove("has-selection");
+        if (targetPill) {
+            targetPill.className = "color-target-pill";
+            targetPill.innerHTML = `Chưa chọn ô (Bấm ô 1-25 trước)`;
+        }
+        if (selectedBadge) {
+            selectedBadge.textContent = "Chưa chọn ô";
+            selectedBadge.style.background = "#1e293b";
+            selectedBadge.style.color = "#f59f00";
+        }
+        if (statusSel) statusSel.textContent = "-";
+        if (btnQuickDeselect) {
+            btnQuickDeselect.style.background = "#374254";
+            btnQuickDeselect.style.color = "#ffffff";
+        }
+    }
+
+    const usedCount = gameState.panels.filter(p => p.used || p.color).length;
+    if (statusUsedEl) statusUsedEl.textContent = `${usedCount} / 25`;
+    if (statusRemEl) statusRemEl.textContent = `${25 - usedCount}`;
+
+    // Update 4 hide color buttons styling
+    if (gameState.hiddenColors) {
+        ['red', 'green', 'white', 'blue'].forEach(c => {
+            const btnHide = document.getElementById("btnHide" + capitalize(c));
+            if (btnHide) {
+                const isHid = !!gameState.hiddenColors[c];
+                btnHide.classList.toggle("is-active-hide", isHid);
+                const colNames = { red: 'đỏ', green: 'xanh', white: 'trắng', blue: 'lam' };
+                btnHide.textContent = isHid ? `👁️ Hiện ${colNames[c] || c}` : `🙈 Ẩn ${colNames[c] || c}`;
+            }
+        });
+    }
+
     updatePreviewScores();
 }
 
@@ -894,3 +1051,38 @@ activateRoomFromController();
         })
         .catch(() => {});
 })();
+
+/* =====================================================
+   KEYBOARD SHORTCUTS FOR FAST PANEL COLORING
+   1 / R: Red | 2 / G: Green | 3 / W: White | 4 / B: Blue | 0 / X / Del: Clear
+===================================================== */
+window.addEventListener('keydown', (e) => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)) {
+        return;
+    }
+
+    if (e.key === 'Escape') {
+        clearSelection();
+        return;
+    }
+
+    if (gameState.selectedPanel) {
+        if (e.key === '1' || e.key === 'r' || e.key === 'R') {
+            e.preventDefault();
+            setPanelColor('red');
+        } else if (e.key === '2' || e.key === 'g' || e.key === 'G') {
+            e.preventDefault();
+            setPanelColor('green');
+        } else if (e.key === '3' || e.key === 'w' || e.key === 'W') {
+            e.preventDefault();
+            setPanelColor('white');
+        } else if (e.key === '4' || e.key === 'b' || e.key === 'B') {
+            e.preventDefault();
+            setPanelColor('blue');
+        } else if (e.key === '0' || e.key === 'x' || e.key === 'X' || e.key === 'Delete' || e.key === 'Backspace') {
+            e.preventDefault();
+            setPanelColor(null);
+        }
+    }
+});

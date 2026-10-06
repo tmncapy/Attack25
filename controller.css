@@ -279,8 +279,8 @@ html, body {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     grid-template-rows: repeat(5, 1fr);
-    gap: 1px;
-    background: #2b3648;
+    gap: 2px;
+    background: #1e293b;
     border: 2px solid #2b3648;
     border-radius: 4px;
     overflow: hidden;
@@ -289,18 +289,18 @@ html, body {
 }
 
 .panel-button {
-    aspect-ratio: 1.1 / 1;
-    min-height: 22px;
-    max-height: 32px;
-    border: none;
-    border-radius: 0;
+    height: 30px;
+    min-height: 24px;
+    max-height: 34px;
+    border: 1px solid #141b29;
+    border-radius: 2px;
     background: #0d131f;
     color: #f8fafc;
     font-family: "UTM Impact", Impact, sans-serif;
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 900;
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
     user-select: none;
     display: flex;
     align-items: center;
@@ -314,12 +314,13 @@ html, body {
     background: #1e293b;
     color: #f59f00;
     z-index: 2;
+    transform: scale(1.02);
 }
 
 .panel-button.active {
-    background: #ffffff !important;
+    background: #f59f00 !important;
     color: #000000 !important;
-    box-shadow: inset 0 0 0 2px #38bdf8, 0 0 8px rgba(56, 189, 248, 0.8) !important;
+    box-shadow: inset 0 0 0 2px #ffffff, 0 0 10px rgba(245, 159, 0, 0.9) !important;
     z-index: 5;
     font-weight: 900;
 }
@@ -332,7 +333,7 @@ html, body {
 }
 
 .panel-button.active.used {
-    background: #ffffff !important;
+    background: #f59f00 !important;
     color: #000000 !important;
     opacity: 1;
     text-decoration: none;
@@ -357,37 +358,239 @@ html, body {
     font-size: 8px;
 }
 
+/* =====================================================
+   GIAO DIỆN CHỌN MÀU NỔI BẬT (PRIMARY COLOR SELECTION TOOLBAR)
+===================================================== */
+.color-picker-banner {
+    background: linear-gradient(180deg, #182337 0%, #101826 100%);
+    border: 1.5px solid #2d3e58;
+    border-radius: 6px;
+    padding: 5px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    margin-bottom: 4px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.color-picker-banner.has-selection {
+    border-color: #f59f00;
+    box-shadow: 0 0 14px rgba(245, 159, 0, 0.4), inset 0 0 0 1px rgba(245, 159, 0, 0.3);
+}
+
+.color-banner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    font-size: 10px;
+}
+
+.color-banner-title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #f1f5f9;
+    font-weight: 800 !important;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.color-palette-icon {
+    font-size: 12px;
+}
+
+.color-target-pill {
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: #0b111a;
+    color: #94a3b8;
+    font-size: 9.5px;
+    font-weight: 700;
+    border: 1px solid #1e293b;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.color-target-pill.active {
+    background: #f59f00;
+    color: #000000;
+    border-color: #fbbf24;
+    font-weight: 900 !important;
+    box-shadow: 0 0 8px rgba(245, 159, 0, 0.6);
+    animation: pulse-gold 1.5s infinite;
+}
+
+@keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 4px rgba(245, 159, 0, 0.5); }
+    50% { box-shadow: 0 0 12px rgba(245, 159, 0, 0.9); }
+}
+
+.shake-attention {
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+    40%, 60% { transform: translate3d(3px, 0, 0); }
+}
+
 .color-actions {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 2px;
+    gap: 3px;
 }
-.color-actions .button {
-    height: 22px;
-    font-size: 8.5px;
-    padding: 0 1px;
+
+.btn-color-pick {
+    height: 30px;
+    border: none;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 900 !important;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+    color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: transform 0.1s ease, filter 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+    padding: 0 2px;
+}
+
+.btn-color-pick:hover {
+    filter: brightness(1.2);
+    transform: translateY(-1px);
+}
+
+.btn-color-pick:active {
+    transform: translateY(1px);
+}
+
+.btn-color-pick small {
+    font-size: 8px;
+    opacity: 0.85;
+    font-weight: normal;
+    margin-left: 2px;
+}
+
+.btn-color-red {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    border: 1px solid #f87171;
+}
+.btn-color-red:hover {
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);
+}
+
+.btn-color-green {
+    background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+    border: 1px solid #4ade80;
+}
+.btn-color-green:hover {
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.7);
+}
+
+.btn-color-white {
+    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1;
+    text-shadow: none !important;
+}
+.btn-color-white:hover {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+.btn-color-blue {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border: 1px solid #60a5fa;
+}
+.btn-color-blue:hover {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
+}
+
+.btn-color-clear {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    border: 1px solid #475569;
+    color: #cbd5e1 !important;
+}
+.btn-color-clear:hover {
+    box-shadow: 0 0 8px rgba(100, 116, 139, 0.6);
 }
 
 .color-hide-actions {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 2px;
+    gap: 3px;
+    margin-top: 2px;
 }
+
 .color-hide-actions .button {
-    height: 20px;
-    font-size: 8px;
-    padding: 0 1px;
+    height: 22px;
+    font-size: 8.5px;
+    padding: 0 2px;
+    border-radius: 3px;
+}
+
+.color-hide-actions .button.is-active-hide {
+    background: #eab308 !important;
+    color: #000000 !important;
+    box-shadow: 0 0 6px #eab308;
+    font-weight: 900;
 }
 
 .board-actions {
     display: grid;
     grid-template-columns: 1.15fr 1.05fr 1fr 1fr;
-    gap: 2px;
+    gap: 3px;
+    margin-top: 2px;
 }
 .board-actions .button {
-    height: 22px;
-    font-size: 8.5px;
-    padding: 0 1px;
+    height: 24px;
+    font-size: 9px;
+    padding: 0 2px;
+    font-weight: bold;
+}
+
+/* Floating Quick Color Menu on Panel Right-Click / Tap */
+.quick-color-menu {
+    position: fixed;
+    z-index: 10000;
+    background: #0f172a;
+    border: 1.5px solid #38bdf8;
+    border-radius: 6px;
+    padding: 4px;
+    display: flex;
+    gap: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 12px rgba(56, 189, 248, 0.4);
+    animation: fadeInScale 0.12s ease-out;
+}
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.quick-color-menu button {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s ease;
+}
+
+.quick-color-menu button:hover {
+    transform: scale(1.15);
 }
 
 .status-row {

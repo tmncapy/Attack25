@@ -82,79 +82,98 @@
         <div class="column">
 
             <!-- 25 PANELS BOARD -->
-            <section class="card">
-                <div class="card-header">
-                    <div class="card-title">🎯 BẢNG 25 Ô ATTACK 25</div>
-                    <div style="display:flex; align-items:center; gap:8px; flex-wrap: wrap;">
-                        <label style="display: flex; align-items: center; gap: 5px; font-size: 10px; cursor: pointer; color: #94a3b8; user-select: none;">
-                            <input type="checkbox" id="chkAutoOthello" checked style="cursor: pointer; width: 13px; height: 13px; accent-color: #f59f00;">
-                            <span>Luật Othello tự động</span>
+            <section class="card" id="boardCardSection">
+                <div class="card-header" style="height: 26px; min-height: 26px; padding: 0 6px;">
+                    <div class="card-title" style="font-size: 11px;">🎯 BẢNG 25 Ô ATTACK 25</div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <label style="display: flex; align-items: center; gap: 4px; font-size: 9.5px; cursor: pointer; color: #94a3b8; user-select: none;">
+                            <input type="checkbox" id="chkAutoOthello" checked style="cursor: pointer; width: 12px; height: 12px; accent-color: #f59f00;">
+                            <span>Othello tự động</span>
                         </label>
-                        <span class="card-badge" id="selectedPanelText" style="background:#1e293b; color:#f59f00; font-size:10px; padding:1px 6px;">Chưa chọn ô</span>
-                        <button class="button button-gray" id="btnQuickDeselect" style="height:20px; padding:0 5px; font-size:9px;" onclick="clearSelection()" title="Hủy chọn ô hiện tại">Bỏ chọn</button>
+                        <span class="card-badge" id="selectedPanelText" style="background:#1e293b; color:#f59f00; font-size:9.5px; padding:1px 6px;">Chưa chọn ô</span>
+                        <button class="button button-gray" id="btnQuickDeselect" style="height:19px; padding:0 5px; font-size:9px;" onclick="clearSelection()" title="Hủy chọn ô hiện tại">Bỏ chọn</button>
                     </div>
                 </div>
 
-                <div class="card-body" style="padding: 6px; gap: 6px;">
-                    <!-- 25 BUTTONS MATRIX -->
-                    <div class="panel-grid" id="panelGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 2px;"></div>
-
-                    <!-- COLOR CLAIM ACTIONS -->
-                    <div class="color-actions" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px;">
-                        <button class="button button-red" onclick="setPanelColor('red')" style="font-size: 10px; font-weight: bold; background: #dc2626;">🔴 Ô ĐỎ</button>
-                        <button class="button button-green" onclick="setPanelColor('green')" style="font-size: 10px; font-weight: bold; background: #16a34a;">🟢 Ô XANH LÁ</button>
-                        <button class="button button-white" onclick="setPanelColor('white')" style="font-size: 10px; font-weight: bold; background: #f1f5f9; color: #0f172a;">⚪ Ô TRẮNG</button>
-                        <button class="button button-blue" onclick="setPanelColor('blue')" style="font-size: 10px; font-weight: bold; background: #2563eb;">🔵 Ô XANH DƯƠNG</button>
-                        <button class="button button-gray" onclick="setPanelColor(null)" style="font-size: 10px; font-weight: bold; background: #334155;">✕ XÓA MÀU</button>
+                <div class="card-body" style="padding: 5px; gap: 4px;">
+                    <!-- GIAO DIỆN CHỌN MÀU NỔI BẬT (LUÔN HIỆN TRÊN ĐẦU BẢNG) -->
+                    <div class="color-picker-banner" id="colorPickerBanner">
+                        <div class="color-banner-header">
+                            <div class="color-banner-title">
+                                <span class="color-palette-icon">🎨</span>
+                                <span>GIAO DIỆN CHỌN MÀU:</span>
+                            </div>
+                            <span class="color-target-pill" id="colorTargetPill">Chưa chọn ô (Bấm ô 1-25 trước)</span>
+                        </div>
+                        <div class="color-actions" id="colorActionsBar">
+                            <button type="button" class="btn-color-pick btn-color-red" onclick="setPanelColor('red')" title="Gán màu Đỏ cho ô đang chọn (Phím 1 hoặc R)">
+                                🔴 Ô ĐỎ <small>(1)</small>
+                            </button>
+                            <button type="button" class="btn-color-pick btn-color-green" onclick="setPanelColor('green')" title="Gán màu Xanh lá cho ô đang chọn (Phím 2 hoặc G)">
+                                🟢 Ô XANH <small>(2)</small>
+                            </button>
+                            <button type="button" class="btn-color-pick btn-color-white" onclick="setPanelColor('white')" title="Gán màu Trắng cho ô đang chọn (Phím 3 hoặc W)">
+                                ⚪ Ô TRẮNG <small>(3)</small>
+                            </button>
+                            <button type="button" class="btn-color-pick btn-color-blue" onclick="setPanelColor('blue')" title="Gán màu Xanh dương cho ô đang chọn (Phím 4 hoặc B)">
+                                🔵 Ô LAM <small>(4)</small>
+                            </button>
+                            <button type="button" class="btn-color-pick btn-color-clear" onclick="setPanelColor(null)" title="Xóa màu ô này (Phím 0 hoặc X)">
+                                ✕ XÓA <small>(0)</small>
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- 4 HIDE COLOR BUTTONS -->
-                    <div class="color-hide-actions" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;">
-                        <button class="button button-red" id="btnHideRed" onclick="toggleHideColor('red')" style="font-size: 10px; padding: 4px 2px; background: #7f1d1d; border: 1px solid #991b1b;">
-                            🙈 Ẩn đỏ
-                        </button>
-                        <button class="button button-green" id="btnHideGreen" onclick="toggleHideColor('green')" style="font-size: 10px; padding: 4px 2px; background: #14532d; border: 1px solid #166534;">
-                            🙈 Ẩn xanh lá
-                        </button>
-                        <button class="button button-white" id="btnHideWhite" onclick="toggleHideColor('white')" style="font-size: 10px; padding: 4px 2px; background: #cbd5e1; color: #0f172a; border: 1px solid #94a3b8;">
-                            🙈 Ẩn trắng
-                        </button>
-                        <button class="button button-blue" id="btnHideBlue" onclick="toggleHideColor('blue')" style="font-size: 10px; padding: 4px 2px; background: #1e3a8a; border: 1px solid #1e40af;">
-                            🙈 Ẩn xanh dương
-                        </button>
-                    </div>
+                    <!-- 25 BUTTONS MATRIX (5x5 GRID) -->
+                    <div class="panel-grid" id="panelGrid"></div>
 
                     <!-- BOARD ACTIONS -->
-                    <div class="board-actions" style="display: grid; grid-template-columns: 1.2fr 1.1fr 1fr 1fr; gap: 3px;">
-                        <button class="button button-orange" onclick="sendSelectedPanel()" style="font-size: 10px; background: #d97706; font-weight: bold;">🌟 HIỆN Ô</button>
-                        <button class="button button-gray" onclick="clearSelection()" style="background:#475569; font-size: 10px;" title="Bỏ chọn ô đang chọn trên màn hình">❌ HỦY CHỌN</button>
-                        <button class="button button-gray" onclick="markSelectedUsed()" style="background:#334155; font-size: 10px;">✔ ĐÃ DÙNG</button>
-                        <button class="button button-red" onclick="resetSelectedPanel()" style="background:#b91c1c; font-size: 10px;">🔄 RESET Ô</button>
+                    <div class="board-actions">
+                        <button class="button button-orange" onclick="sendSelectedPanel()" style="font-size: 9.5px; background: #d97706; font-weight: bold;" title="Hiển thị khung ô đang chọn lên Projector">🌟 HIỆN Ô</button>
+                        <button class="button button-gray" onclick="clearSelection()" style="background:#475569; font-size: 9.5px;" title="Bỏ chọn ô đang chọn trên màn hình">❌ HỦY CHỌN</button>
+                        <button class="button button-gray" onclick="markSelectedUsed()" style="background:#334155; font-size: 9.5px;" title="Đánh dấu ô này đã chơi xong">✔ ĐÃ DÙNG</button>
+                        <button class="button button-red" onclick="resetSelectedPanel()" style="background:#b91c1c; font-size: 9.5px;" title="Reset ô này về mặc định">🔄 RESET Ô</button>
                     </div>
 
-                    <!-- STATUS -->
-                    <div class="status-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">
-                        <div class="status-box" style="background: #0f172a; border: 1px solid #1e293b; border-radius: 4px; padding: 3px 6px; text-align: center;">
-                            <span class="status-label" style="font-size: 8px; color: #94a3b8; text-transform: uppercase;">Ô đang chọn</span>
-                            <span class="status-value" id="statusSelected" style="font-family: 'UTM Impact', Impact, sans-serif; font-size: 14px; color: #f59f00;">-</span>
+                    <!-- 4 HIDE COLOR BUTTONS (ẨN/HIỆN MÀU TRÊN PROJECTOR) -->
+                    <div class="color-hide-actions">
+                        <button class="button button-red" id="btnHideRed" onclick="toggleHideColor('red')" style="font-size: 8.5px; background: #7f1d1d; border: 1px solid #991b1b;" title="Bật/Tắt ẩn màu Đỏ trên Projector">
+                            🙈 Ẩn đỏ
+                        </button>
+                        <button class="button button-green" id="btnHideGreen" onclick="toggleHideColor('green')" style="font-size: 8.5px; background: #14532d; border: 1px solid #166534;" title="Bật/Tắt ẩn màu Xanh lá trên Projector">
+                            🙈 Ẩn xanh
+                        </button>
+                        <button class="button button-white" id="btnHideWhite" onclick="toggleHideColor('white')" style="font-size: 8.5px; background: #cbd5e1; color: #0f172a; border: 1px solid #94a3b8;" title="Bật/Tắt ẩn màu Trắng trên Projector">
+                            🙈 Ẩn trắng
+                        </button>
+                        <button class="button button-blue" id="btnHideBlue" onclick="toggleHideColor('blue')" style="font-size: 8.5px; background: #1e3a8a; border: 1px solid #1e40af;" title="Bật/Tắt ẩn màu Xanh dương trên Projector">
+                            🙈 Ẩn lam
+                        </button>
+                    </div>
+
+                    <!-- STATUS SUMMARY ROW -->
+                    <div class="status-row">
+                        <div class="status-box">
+                            <span class="status-label">Ô đang chọn</span>
+                            <span class="status-value" id="statusSelected" style="color: #f59f00;">-</span>
                         </div>
-                        <div class="status-box" style="background: #0f172a; border: 1px solid #1e293b; border-radius: 4px; padding: 3px 6px; text-align: center;">
-                            <span class="status-label" style="font-size: 8px; color: #94a3b8; text-transform: uppercase;">Đã dùng</span>
-                            <span class="status-value" id="statusUsed" style="font-family: 'UTM Impact', Impact, sans-serif; font-size: 14px; color: #38bdf8;">0 / 25</span>
+                        <div class="status-box">
+                            <span class="status-label">Đã lật màu</span>
+                            <span class="status-value" id="statusUsed" style="color: #38bdf8;">0 / 25</span>
                         </div>
-                        <div class="status-box" style="background: #0f172a; border: 1px solid #1e293b; border-radius: 4px; padding: 3px 6px; text-align: center;">
-                            <span class="status-label" style="font-size: 8px; color: #94a3b8; text-transform: uppercase;">Còn lại</span>
-                            <span class="status-value" id="statusRemaining" style="font-family: 'UTM Impact', Impact, sans-serif; font-size: 14px; color: #4ade80;">25</span>
+                        <div class="status-box">
+                            <span class="status-label">Còn lại</span>
+                            <span class="status-value" id="statusRemaining" style="color: #4ade80;">25</span>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- SPECIAL ROUND MEDIA CONTROLLER (VÒNG THI ĐẶC BIỆT) -->
+            <!-- SPECIAL ROUND MEDIA CONTROLLER (VÒNG THI ĐẶC BIỆT - THU GỌN MẶC ĐỊNH ĐỂ KHÔNG CHIẾM DIỆN TÍCH) -->
             <section class="card" id="specialRoundBox">
-                <div class="card-header">
+                <div class="card-header" onclick="toggleSpecialRoundCard()" style="cursor: pointer; user-select: none;" title="Nhấp để Thu gọn / Mở rộng bảng điều khiển vòng đặc biệt">
                     <div class="card-title" style="color: #f59f00;">
-                        <span>🌟</span> CÂU HỎI VÒNG ĐẶC BIỆT
+                        <span>🌟</span> CÂU HỎI VÒNG ĐẶC BIỆT <span id="specialToggleIcon" style="font-size: 9px; color: #38bdf8; font-family: sans-serif; font-weight: normal; margin-left: 4px;">▼ (Mở rộng)</span>
                     </div>
                     <div style="display:flex; align-items:center; gap: 6px;">
                         <span id="specialRoundTimeBadge" class="card-badge" style="background:#0f172a; color:#f59f00; font-family: monospace; font-size: 10px; border: 1px solid #334155;">⏱️ 20.0s</span>
@@ -162,7 +181,7 @@
                     </div>
                 </div>
 
-                <div class="card-body" style="padding: 6px; gap: 6px;">
+                <div class="card-body" id="specialRoundBody" style="display: none; padding: 6px; gap: 6px;">
                     <!-- MODE SWITCHER (3 TABS) -->
                     <div style="display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 3px; background: #090d14; padding: 2px; border-radius: 5px; border: 1px solid #1e293b;">
                         <button type="button" id="btnModeLocalVideo" onclick="setSpecialRoundMode('local_video')" class="button" style="padding: 4px 2px; font-size: 10px; background: #1e293b; color: #f1f5f9; border: 1px solid #334155;">
