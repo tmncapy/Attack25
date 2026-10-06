@@ -1,0 +1,219 @@
+{
+  "roomId": "999888",
+  "passwords": {
+    "host": "1234",
+    "red": "1111",
+    "green": "2222",
+    "white": "3333",
+    "blue": "4444"
+  },
+  "state": {
+    "currentQuestionIndex": 0,
+    "selectedPanel": 13,
+    "panels": [
+      {
+        "number": 1,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 2,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 3,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 4,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 5,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 6,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 7,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 8,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 9,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 10,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 11,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 12,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 13,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 14,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 15,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 16,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 17,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 18,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 19,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 20,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 21,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 22,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 23,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 24,
+        "used": false,
+        "color": null
+      },
+      {
+        "number": 25,
+        "used": false,
+        "color": null
+      }
+    ],
+    "players": {
+      "red": {
+        "name": "PLAYER 1",
+        "score": 0
+      },
+      "green": {
+        "name": "PLAYER 2",
+        "score": 0
+      },
+      "white": {
+        "name": "PLAYER 3",
+        "score": 0
+      },
+      "blue": {
+        "name": "PLAYER 4",
+        "score": 0
+      }
+    },
+    "buzzer": {
+      "status": "locked",
+      "winner": null,
+      "buzzTime": null,
+      "pressOrder": [],
+      "lockedPlayers": []
+    },
+    "video": {
+      "mode": "local_video",
+      "url": "",
+      "embedUrl": "",
+      "videoName": "",
+      "images": [],
+      "totalDuration": 20,
+      "playing": false,
+      "visible": false,
+      "startTime": null,
+      "playToken": null,
+      "loop": true
+    },
+    "questionMedia": {
+      "visible": false,
+      "type": "none",
+      "url": "",
+      "images": [],
+      "totalDuration": 20,
+      "questionText": "",
+      "questionStt": 1,
+      "answer": "",
+      "playing": true,
+      "playToken": 0
+    },
+    "soundVolume": 100
+  },
+  "questions": [
+    {
+      "stt": 1,
+      "question": "Năm 2026 là năm con gì theo can chi?",
+      "answer": "Bính Ngọ (Con Ngựa)"
+    },
+    {
+      "stt": 2,
+      "question": "Đỉnh núi cao nhất Việt Nam là đỉnh núi nào?",
+      "answer": "Fansipan (3.143m)"
+    },
+    {
+      "stt": 3,
+      "question": "Hành tinh nào gần Mặt Trời nhất trong Hệ Mặt Trời?",
+      "answer": "Sao Thủy (Mercury)"
+    },
+    {
+      "stt": 4,
+      "question": "Bức họa nổi tiếng 'Mona Lisa' là tác phẩm của danh họa nào?",
+      "answer": "Leonardo da Vinci"
+    },
+    {
+      "stt": 5,
+      "question": "Kim loại nào dẫn điện tốt nhất ở điều kiện tiêu chuẩn?",
+      "answer": "Bạc (Ag)"
+    }
+  ]
+}

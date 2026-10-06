@@ -1053,8 +1053,18 @@ function playSynthTone(type) {
 
 
 /* =====================================================
-   TẠO BẢNG 5 x 5 (HỖ TRỢ HIỆU ỨNG FADE 0.5S KHI ĐỔI MÀU / CHIẾM Ô OTHELLO)
+   PRELOAD HÌNH ẢNH & TẠO BẢNG 5 x 5
 ===================================================== */
+// Preload toàn bộ assets bảng và scoreboard vào bộ nhớ GPU để hiển thị ngay lập tức
+[
+    "DefaultPanel.png", "RedPanel.png", "GreenPanel.png", "WhitePanel.png", "BluePanel.png",
+    "board.png", "ScoreBackground.png", "RedScoreboard.png", "GreenScoreboard.png",
+    "WhiteScoreboard.png", "BlueScoreboard.png", "background.png"
+].forEach(src => {
+    const pre = new Image();
+    pre.src = src;
+});
+
 const panelBoard = document.getElementById("panelBoard");
 const panelElements = {};
 
@@ -1579,7 +1589,7 @@ function applyGameState(state) {
                 elObj.currentSrc = targetSrc;
                 elObj.initialized = true;
             } else if (elObj.currentSrc !== targetSrc) {
-                // Hiệu ứng Fade 0.5s mượt mà khi đổi màu / cướp ô theo luật Othello
+                // Hiệu ứng Fade siêu tốc 120ms, mượt mà và không gây layout thrashing
                 if (elObj.fadeTimer) {
                     clearTimeout(elObj.fadeTimer);
                     elObj.fadeTimer = null;
@@ -1588,22 +1598,19 @@ function applyGameState(state) {
                 elObj.fadeImg.src = targetSrc;
                 elObj.fadeImg.style.transition = 'none';
                 elObj.fadeImg.style.opacity = '0';
-
-                // Bắt buộc trình duyệt reflow layout để nhận opacity 0 trước khi transition
-                void elObj.fadeImg.offsetWidth;
-
-                // Fade dần sang màu người chiếm với duration 0.5s
-                elObj.fadeImg.style.transition = 'opacity 0.5s ease-in-out';
-                elObj.fadeImg.style.opacity = '1';
-
                 elObj.currentSrc = targetSrc;
 
-                elObj.fadeTimer = setTimeout(() => {
-                    elObj.baseImg.src = targetSrc;
-                    elObj.fadeImg.style.transition = 'none';
-                    elObj.fadeImg.style.opacity = '0';
-                    elObj.fadeTimer = null;
-                }, 500);
+                requestAnimationFrame(() => {
+                    elObj.fadeImg.style.transition = 'opacity 0.12s ease-out';
+                    elObj.fadeImg.style.opacity = '1';
+
+                    elObj.fadeTimer = setTimeout(() => {
+                        elObj.baseImg.src = targetSrc;
+                        elObj.fadeImg.style.transition = 'none';
+                        elObj.fadeImg.style.opacity = '0';
+                        elObj.fadeTimer = null;
+                    }, 130);
+                });
             }
         });
 

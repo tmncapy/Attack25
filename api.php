@@ -221,6 +221,24 @@ if ($action === 'upload-media' || $action === 'uploadmedia') {
     exit();
 }
 
+if ($action === 'events') {
+    header('Content-Type: text/event-stream');
+    header('Cache-Control: no-cache');
+    header('Connection: keep-alive');
+    header('X-Accel-Buffering: no');
+    recalculateScores($room['state']);
+    echo "data: " . json_encode([
+        'channel' => 'attack25-sync-v3',
+        'type' => 'state',
+        'state' => $room['state'],
+        'questions' => $room['questions'],
+        'roomId' => $room['roomId']
+    ], JSON_UNESCAPED_UNICODE) . "\n\n";
+    @ob_flush();
+    flush();
+    exit();
+}
+
 if ($action === 'state' || $action === 'get_state' || $_SERVER['REQUEST_METHOD'] === 'GET') {
     recalculateScores($room['state']);
     echo json_encode([

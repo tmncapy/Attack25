@@ -74,6 +74,8 @@
 <IfModule mod_rewrite.c>
     # Fallback to api.php for PHP hosting environments where mod_proxy is not loaded
     <IfModule !mod_proxy.c>
+        RewriteRule ^api/events/?$ api.php?action=events [NC,L,QSA]
+        RewriteRule ^events/?$ api.php?action=events [NC,L,QSA]
         RewriteRule ^api/state/?$ api.php?action=state [NC,L,QSA]
         RewriteRule ^api/sync-action/?$ api.php?action=sync-action [NC,L,QSA]
         RewriteRule ^api/verify-room/?$ api.php?action=verify-room [NC,L,QSA]

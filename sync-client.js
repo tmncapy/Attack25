@@ -153,11 +153,9 @@
         const basePath = getAppBasePath();
         const wsPath = basePath === '/' ? '/ws' : (basePath.endsWith('/') ? basePath + 'ws' : basePath + '/ws');
 
-        // 1. If currently loaded via HTTP/HTTPS, current origin is ALWAYS the primary target
+        // 1. Current origin is the primary and fastest target
         if (window.location.protocol.startsWith("http")) {
             const curHost = window.location.host;
-            const curHostname = window.location.hostname;
-            const curPort = window.location.port;
 
             // Primary: Current host with app base path (/ws or /Attack25/ws)
             const c1 = protocol + "//" + curHost + wsPath + query;
@@ -167,20 +165,12 @@
             const c2 = protocol + "//" + curHost + "/ws" + query;
             if (!candidates.includes(c2)) candidates.push(c2);
 
-            // Direct port 3000 candidate (e.g. for custom domain/Apache where Node is on 3000)
-            if (curPort !== '3000' && curHostname && curHostname !== 'localhost' && !curHostname.includes('run.app')) {
-                const cPort = "ws://" + curHostname + ":3000/ws" + query;
-                if (!candidates.includes(cPort)) candidates.push(cPort);
-                const cPortSecure = "wss://" + curHostname + ":3000/ws" + query;
-                if (!candidates.includes(cPortSecure)) candidates.push(cPortSecure);
-            }
-
             // Tertiary: Current host root /
             const c3 = protocol + "//" + curHost + "/" + query;
             if (!candidates.includes(c3)) candidates.push(c3);
         }
 
-        // 2. If explicit server host parameter was passed in URL (?server=...)
+        // 2. If explicit server host parameter was passed in URL (?server=...) or configured
         const normManual = normalizeHost(manualHost);
         if (normManual && (!window.location.protocol.startsWith("http") || normManual !== window.location.host)) {
             const m1 = protocol + "//" + normManual + wsPath + query;
@@ -189,7 +179,7 @@
             if (!candidates.includes(m2)) candidates.push(m2);
         }
 
-        // 3. Fallback for file:// or local dev
+        // 3. Fallback for file:// local dev
         if (!window.location.protocol.startsWith("http")) {
             const loc1 = "ws://localhost:3000/ws" + query;
             if (!candidates.includes(loc1)) candidates.push(loc1);
@@ -212,6 +202,9 @@
        SMART HTTP API CANDIDATES & MULTI-TARGET FETCHER
        ========================================================= */
     let lastWorkingApiBase = null;
+    try {
+        lastWorkingApiBase = sessionStorage.getItem('attack25_api_base') || null;
+    } catch (e) {}
 
     function getApiCandidates(endpoint, queryParams) {
         if (typeof window === 'undefined' || !window.location || !window.location.protocol.startsWith('http')) {
@@ -220,12 +213,9 @@
         const clean = endpoint.replace(/^\/+/, ''); // e.g. 'api/state'
         const q = queryParams ? (queryParams.startsWith('?') ? queryParams : '?' + queryParams) : '';
         const basePath = getAppBasePath();
-        const curHostname = window.location.hostname;
-        const curPort = window.location.port;
-        const protocol = window.location.protocol;
         const list = [];
 
-        // 1. If we discovered a working base in this session, prioritize it
+        // 1. If we discovered a working base in this session, prioritize it directly for 0-latency
         if (lastWorkingApiBase) {
             const pref = lastWorkingApiBase + clean + q;
             if (!list.includes(pref)) list.push(pref);
@@ -248,21 +238,6 @@
         const php2 = '/api.php' + phpQuery;
         if (!list.includes(php2)) list.push(php2);
 
-        // 5. Short form without 'api/' prefix (e.g. '/Attack25/state', '/state')
-        const shortClean = clean.replace(/^api\//, '');
-        const b3 = (basePath === '/' ? '/' : basePath) + shortClean + q;
-        if (!list.includes(b3)) list.push(b3);
-        const b4 = '/' + shortClean + q;
-        if (!list.includes(b4)) list.push(b4);
-
-        // 6. Direct port 3000 if not already on 3000
-        if (curPort !== '3000' && curHostname && curHostname !== 'localhost' && !curHostname.includes('run.app')) {
-            const p1 = `${protocol}//${curHostname}:3000/${clean}${q}`;
-            if (!list.includes(p1)) list.push(p1);
-            const p2 = `http://${curHostname}:3000/${clean}${q}`;
-            if (!list.includes(p2)) list.push(p2);
-        }
-
         return list;
     }
 
@@ -278,6 +253,7 @@
                         const idx = parsed.pathname.indexOf(cleanEndpoint);
                         if (idx >= 0) {
                             lastWorkingApiBase = parsed.pathname.substring(0, idx);
+                            try { sessionStorage.setItem('attack25_api_base', lastWorkingApiBase); } catch (e) {}
                         }
                     } catch (e) {}
                     return await res.json();
@@ -388,9 +364,20 @@
     }
 
     /* =========================================================
-       SEND MESSAGE (TRIPLE-CHANNEL BROADCAST)
+       SEND MESSAGE (LOW-LATENCY MULTI-CHANNEL BROADCAST)
        ========================================================= */
     let msgCounter = 0;
+    const pendingWsQueue = [];
+
+    function flushPendingWsQueue() {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        while (pendingWsQueue.length > 0) {
+            const item = pendingWsQueue.shift();
+            try {
+                ws.send(item);
+            } catch (e) {}
+        }
+    }
 
     function send(message) {
         if (!message || typeof message !== "object") {
@@ -415,41 +402,47 @@
         // Deduplicate locally
         isDuplicateMsg(msgId);
 
-        // 1. Channel 1: BroadcastChannel (Instant peer sync for tabs in same browser)
+        const payloadStr = JSON.stringify(payload);
+
+        // 1. Channel 1: BroadcastChannel (Instant peer sync for tabs in same browser, 0ms)
         if (broadcastChannel) {
             try {
                 broadcastChannel.postMessage(payload);
             } catch (e) {}
         }
 
-        // 2. Channel 2: LocalStorage Pulse (Instant cross-window / iframe fallback)
-        try {
-            localStorage.setItem("attack25_sync_pulse_" + currentRoomId, JSON.stringify(payload));
-        } catch (e) {}
-
-        // 3. Channel 3: WebSocket
+        // 2. Channel 2: WebSocket Send IMMEDIATELY (0ms real-time network push)
         let sent = false;
         if (ws && ws.readyState === WebSocket.OPEN) {
             try {
-                ws.send(JSON.stringify(payload));
+                ws.send(payloadStr);
                 sent = true;
             } catch (e) {
                 console.error("WebSocket send failed:", e);
             }
+        } else if (ws && ws.readyState === WebSocket.CONNECTING) {
+            pendingWsQueue.push(payloadStr);
         }
 
-        // 4. Channel 4: HTTP Fallback if WebSocket is not connected
+        // 3. Channel 3: HTTP Fallback if WebSocket is not connected
         if (!sent && typeof fetch === 'function' && window.location.protocol.startsWith('http')) {
             smartFetchApi('api/sync-action', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: payloadStr
             }).then(res => {
                 if (res && res.state) {
                     handleMessage({ type: 'state', state: res.state, questions: res.questions, roomId: currentRoomId });
                 }
             }).catch(() => {});
         }
+
+        // 4. Channel 4: LocalStorage pulse (Asynchronous write to never block UI thread)
+        setTimeout(function () {
+            try {
+                localStorage.setItem("attack25_sync_pulse_" + currentRoomId, payloadStr);
+            } catch (e) {}
+        }, 0);
 
         return sent;
     }
@@ -458,6 +451,61 @@
        WEBSOCKET CONNECTION & AUTO-FAILOVER
        ========================================================= */
     let connTimer = null;
+    let pingInterval = null;
+
+    function startPingKeepalive() {
+        if (pingInterval) clearInterval(pingInterval);
+        pingInterval = setInterval(function () {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                try {
+                    ws.send(JSON.stringify({ type: 'ping', roomId: currentRoomId, ts: Date.now() }));
+                } catch (e) {}
+            }
+        }, 8000);
+    }
+
+    function stopPingKeepalive() {
+        if (pingInterval) {
+            clearInterval(pingInterval);
+            pingInterval = null;
+        }
+    }
+
+    /* =========================================================
+       SERVER-SENT EVENTS (SSE) STREAM (ZERO-CONFIG REAL-TIME HTTP)
+       ========================================================= */
+    let sseSource = null;
+
+    function initSse() {
+        if (typeof EventSource === 'undefined' || !window.location.protocol.startsWith('http')) return;
+        if (sseSource) return;
+
+        try {
+            const basePath = getAppBasePath();
+            const sseBase = basePath === '/' ? '' : basePath.replace(/\/$/, '');
+            const sseUrl = sseBase + '/api/events?roomid=' + encodeURIComponent(currentRoomId);
+            sseSource = new EventSource(sseUrl);
+
+            sseSource.onmessage = function (event) {
+                if (!event || !event.data) return;
+                try {
+                    const data = JSON.parse(event.data);
+                    handleMessage(data);
+                } catch (e) {}
+            };
+
+            sseSource.onerror = function () {
+                // Keep trying or let polling handle it
+            };
+        } catch (e) {}
+    }
+
+    function stopSse() {
+        if (sseSource) {
+            try { sseSource.close(); } catch (e) {}
+            sseSource = null;
+        }
+    }
 
     function connect() {
         if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
@@ -481,11 +529,12 @@
         } catch (error) {
             ws = null;
             emitConnection(false, url, { error: 'Failed to create WebSocket instance' });
-            rotateCandidateAndScheduleReconnect(500);
+            startPollingFallback();
+            rotateCandidateAndScheduleReconnect(300);
             return;
         }
 
-        // Connection timeout: If candidate fails to open in 2200ms, immediately rotate to next candidate
+        // Connection timeout: If candidate fails to open in 1000ms, immediately rotate to next candidate
         connTimer = setTimeout(function () {
             if (ws && ws.readyState === WebSocket.CONNECTING) {
                 try {
@@ -500,7 +549,7 @@
                 emitConnection(false, url, { error: 'Connection attempt timeout' });
                 rotateCandidateAndScheduleReconnect(300);
             }
-        }, 2200);
+        }, 1000);
 
         ws.onopen = function () {
             if (connTimer) {
@@ -509,6 +558,7 @@
             }
             reconnecting = false;
             stopPollingFallback();
+            startPingKeepalive();
 
             // Extract working host and record it
             try {
@@ -532,11 +582,15 @@
                     auth: currentAuth
                 }));
             } catch (e) {}
+
+            // Immediately flush any actions queued during connect
+            flushPendingWsQueue();
         };
 
         ws.onmessage = function (event) {
             try {
                 const message = JSON.parse(event.data);
+                if (message.type === 'pong') return; // Heartbeat ack
                 handleMessage(message);
             } catch (error) {}
         };
@@ -550,11 +604,12 @@
                 clearTimeout(connTimer);
                 connTimer = null;
             }
+            stopPingKeepalive();
             ws = null;
             reconnecting = false;
             startPollingFallback();
             emitConnection(false, url);
-            rotateCandidateAndScheduleReconnect(1500);
+            rotateCandidateAndScheduleReconnect(500);
         };
     }
 
@@ -567,34 +622,40 @@
                 candidateIndex = (candidateIndex + 1) % candidateList.length;
             }
             connect();
-        }, (typeof delayMs === 'number' ? delayMs : 2000));
+        }, (typeof delayMs === 'number' ? delayMs : 500));
     }
 
+    let isFetchingState = false;
     function fetchStateOnce() {
-        if (!window.location.protocol.startsWith('http')) return;
+        if (!window.location.protocol.startsWith('http') || isFetchingState) return;
+        isFetchingState = true;
         smartFetchApi('api/state', { method: 'GET' }, 'roomid=' + encodeURIComponent(currentRoomId))
             .then(data => {
+                isFetchingState = false;
                 if (data && data.state) {
                     handleMessage({ type: 'state', state: data.state, questions: data.questions, roomId: currentRoomId });
                 }
             })
-            .catch(() => {});
+            .catch(() => {
+                isFetchingState = false;
+            });
     }
 
     function startPollingFallback() {
         if (!window.location.protocol.startsWith('http')) return;
-        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-            return;
-        }
+        initSse();
         fetchStateOnce();
         if (pollInterval) return;
-        pollInterval = setInterval(function() {
-            if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+
+        // Snappy 90ms poll rate when tab is active (< 0.1s update latency on PHP/HTTP hosts)
+        const pollSpeed = (typeof document !== 'undefined' && document.hidden) ? 350 : 90;
+        pollInterval = setInterval(function () {
+            if (ws && ws.readyState === WebSocket.OPEN) {
                 stopPollingFallback();
                 return;
             }
             fetchStateOnce();
-        }, 500);
+        }, pollSpeed);
     }
 
     function stopPollingFallback() {

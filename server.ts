@@ -226,12 +226,20 @@ function getRoomFilePath(roomId: string): string {
   return path.join(uploadsDir, `room_state_${safeId}.json`);
 }
 
-function saveRoomToDisk(room: RoomData) {
-  try {
-    const filePath = getRoomFilePath(room.roomId);
-    fs.writeFileSync(
-      filePath,
-      JSON.stringify(
+// Debounced async room persistence to prevent blocking real-time game broadcasts
+const pendingSaveTimers = new Map<string, NodeJS.Timeout>();
+
+function saveRoomToDisk(room: RoomData, immediate = false) {
+  const roomId = room.roomId;
+  if (pendingSaveTimers.has(roomId)) {
+    clearTimeout(pendingSaveTimers.get(roomId)!);
+    pendingSaveTimers.delete(roomId);
+  }
+
+  const doWrite = () => {
+    try {
+      const filePath = getRoomFilePath(roomId);
+      const dataStr = JSON.stringify(
         {
           roomId: room.roomId,
           passwords: room.passwords,
@@ -240,11 +248,24 @@ function saveRoomToDisk(room: RoomData) {
         },
         null,
         2
-      ),
-      'utf-8'
-    );
-  } catch (e) {
-    console.error('Failed to save room to disk:', e);
+      );
+      fs.promises.writeFile(filePath, dataStr, 'utf-8').catch((err) => {
+        console.error('Async save room failed:', err);
+      });
+    } catch (e) {
+      console.error('Failed to prepare room data for save:', e);
+    }
+  };
+
+  if (immediate) {
+    doWrite();
+  } else {
+    // 120ms debounce: allows back-to-back rapid actions (flips, buzzes) to broadcast with 0ms latency
+    const timer = setTimeout(() => {
+      pendingSaveTimers.delete(roomId);
+      doWrite();
+    }, 120);
+    pendingSaveTimers.set(roomId, timer);
   }
 }
 
@@ -492,7 +513,6 @@ const handleSyncAction = (req: Request, res: Response) => {
           currentRoom.state.buzzer.winner = player;
           currentRoom.state.buzzer.buzzTime = elapsed;
           currentRoom.state.buzzer.pressOrder = [{ player: player, time: elapsed }];
-          saveRoomToDisk(currentRoom);
           if (broadcastToRoomFn) {
             broadcastToRoomFn(currentRoom.roomId, {
               channel: 'attack25-sync-v3',
@@ -512,6 +532,7 @@ const handleSyncAction = (req: Request, res: Response) => {
               msgId: 'http_buzz_ev_' + Date.now() + '_' + player
             });
           }
+          saveRoomToDisk(currentRoom);
         }
       } else {
         if (broadcastToRoomFn) {
@@ -677,6 +698,44 @@ app.get(['/player4', '/player4.html', '/Player4.html', '/p4', '/blue'], (_req: R
 app.use(express.static(process.cwd(), { etag: false, maxAge: 0, lastModified: false }));
 
 // ==========================================
+// REAL-TIME SERVER-SENT EVENTS (SSE) & WEBSOCKET ENGINE
+// ==========================================
+const sseClients = new Map<string, Set<Response>>();
+
+app.get(['/api/events', '/events', '*events'], (req: Request, res: Response) => {
+  const qRoom = req.query.roomid || req.query.roomId || req.query.room || '123456';
+  const roomId = String(qRoom).trim();
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+    'X-Accel-Buffering': 'no'
+  });
+
+  const room = getOrCreateRoom(roomId);
+  recalculateScores(room.state);
+  res.write(`data: ${JSON.stringify({
+    channel: 'attack25-sync-v3',
+    type: 'state',
+    roomId: room.roomId,
+    state: room.state,
+    questions: room.questions
+  })}\n\n`);
+
+  if (!sseClients.has(roomId)) {
+    sseClients.set(roomId, new Set());
+  }
+  const clientSet = sseClients.get(roomId)!;
+  clientSet.add(res);
+
+  req.on('close', () => {
+    clientSet.delete(res);
+  });
+});
+
+// ==========================================
 // START SERVER WITH WEBSOCKET SUPPORT
 // ==========================================
 async function startServer() {
@@ -684,6 +743,10 @@ async function startServer() {
   const wss = new WebSocketServer({ noServer: true, maxPayload: 100 * 1024 * 1024 });
 
   server.on('upgrade', (request, socket, head) => {
+    // Disable Nagle's algorithm for zero-delay instant TCP packet transmission
+    if (typeof (socket as any).setNoDelay === 'function') {
+      (socket as any).setNoDelay(true);
+    }
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit('connection', ws, request);
     });
@@ -691,6 +754,8 @@ async function startServer() {
 
   function broadcastToRoom(roomId: string, data: any, excludeWs: CustomWebSocket | null = null) {
     const message = JSON.stringify(data);
+
+    // 1. WebSocket Broadcast (0ms in-memory delivery)
     wss.clients.forEach((client) => {
       const wsClient = client as CustomWebSocket;
       if (wsClient.roomId === roomId && wsClient !== excludeWs && wsClient.readyState === WebSocket.OPEN) {
@@ -699,11 +764,24 @@ async function startServer() {
         } catch (e) {}
       }
     });
+
+    // 2. Server-Sent Events Broadcast (0ms HTTP push for proxies/domains blocking WS)
+    const sseSet = sseClients.get(roomId);
+    if (sseSet && sseSet.size > 0) {
+      const ssePayload = `data: ${message}\n\n`;
+      sseSet.forEach((clientRes) => {
+        try {
+          clientRes.write(ssePayload);
+        } catch (e) {
+          sseSet.delete(clientRes);
+        }
+      });
+    }
   }
 
   broadcastToRoomFn = broadcastToRoom;
 
-  // WebSocket Heartbeat / Keepalive
+  // Active WebSocket Heartbeat / Keepalive (12s interval for responsive detection)
   const heartbeatInterval = setInterval(() => {
     wss.clients.forEach((client) => {
       const ws = client as CustomWebSocket;
@@ -718,7 +796,7 @@ async function startServer() {
         ws.ping();
       } catch (e) {}
     });
-  }, 25000);
+  }, 12000);
 
   server.on('close', () => {
     clearInterval(heartbeatInterval);
@@ -726,6 +804,12 @@ async function startServer() {
 
   wss.on('connection', (ws: CustomWebSocket, request) => {
     ws.isAlive = true;
+    // @ts-ignore
+    if (ws._socket && typeof ws._socket.setNoDelay === 'function') {
+      // @ts-ignore
+      ws._socket.setNoDelay(true);
+    }
+
     ws.on('pong', () => {
       ws.isAlive = true;
     });
@@ -768,6 +852,12 @@ async function startServer() {
         ws.roomId = roomId;
         const currentRoom = getOrCreateRoom(roomId);
 
+        // Immediate low-latency Ping/Pong keep-alive
+        if (data.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong', ts: data.ts || Date.now(), roomId }));
+          return;
+        }
+
         if (data.type === 'CREATE_ROOM') {
           if (data.roomId && data.passwords) {
             getOrCreateRoom(String(data.roomId).trim(), data.passwords);
@@ -794,7 +884,6 @@ async function startServer() {
         } else if (data.type === 'SYNC_STATE' || data.type === 'state') {
           const action = data.action || '';
           if (action === 'sync' || action === 'init' || action === 'get_state') {
-            // Client is just synchronizing on connect/reload: do NOT overwrite server state!
             recalculateScores(currentRoom.state);
             ws.send(
               JSON.stringify({
@@ -811,8 +900,8 @@ async function startServer() {
               if (action === 'buzzer_armed' || action === 'arm') {
                 currentRoom.buzzerArmTime = Date.now();
               }
-              saveRoomToDisk(currentRoom);
             }
+            // Broadcast IMMEDIATELY in-memory (0ms latency), persist in background
             broadcastToRoom(
               currentRoom.roomId,
               {
@@ -826,11 +915,13 @@ async function startServer() {
               },
               ws
             );
+            if (data.state) {
+              saveRoomToDisk(currentRoom);
+            }
           }
         } else if (data.type === 'SYNC_QUESTIONS' || data.type === 'questions') {
           if (Array.isArray(data.questions) && data.questions.length > 0) {
             currentRoom.questions = data.questions;
-            saveRoomToDisk(currentRoom);
           }
           broadcastToRoom(
             currentRoom.roomId,
@@ -843,6 +934,9 @@ async function startServer() {
             },
             ws
           );
+          if (Array.isArray(data.questions) && data.questions.length > 0) {
+            saveRoomToDisk(currentRoom);
+          }
         } else if (data.type === 'PLAYER_BUZZ' || data.type === 'buzz' || data.type === 'buzz_attempt') {
           const player = data.player;
           if (
@@ -859,8 +953,8 @@ async function startServer() {
               currentRoom.state.buzzer.winner = player;
               currentRoom.state.buzzer.buzzTime = elapsed;
               currentRoom.state.buzzer.pressOrder = [{ player: player, time: elapsed }];
-              saveRoomToDisk(currentRoom);
 
+              // Broadcast buzzer hit INSTANTLY
               broadcastToRoom(currentRoom.roomId, {
                 channel: 'attack25-sync-v3',
                 type: 'state',
@@ -879,10 +973,11 @@ async function startServer() {
                 time: elapsed,
                 msgId: 'srv_buzz_ev_' + Date.now() + '_' + player
               });
+
+              saveRoomToDisk(currentRoom);
             } else {
               if (!currentRoom.state.buzzer.pressOrder.some((p) => p.player === player)) {
                 currentRoom.state.buzzer.pressOrder.push({ player: player, time: elapsed });
-                saveRoomToDisk(currentRoom);
                 broadcastToRoom(currentRoom.roomId, {
                   channel: 'attack25-sync-v3',
                   type: 'state',
@@ -891,6 +986,7 @@ async function startServer() {
                   state: currentRoom.state,
                   msgId: 'srv_order_' + Date.now()
                 });
+                saveRoomToDisk(currentRoom);
               }
             }
           } else {
