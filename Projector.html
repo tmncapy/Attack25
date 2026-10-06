@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Panel Quiz Attack 25 - Universal Cloud Projector</title>
+<script>
+    window.DisableDevtool = { isOpened: false, onDevToolOpened: function(){}, close: function(){} };
+    window.disableDevtool = function(){};
+</script>
+
+<!-- 3 Required Connector Libraries -->
+<script src="jquery.js"></script>
+<script src="socket.io.js"></script>
+<script src="howler.js"></script>
+<!-- Universal Real-time Synchronizer (Global Edition) -->
+<script src="sync-client.js?v=20260920b"></script>
+<script>
+    (function checkProjectorRoom() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let roomId = urlParams.get('roomid') || urlParams.get('roomId') || urlParams.get('room');
+        const isPreview = urlParams.get('preview') === '1';
+
+        if (!roomId) {
+            try {
+                roomId = localStorage.getItem('attack25_active_roomid') || '123456';
+            } catch (e) {
+                roomId = '123456';
+            }
+        }
+
+        if (window.Attack25Sync && typeof Attack25Sync.setRoomId === 'function') {
+            Attack25Sync.setRoomId(roomId);
+        }
+    })();
+</script>
+
+<style>
+
+/* =====================================================
+   FONT UTM IMPACT
+===================================================== */
+@font-face {
+    font-family: "UTM Impact";
+    src: local("UTM Impact"), local("Impact"), url("UTM Impact.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-weight: bold !important;
+}
+
+/* Tắt bold đối với tất cả thành phần sử dụng font UTM Impact */
+.panel-number,
+.score-text,
+.player-name,
+.screen-buzzer-alert,
+[style*="UTM Impact"],
+[style*="utm impact"],
+[style*="Impact"],
+.utm-impact {
+    font-weight: normal !important;
+    font-synthesis: none !important;
+}
+
+button:hover,
+.button:hover,
+.btn:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+[role="button"]:hover,
+.action-btn:hover,
+.panel-btn:hover,
+.reset-btn:hover,
+.buzzer-btn:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-success:hover,
+.btn-danger:hover,
+.btn-warning:hover,
+.btn-info:hover,
+.btn-dark:hover {
+    background: #C2410C !important;
+    background-color: #C2410C !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #04060a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* =====================================================
+   KHUNG THIẾT KẾ GỐC: 1280 x 720
+===================================================== */
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+#game {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    transform-origin: center center;
+    background: radial-gradient(circle at center, #173c71 0%, #0b1730 60%, #05070c 100%);
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.95);
+    flex-shrink: 0;
+}
+
+/* =====================================================
+   STYLE CHUNG CHO HÌNH ẢNH
+===================================================== */
+img {
+    display: block;
+    object-fit: contain;
+}
+
+/* =====================================================
+   BACKGROUND
+===================================================== */
+.background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1280px;
+    height: 720px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.background img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* =====================================================
+   BOARD BACKGROUND
+===================================================== */
+.board-background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1280px;
+    height: 720px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.board-background img {
+    width: 100%;
+    height: 100%;
+}
+
+/* =====================================================
+   STREAMABLE VIDEO CONTAINER UNDER BOARD
+===================================================== */
+.video-container {
+    position: absolute;
+    left: 122.42px;
+    top: 65.78px;
+    width: 778.56px;
+    height: 586.56px;
+    z-index: 2;
+    background: #000;
+    overflow: hidden;
+    display: none;
+    pointer-events: auto;
+}
+
+.video-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* =====================================================
+   BẢNG 5 x 5
+===================================================== */
+.panel-board {
+    position: absolute;
+    left: 122.42px;
+    top: 65.78px;
+    width: 778.56px;
+    height: 586.56px;
+    display: grid;
+    grid-template-columns: repeat(5, 154.712px);
+    grid-template-rows: repeat(5, 116.312px);
+    column-gap: 0px;
+    row-gap: 0px;
+    padding: 0;
+    z-index: 3;
+}
+
+/* =====================================================
+   DEFAULT PANEL
+===================================================== */
+.default-panel {
+    position: relative;
+    width: 155.712px;
+    height: 117.312px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease, opacity 0.2s ease;
+}
+
+.default-panel.color-hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.default-panel img {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: fill;
+    transform: none;
+    pointer-events: none;
+}
+
+.default-panel img.panel-img-base {
+    z-index: 1;
+}
+
+.default-panel img.panel-img-fade {
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    will-change: opacity;
+}
+
+.default-panel.active {
+    z-index: 10;
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(232, 163, 38, 0.95), inset 0 0 15px rgba(255, 211, 111, 0.85);
+    border-radius: 4px;
+    animation: activeGlow 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes activeGlow {
+    0% {
+        box-shadow: 0 0 15px rgba(232, 163, 38, 0.7), inset 0 0 10px rgba(255, 211, 111, 0.6);
+        filter: brightness(1.05);
+    }
+    100% {
+        box-shadow: 0 0 32px rgba(255, 193, 7, 1), inset 0 0 22px rgba(255, 235, 59, 0.95);
+        filter: brightness(1.3);
+    }
+}
+
+.default-panel.used {
+    opacity: 0.45;
+    filter: grayscale(0.7) brightness(0.65);
+}
+
+.default-panel.used .panel-number {
+    text-decoration: line-through;
+    opacity: 0.5;
+}
+
+/* =====================================================
+   SỐ TRÊN BẢNG 5 x 5
+===================================================== */
+.panel-number {
+    position: relative;
+    z-index: 5;
+    color: #111111;
+    font-family: "UTM Impact", Impact, "Arial Black", sans-serif;
+    font-size: 60px;
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.default-panel.active .panel-number {
+    color: #000;
+    font-size: 64px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* =====================================================
+   SCORE BACKGROUND
+===================================================== */
+.score-background {
+    position: absolute;
+    left: 1012.8px;
+    top: 65.28px;
+    width: 267.84px;
+    height: 582.72px;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.score-background img {
+    width: 100%;
+    height: 100%;
+}
+
+/* =====================================================
+   SCOREBOARD & HIGHLIGHT
+===================================================== */
+.score-item {
+    position: absolute;
+    width: 83.52px;
+    height: 63.36px;
+    z-index: 5;
+    border-radius: 6px;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease, box-shadow 0.25s ease;
+}
+
+.score-item img {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* HIGHLIGHT SCOREBOARD WHEN BUZZED */
+.score-item.buzzed-highlight {
+    z-index: 25 !important;
+    animation: scoreBuzzedPulse 0.7s infinite alternate ease-in-out;
+}
+
+.score-item.buzzed-red {
+    box-shadow: 0 0 35px #e03131, inset 0 0 15px #ff8787;
+    filter: brightness(1.25);
+}
+
+.score-item.buzzed-green {
+    box-shadow: 0 0 35px #2fb344, inset 0 0 15px #69db7c;
+    filter: brightness(1.25);
+}
+
+.score-item.buzzed-white {
+    box-shadow: 0 0 40px #ffffff, inset 0 0 20px #f8f9fa;
+    filter: brightness(1.35);
+}
+
+.score-item.buzzed-blue {
+    box-shadow: 0 0 35px #2f80ed, inset 0 0 15px #74c0fc;
+    filter: brightness(1.25);
+}
+
+@keyframes scoreBuzzedPulse {
+    0% {
+        transform: scale(1.12);
+        filter: brightness(1.15);
+    }
+    100% {
+        transform: scale(1.25);
+        filter: brightness(1.4);
+    }
+}
+
+/* =====================================================
+   TEXT ĐIỂM
+===================================================== */
+.score-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: black;
+    font-family: "UTM Impact", Impact, "Arial Black", sans-serif;
+    font-size: 32px;
+    font-weight: bold;
+    line-height: 1;
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* =====================================================
+   SCOREBOARD POSITIONS
+===================================================== */
+.score-red { left: 981.12px; top: 79.68px; }
+.score-green { left: 981.12px; top: 226.56px; }
+.score-white { left: 981.12px; top: 369.6px; }
+.score-blue { left: 981.12px; top: 516.48px; }
+
+/* =====================================================
+   TÊN NGƯỜI CHƠI
+===================================================== */
+.player-name {
+    position: absolute;
+    left: 1064.64px;
+    width: 216px;
+    height: 63.36px;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    color: black;
+    font-family: "UTM Impact", Impact, "Segoe UI", Arial, sans-serif;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1;
+    user-select: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.25s ease, text-shadow 0.25s ease;
+}
+
+.player-name.buzzed-highlight {
+    transform: scale(1.15);
+    color: #fffb00 !important;
+    text-shadow: 0 0 14px rgba(255, 235, 59, 1), 2px 2px 4px #000, 0 0 25px rgba(255, 193, 7, 0.8) !important;
+}
+
+.player-1 { top: 79.68px; }
+.player-2 { top: 226.56px; }
+.player-3 { top: 369.6px; }
+.player-4 { top: 516.48px; }
+
+/* =====================================================
+   BUZZER SPOTLIGHT & OVERLAY (HIỆU ỨNG CHUÔNG)
+===================================================== */
+.player-buzzer-spotlight {
+    position: absolute;
+    left: 970px;
+    width: 305px;
+    height: 80px;
+    z-index: 4;
+    border-radius: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+}
+
+.player-buzzer-spotlight.active {
+    opacity: 1;
+    animation: spotlightPulse 0.75s infinite alternate ease-in-out;
+}
+
+.player-buzzer-spotlight.spotlight-red {
+    top: 71px;
+    background: radial-gradient(ellipse at center, rgba(224, 49, 49, 0.85) 0%, rgba(224, 49, 49, 0) 75%);
+    box-shadow: 0 0 45px #e03131;
+}
+
+.player-buzzer-spotlight.spotlight-green {
+    top: 218px;
+    background: radial-gradient(ellipse at center, rgba(47, 179, 68, 0.85) 0%, rgba(47, 179, 68, 0) 75%);
+    box-shadow: 0 0 45px #2fb344;
+}
+
+.player-buzzer-spotlight.spotlight-white {
+    top: 361px;
+    background: radial-gradient(ellipse at center, rgba(248, 249, 250, 0.9) 0%, rgba(248, 249, 250, 0) 75%);
+    box-shadow: 0 0 45px #ffffff;
+}
+
+.player-buzzer-spotlight.spotlight-blue {
+    top: 508px;
+    background: radial-gradient(ellipse at center, rgba(47, 128, 237, 0.85) 0%, rgba(47, 128, 237, 0) 75%);
+    box-shadow: 0 0 45px #2f80ed;
+}
+
+@keyframes spotlightPulse {
+    from { transform: scale(0.98); opacity: 0.85; }
+    to { transform: scale(1.04); opacity: 1; filter: brightness(1.35); }
+}
+
+/* FLOATING HUD TOOLBAR & AUDIO BANNER HIDDEN */
+.projector-hud, .audio-banner, .screen-buzzer-alert {
+    display: none !important;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-6px); }
+}
+
+/* =====================================================
+   FULL-WINDOW QUESTION MEDIA OVERLAY (IMAGE / VIDEO)
+===================================================== */
+.projector-media-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1280px;
+    height: 720px;
+    z-index: 100;
+    background: rgba(3, 7, 18, 0.98);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    animation: overlayFadeIn 0.25s ease-out;
+}
+
+@keyframes overlayFadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.overlay-media-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 16px 20px 72px 20px;
+    box-sizing: border-box;
+}
+
+.overlay-media-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    background: #000;
+}
+
+.overlay-media-container video {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    background: #000;
+}
+
+.overlay-media-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.95);
+    background: #000;
+}
+
+.overlay-caption-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 14px 24px;
+    box-sizing: border-box;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.96) 0%, rgba(0, 0, 0, 0.85) 65%, rgba(0, 0, 0, 0) 100%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 10;
+}
+
+.overlay-badge {
+    background: #f59f00;
+    color: #000;
+    font-family: 'UTM Impact', Impact, sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    padding: 4px 16px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(245, 159, 0, 0.4);
+    flex-shrink: 0;
+}
+
+.overlay-question-text {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game-container">
+    <div id="game">
+
+        <!-- LAYER 1: BACKGROUND -->
+        <div class="background">
+            <img src="background.png" alt="" onerror="this.style.display='none'">
+        </div>
+
+        <!-- LAYER 2: BOARD BACKGROUND -->
+        <div class="board-background">
+            <img src="board.png" alt="">
+        </div>
+
+        <!-- LAYER 2.5: SPECIAL ROUND MEDIA CONTAINER UNDER BOARD (LOCAL VIDEO / SLIDESHOW 20S / STREAMABLE) -->
+        <div class="video-container" id="projectorVideoContainer">
+            <iframe id="projectorVideoIframe" src="" frameborder="0" width="100%" height="100%" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="display:none;"></iframe>
+            <video id="projectorLocalVideo" playsinline webkit-playsinline loop style="width: 100%; height: 100%; object-fit: contain; background: #000; display: none;"></video>
+            <div id="projectorSlideContainer" style="width: 100%; height: 100%; position: relative; background: #000; display: none; overflow: hidden;">
+                <img id="projectorSlideImg" src="" alt="Slide" style="width: 100%; height: 100%; object-fit: contain; transition: opacity 0.15s ease-in-out;" />
+                <div id="projectorSlideTimerBadge" style="position: absolute; bottom: 10px; right: 10px; background: rgba(15, 23, 42, 0.9); color: #f59f00; font-family: monospace; font-size: 15px; font-weight: bold; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(245, 159, 0, 0.5); display: flex; align-items: center; gap: 6px; z-index: 10; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
+                    <span>⏱️</span>
+                    <span id="projectorSlideTimerText">20.0s</span>
+                </div>
+                <div id="projectorSlideProgressBar" style="position: absolute; bottom: 0; left: 0; height: 5px; width: 0%; background: #f59f00; z-index: 11; pointer-events: none; transition: width 0.08s linear;"></div>
+            </div>
+        </div>
+
+        <!-- LAYER 3: BẢNG 5 x 5 -->
+        <div class="panel-board" id="panelBoard"></div>
+
+        <!-- LAYER 4: SCORE BACKGROUND -->
+        <div class="score-background">
+            <img src="ScoreBackground.png" alt="">
+        </div>
+
+        <!-- BUZZER SPOTLIGHTS -->
+        <div class="player-buzzer-spotlight spotlight-red" id="spotlightRed"></div>
+        <div class="player-buzzer-spotlight spotlight-green" id="spotlightGreen"></div>
+        <div class="player-buzzer-spotlight spotlight-white" id="spotlightWhite"></div>
+        <div class="player-buzzer-spotlight spotlight-blue" id="spotlightBlue"></div>
+
+        <!-- SCOREBOARDS (4 ĐỘI) -->
+        <div class="score-item score-red" id="scoreBoxRed">
+            <img src="RedScoreboard.png" alt="">
+            <div class="score-text" id="scoreRed">0</div>
+        </div>
+
+        <div class="score-item score-green" id="scoreBoxGreen">
+            <img src="GreenScoreboard.png" alt="">
+            <div class="score-text" id="scoreGreen">0</div>
+        </div>
+
+        <div class="score-item score-white" id="scoreBoxWhite">
+            <img src="WhiteScoreboard.png" alt="">
+            <div class="score-text" id="scoreWhite">0</div>
+        </div>
+
+        <div class="score-item score-blue" id="scoreBoxBlue">
+            <img src="BlueScoreboard.png" alt="">
+            <div class="score-text" id="scoreBlue">0</div>
+        </div>
+
+        <!-- TÊN 4 NGƯỜI CHƠI -->
+        <div class="player-name player-1" id="player1">PLAYER 1</div>
+        <div class="player-name player-2" id="player2">PLAYER 2</div>
+        <div class="player-name player-3" id="player3">PLAYER 3</div>
+        <div class="player-name player-4" id="player4">PLAYER 4</div>
+
+        <!-- LAYER 5: FULL-WINDOW QUESTION MEDIA OVERLAY (IMAGE / VIDEO / AUDIO / SLIDESHOW) -->
+        <div class="projector-media-overlay" id="projectorMediaOverlay" style="display: none;">
+            <div class="overlay-media-container" id="overlayMediaContainer">
+                <img id="overlayImg" src="" alt="Media câu hỏi" style="display: none;">
+                <video id="overlayVid" controls playsinline style="display: none;"></video>
+                <iframe id="overlayFrame" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="display: none;"></iframe>
+                <!-- AUDIO CONTAINER -->
+                <div id="overlayAudioContainer" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(15, 23, 42, 0.95); padding: 36px 48px; border-radius: 16px; border: 2px solid #ec4899; box-shadow: 0 10px 40px rgba(236,72,153,0.35);">
+                    <div style="font-size: 56px;">🎵</div>
+                    <div style="font-size: 20px; color: #f472b6; font-weight: bold; font-family: 'UTM Impact', Impact, sans-serif;" id="overlayAudioTitle">CÂU HỎI ÂM THANH</div>
+                    <audio id="overlayAudioPlayer" controls style="width: 440px; max-width: 90vw; outline: none;"></audio>
+                </div>
+                <!-- MULTI-IMAGE SLIDESHOW (20S) FULL-WINDOW OVERLAY -->
+                <div id="overlaySlideContainer" style="width: 100%; height: 100%; position: relative; background: #000; display: none; overflow: hidden; border-radius: 8px;">
+                    <img id="overlaySlideImg" src="" alt="Slide" style="width: 100%; height: 100%; object-fit: contain; transition: opacity 0.15s ease-in-out;" />
+                    <div id="overlaySlideTimerBadge" style="position: absolute; bottom: 12px; right: 12px; background: rgba(15, 23, 42, 0.92); color: #f59f00; font-family: monospace; font-size: 16px; font-weight: bold; padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(245, 159, 0, 0.5); display: flex; align-items: center; gap: 8px; z-index: 10; pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,0.7);">
+                        <span>⏱️</span>
+                        <span id="overlaySlideTimerText">20.0s</span>
+                    </div>
+                    <div id="overlaySlideProgressBar" style="position: absolute; bottom: 0; left: 0; height: 6px; width: 0%; background: #f59f00; z-index: 11; pointer-events: none; transition: width 0.08s linear;"></div>
+                </div>
+            </div>
+            <!-- CAPTION BANNER -->
+            <div class="overlay-caption-bar" id="overlayCaptionBar">
+                <span class="overlay-badge" id="overlayBadge">CÂU HỎI 1</span>
+                <span class="overlay-question-text" id="overlayQText">Nội dung câu hỏi</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+/* =====================================================
+   UNIVERSAL RESOLUTION AUTO-SCALER (4K, 1080p, TV, Mobile)
+===================================================== */
+const gameElement = document.getElementById("game");
+const BASE_WIDTH = 1280;
+const BASE_HEIGHT = 720;
+
+function autoScaleProjector() {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    const scaleX = windowWidth / BASE_WIDTH;
+    const scaleY = windowHeight / BASE_HEIGHT;
+    const scale = Math.min(scaleX, scaleY);
+
+    gameElement.style.transform = `scale(${scale})`;
+}
+
+window.addEventListener('resize', autoScaleProjector);
+window.addEventListener('orientationchange', autoScaleProjector);
+autoScaleProjector();
+
+// Auto-Hide HUD for cinematic projector presentation
+const hud = document.getElementById('projectorHud');
+let hudTimer = null;
+
+function resetHudTimer() {
+    if (!hud) return;
+    hud.classList.remove('idle');
+    clearTimeout(hudTimer);
+    hudTimer = setTimeout(() => {
+        hud.classList.add('idle');
+    }, 3000);
+}
+
+window.addEventListener('mousemove', resetHudTimer);
+window.addEventListener('touchstart', resetHudTimer);
+resetHudTimer();
+
+
+/* =====================================================
+   SCREEN WAKE LOCK (Keep TV / Projector Display Awake)
+===================================================== */
+let wakeLock = null;
+async function requestScreenWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+        }
+    } catch (err) {}
+}
+requestScreenWakeLock();
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        requestScreenWakeLock();
+    }
+});
+
+
+/* =====================================================
+   FULLSCREEN & SHORTCUTS
+===================================================== */
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+document.getElementById('btnFullscreen')?.addEventListener('click', toggleFullScreen);
+document.body.addEventListener('dblclick', toggleFullScreen);
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+    } else if (e.key === 's' || e.key === 'S') {
+        promptServerConfig();
+    } else if (e.key === 'm' || e.key === 'M') {
+        toggleAudio();
+    }
+});
+
+
+/* =====================================================
+   AUDIO ENGINE (WAV AUDIO FILES + SYNTHESIZER FALLBACK)
+===================================================== */
+let audioCtx = null;
+let isMuted = false;
+
+const colorWavMap = {
+    'red': 'SFX/red.wav',
+    'green': 'SFX/green.wav',
+    'white': 'SFX/white.wav',
+    'blue': 'SFX/blue.wav',
+    'buzzer_red': 'SFX/red.wav',
+    'buzzer_green': 'SFX/green.wav',
+    'buzzer_white': 'SFX/white.wav',
+    'buzzer_blue': 'SFX/blue.wav',
+    'buzz_red': 'SFX/red.wav',
+    'buzz_green': 'SFX/green.wav',
+    'buzz_white': 'SFX/white.wav',
+    'buzz_blue': 'SFX/blue.wav',
+    'wrong': 'SFX/pqa25-wrong.mp3'
+};
+
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    const banner = document.getElementById('audioBanner');
+    if (banner) banner.style.display = 'none';
+    return audioCtx;
+}
+
+window.addEventListener('click', () => {
+    getAudioContext();
+}, { once: true });
+
+document.getElementById('audioBanner')?.addEventListener('click', () => {
+    getAudioContext();
+});
+
+function toggleAudio() {
+    isMuted = !isMuted;
+    const btn = document.getElementById('btnAudioToggle');
+    if (btn) btn.textContent = isMuted ? '🔇 Đã tắt âm' : '🔊 Âm thanh';
+    if (!isMuted) getAudioContext();
+}
+
+document.getElementById('btnAudioToggle')?.addEventListener('click', toggleAudio);
+
+let currentVolume = 1.0;
+
+try {
+    const savedVol = localStorage.getItem("attack25_sound_volume");
+    if (savedVol !== null && !isNaN(Number(savedVol))) {
+        currentVolume = Math.max(0, Math.min(1, Number(savedVol) / 100));
+    }
+} catch (e) {}
+
+function setProjectorVolume(volPercent) {
+    const p = Math.max(0, Math.min(100, Number(volPercent)));
+    currentVolume = p / 100;
+    try {
+        localStorage.setItem("attack25_sound_volume", String(p));
+    } catch (e) {}
+    if (window.activeAudios && Array.isArray(window.activeAudios)) {
+        window.activeAudios.forEach(audio => {
+            try {
+                audio.volume = currentVolume;
+            } catch (e) {}
+        });
+    }
+    const overlayVid = document.getElementById("overlayVid");
+    if (overlayVid) {
+        try { overlayVid.volume = currentVolume; } catch (e) {}
+    }
+}
+
+function stopAllSounds() {
+    if (window.activeAudios && Array.isArray(window.activeAudios)) {
+        window.activeAudios.forEach(audio => {
+            try {
+                audio.pause();
+                audio.currentTime = 0;
+            } catch (e) {}
+        });
+        window.activeAudios = [];
+    }
+}
+
+let lastSoundKey = null;
+let lastSoundTime = 0;
+
+function playSound(type) {
+    if (!type || isMuted) return;
+
+    if (type === 'stop') {
+        stopAllSounds();
+        lastSoundKey = null;
+        return;
+    }
+
+    // Chặn hoàn toàn phát lặp âm thanh: Nếu cùng một loại âm thanh được gọi trong 450ms thì bỏ qua
+    const now = Date.now();
+    if (type === lastSoundKey && (now - lastSoundTime) < 450) {
+        return;
+    }
+    lastSoundKey = type;
+    lastSoundTime = now;
+
+    let audioSrc = colorWavMap[type];
+    if (!audioSrc && (type.startsWith('data:audio') || type.startsWith('blob:') || type.toLowerCase().endsWith('.mp3') || type.toLowerCase().endsWith('.wav') || type.toLowerCase().startsWith('sfx/'))) {
+        audioSrc = type;
+    }
+
+    if (audioSrc) {
+        try {
+            const resolvedSrc = (audioSrc.startsWith('data:') || audioSrc.startsWith('blob:')) ? audioSrc : encodeURI(audioSrc);
+            const audio = new Audio(resolvedSrc);
+            audio.volume = currentVolume;
+            window.activeAudios = window.activeAudios || [];
+            window.activeAudios.push(audio);
+            audio.addEventListener('ended', () => {
+                const idx = window.activeAudios.indexOf(audio);
+                if (idx > -1) window.activeAudios.splice(idx, 1);
+            });
+            audio.play().catch(() => {});
+            return;
+        } catch (e) {
+            return;
+        }
+    }
+
+    // 2. Play standard game sound effect via synthesizer nếu không có file âm thanh
+    playSynthTone(type);
+}
+
+function playSynthTone(type) {
+    if (currentVolume <= 0) return;
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(currentVolume, now);
+        masterGain.connect(ctx.destination);
+
+        if (type === 'buzzer' || type === 'buzzer_red' || type === 'red') {
+            // RED: Deep, powerful punch tone
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(660, now);
+            osc.frequency.exponentialRampToValueAtTime(330, now + 0.35);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'buzzer_green' || type === 'green') {
+            // GREEN: Bright energetic ring
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(587.33, now);
+            osc.frequency.setValueAtTime(880, now + 0.1);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'buzzer_white' || type === 'white') {
+            // WHITE: High crystal chime
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1046.50, now);
+            osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.35);
+            gain.gain.setValueAtTime(0.45, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'buzzer_blue' || type === 'blue') {
+            // BLUE: Resonant power chime
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(1046.50, now + 0.1);
+            gain.gain.setValueAtTime(0.38, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'correct') {
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.2, now + i * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+                osc.connect(gain);
+                gain.connect(masterGain);
+                osc.start(now + i * 0.08);
+                osc.stop(now + i * 0.08 + 0.35);
+            });
+        } else if (type === 'wrong') {
+            [180, 140].forEach(freq => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+                osc.connect(gain);
+                gain.connect(masterGain);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            });
+        } else if (type === 'arm') {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, now);
+            osc.frequency.setValueAtTime(880, now + 0.08);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        }
+    } catch (e) {}
+}
+
+
+/* =====================================================
+   TẠO BẢNG 5 x 5 (HỖ TRỢ HIỆU ỨNG FADE 0.5S KHI ĐỔI MÀU / CHIẾM Ô OTHELLO)
+===================================================== */
+const panelBoard = document.getElementById("panelBoard");
+const panelElements = {};
+
+for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 5; col++) {
+        const number = row * 5 + col + 1;
+
+        const panel = document.createElement("div");
+        panel.className = "default-panel";
+        panel.id = "panel-" + number;
+        panel.dataset.number = number;
+        panel.dataset.row = row + 1;
+        panel.dataset.col = col + 1;
+
+        // Lớp hình nền gốc (Base layer)
+        const baseImage = document.createElement("img");
+        baseImage.className = "panel-img-base";
+        baseImage.src = "DefaultPanel.png";
+        baseImage.alt = "";
+        baseImage.id = "panel-img-" + number;
+
+        // Lớp hình nền mờ dần 0.5s (Fade transition layer)
+        const fadeImage = document.createElement("img");
+        fadeImage.className = "panel-img-fade";
+        fadeImage.src = "DefaultPanel.png";
+        fadeImage.alt = "";
+        fadeImage.id = "panel-fade-" + number;
+
+        const numberText = document.createElement("div");
+        numberText.className = "panel-number";
+        numberText.textContent = number;
+
+        panel.appendChild(baseImage);
+        panel.appendChild(fadeImage);
+        panel.appendChild(numberText);
+
+        panelBoard.appendChild(panel);
+        panelElements[number] = {
+            container: panel,
+            baseImg: baseImage,
+            fadeImg: fadeImage,
+            image: baseImage,
+            text: numberText,
+            currentSrc: "DefaultPanel.png",
+            initialized: false,
+            fadeTimer: null
+        };
+    }
+}
+
+
+/* =====================================================
+   DỮ LIỆU ĐIỂM & TRẠNG THÁI
+===================================================== */
+const scores = { red: 0, green: 0, white: 0, blue: 0 };
+
+function setScore(player, score) {
+    if (scores.hasOwnProperty(player)) {
+        scores[player] = score;
+        const elementId = "score" + player.charAt(0).toUpperCase() + player.slice(1);
+        const el = document.getElementById(elementId);
+        if (el) el.textContent = score;
+    }
+}
+
+function setPlayerName(playerNumber, name) {
+    const element = document.getElementById("player" + playerNumber);
+    if (element) {
+        element.textContent = name;
+    }
+}
+
+
+/* =====================================================
+   PERSISTENT VIDEO PLAYBACK & KEEP-ALIVE SYSTEM
+===================================================== */
+let currentVideoState = { url: '', embedUrl: '', visible: false, playing: false };
+let keepAliveAudioCtx = null;
+let keepAliveTimer = null;
+
+function keepAudioActive() {
+    try {
+        if (!keepAliveAudioCtx) {
+            keepAliveAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (keepAliveAudioCtx.state === 'suspended') {
+            keepAliveAudioCtx.resume();
+        }
+        const osc = keepAliveAudioCtx.createOscillator();
+        const gain = keepAliveAudioCtx.createGain();
+        gain.gain.value = 0.00001;
+        osc.connect(gain);
+        gain.connect(keepAliveAudioCtx.destination);
+        osc.start();
+    } catch (e) {}
+}
+
+function startKeepAliveLoop() {
+    keepAudioActive();
+    if (keepAliveTimer) clearInterval(keepAliveTimer);
+    keepAliveTimer = setInterval(() => {
+        if (currentVideoState && currentVideoState.visible && currentVideoState.playing) {
+            keepAudioActive();
+            sendIframeCommand('play');
+        }
+    }, 1000);
+}
+
+function stopKeepAliveLoop() {
+    if (keepAliveTimer) {
+        clearInterval(keepAliveTimer);
+        keepAliveTimer = null;
+    }
+}
+
+function sendIframeCommand(cmd) {
+    const iframe = document.getElementById("projectorVideoIframe");
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+        iframe.contentWindow.postMessage(JSON.stringify({ method: cmd }), '*');
+        iframe.contentWindow.postMessage(cmd, '*');
+    } catch (e) {}
+}
+
+let lastPlayToken = null;
+let activeSlideshowIntervals = new Map();
+
+function runSlideshow(containerId, imgId, timerTextId, progressBarId, slideshowData) {
+    const container = document.getElementById(containerId);
+    const img = document.getElementById(imgId);
+    const timerText = document.getElementById(timerTextId);
+    const progressBar = document.getElementById(progressBarId);
+
+    if (!container || !img) return;
+
+    if (activeSlideshowIntervals.has(containerId)) {
+        cancelAnimationFrame(activeSlideshowIntervals.get(containerId));
+        activeSlideshowIntervals.delete(containerId);
+    }
+
+    if (!slideshowData || !slideshowData.images || slideshowData.images.length === 0) {
+        container.style.display = "none";
+        return;
+    }
+
+    container.style.display = "block";
+    const images = slideshowData.images;
+    const totalDuration = Number(slideshowData.totalDuration) || 20;
+    const timePerImage = totalDuration / images.length;
+    const isPlaying = !!slideshowData.playing;
+    const isLoop = slideshowData.loop !== false;
+    const startTime = slideshowData.startTime || Date.now();
+
+    function renderFrame() {
+        if (!isPlaying) {
+            const curIdx = Math.max(0, Math.min(images.length - 1, slideshowData.currentImageIndex || 0));
+            const curUrl = typeof images[curIdx] === 'string' ? images[curIdx] : (images[curIdx]?.url || '');
+            if (img.getAttribute("data-src") !== curUrl && curUrl) {
+                img.src = curUrl;
+                img.setAttribute("data-src", curUrl);
+            }
+            if (timerText) timerText.textContent = `${totalDuration.toFixed(1)}s`;
+            if (progressBar) progressBar.style.width = "0%";
+            return;
+        }
+
+        const elapsed = (Date.now() - startTime) / 1000;
+        if (!isLoop && elapsed >= totalDuration) {
+            const lastIdx = images.length - 1;
+            const lastUrl = typeof images[lastIdx] === 'string' ? images[lastIdx] : (images[lastIdx]?.url || '');
+            if (img.getAttribute("data-src") !== lastUrl && lastUrl) {
+                img.src = lastUrl;
+                img.setAttribute("data-src", lastUrl);
+            }
+            if (timerText) timerText.textContent = "HẾT 20S";
+            if (progressBar) progressBar.style.width = "100%";
+            return;
+        }
+
+        const loopElapsed = elapsed % totalDuration;
+        const remaining = Math.max(0, totalDuration - loopElapsed);
+        const idx = Math.min(images.length - 1, Math.floor(loopElapsed / timePerImage));
+        const activeUrl = typeof images[idx] === 'string' ? images[idx] : (images[idx]?.url || '');
+
+        if (img.getAttribute("data-src") !== activeUrl && activeUrl) {
+            img.src = activeUrl;
+            img.setAttribute("data-src", activeUrl);
+        }
+
+        if (timerText) {
+            timerText.textContent = `${remaining.toFixed(1)}s`;
+        }
+        if (progressBar) {
+            const pct = (loopElapsed / totalDuration) * 100;
+            progressBar.style.width = `${pct}%`;
+        }
+
+        const animId = requestAnimationFrame(renderFrame);
+        activeSlideshowIntervals.set(containerId, animId);
+    }
+
+    renderFrame();
+}
+
+function stopSlideshow(containerId) {
+    if (activeSlideshowIntervals.has(containerId)) {
+        cancelAnimationFrame(activeSlideshowIntervals.get(containerId));
+        activeSlideshowIntervals.delete(containerId);
+    }
+}
+
+function updateProjectorVideo(videoState) {
+    if (!videoState) return;
+    const container = document.getElementById("projectorVideoContainer");
+    const iframe = document.getElementById("projectorVideoIframe");
+    const localVid = document.getElementById("projectorLocalVideo");
+    const slideContainer = document.getElementById("projectorSlideContainer");
+
+    if (!container) return;
+
+    currentVideoState = Object.assign({}, videoState);
+
+    const isNewPlayToken = videoState.playToken && videoState.playToken !== lastPlayToken;
+    if (isNewPlayToken) {
+        lastPlayToken = videoState.playToken;
+    }
+
+    if (!videoState.visible) {
+        container.style.display = "none";
+        if (iframe && iframe.src && iframe.src !== 'about:blank') {
+            iframe.src = "about:blank";
+            iframe.removeAttribute("data-src");
+            iframe.style.display = "none";
+        }
+        if (localVid) {
+            localVid.pause();
+            localVid.src = "";
+            localVid.removeAttribute("data-src");
+            localVid.style.display = "none";
+        }
+        stopSlideshow("projectorSlideContainer");
+        if (slideContainer) slideContainer.style.display = "none";
+        stopKeepAliveLoop();
+        return;
+    }
+
+    // Visible = true
+    container.style.display = "block";
+
+    const mode = videoState.mode || (videoState.images && videoState.images.length > 0 ? 'slideshow' : (videoState.url && videoState.url.match(/\.(mp4|webm)|data:video|\/uploads\//i) && !videoState.url.includes('streamable') ? 'local_video' : 'streamable'));
+
+    if (mode === 'slideshow') {
+        // Mode 1: 20-second image slideshow
+        if (iframe) { iframe.style.display = "none"; iframe.src = "about:blank"; }
+        if (localVid) { localVid.style.display = "none"; localVid.pause(); }
+        runSlideshow("projectorSlideContainer", "projectorSlideImg", "projectorSlideTimerText", "projectorSlideProgressBar", videoState);
+    } else if (mode === 'local_video') {
+        // Mode 2: Local uploaded video (MP4/WebM)
+        stopSlideshow("projectorSlideContainer");
+        if (slideContainer) slideContainer.style.display = "none";
+        if (iframe) { iframe.style.display = "none"; iframe.src = "about:blank"; }
+
+        if (localVid) {
+            localVid.style.display = "block";
+            const targetUrl = videoState.url || '';
+            if (localVid.getAttribute("data-src") !== targetUrl || isNewPlayToken) {
+                localVid.src = targetUrl;
+                localVid.setAttribute("data-src", targetUrl);
+                localVid.currentTime = 0;
+                localVid.load();
+            }
+            localVid.volume = currentVolume !== undefined ? currentVolume : 1.0;
+            localVid.loop = videoState.loop !== false;
+
+            if (videoState.playing) {
+                localVid.play().catch(e => console.log('Local video autoplay:', e));
+            } else {
+                localVid.pause();
+            }
+        }
+    } else {
+        // Mode 3: Streamable or Web URL iframe
+        stopSlideshow("projectorSlideContainer");
+        if (slideContainer) slideContainer.style.display = "none";
+        if (localVid) { localVid.style.display = "none"; localVid.pause(); }
+
+        if (iframe) {
+            iframe.style.display = "block";
+            let targetSrc = videoState.embedUrl || videoState.url || '';
+            if (targetSrc) {
+                let params = [];
+                if (videoState.playing) params.push('autoplay=1');
+                params.push('loop=0');
+                params.push('muted=0');
+                targetSrc += (targetSrc.includes('?') ? '&' : '?') + params.join('&');
+            }
+            const currentDataSrc = iframe.getAttribute("data-src");
+            if (currentDataSrc !== targetSrc || isNewPlayToken) {
+                iframe.src = targetSrc;
+                iframe.setAttribute("data-src", targetSrc);
+            }
+            if (videoState.playing) {
+                sendIframeCommand('play');
+                startKeepAliveLoop();
+            } else {
+                sendIframeCommand('pause');
+                stopKeepAliveLoop();
+            }
+        }
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && currentVideoState.visible && currentVideoState.playing) {
+        sendIframeCommand('play');
+        keepAudioActive();
+    }
+});
+
+window.addEventListener('focus', () => {
+    if (currentVideoState.visible && currentVideoState.playing) {
+        sendIframeCommand('play');
+        keepAudioActive();
+    }
+});
+
+/* =====================================================
+   FULL-WINDOW QUESTION MEDIA OVERLAY (IMAGE / VIDEO)
+===================================================== */
+let lastMediaPlayToken = null;
+
+function parseMediaEmbedUrl(rawUrl) {
+    if (!rawUrl || !rawUrl.trim()) return '';
+    const str = rawUrl.trim();
+
+    // Streamable
+    const sMatch = str.match(/streamable\.com\/(?:e\/)?([a-zA-Z0-9]+)/i);
+    if (sMatch && sMatch[1]) {
+        return `https://streamable.com/e/${sMatch[1]}`;
+    }
+
+    // YouTube
+    const ytMatch = str.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    if (ytMatch && ytMatch[1]) {
+        return `https://www.youtube-nocookie.com/embed/${ytMatch[1]}`;
+    }
+
+    return '';
+}
+
+function updateProjectorQuestionMedia(mediaState) {
+    const overlay = document.getElementById("projectorMediaOverlay");
+    const img = document.getElementById("overlayImg");
+    const vid = document.getElementById("overlayVid");
+    const frame = document.getElementById("overlayFrame");
+    const audioContainer = document.getElementById("overlayAudioContainer");
+    const audioPlayer = document.getElementById("overlayAudioPlayer");
+    const slideBox = document.getElementById("overlaySlideContainer");
+    const badge = document.getElementById("overlayBadge");
+    const qText = document.getElementById("overlayQText");
+
+    if (!overlay) return;
+
+    if (!mediaState || !mediaState.visible || (!mediaState.url && (!mediaState.images || mediaState.images.length === 0))) {
+        overlay.style.display = "none";
+        if (vid) {
+            vid.pause();
+            vid.src = "";
+            vid.style.display = "none";
+        }
+        if (frame && frame.src !== "about:blank") {
+            frame.src = "about:blank";
+            frame.removeAttribute("data-src");
+            frame.style.display = "none";
+        }
+        if (audioPlayer) {
+            audioPlayer.pause();
+            audioPlayer.src = "";
+        }
+        if (audioContainer) audioContainer.style.display = "none";
+        if (img) {
+            img.src = "";
+            img.style.display = "none";
+        }
+        stopSlideshow("overlaySlideContainer");
+        if (slideBox) slideBox.style.display = "none";
+        return;
+    }
+
+    // Show Full-Window Overlay
+    overlay.style.display = "flex";
+    if (badge) badge.textContent = `CÂU HỎI ${mediaState.questionStt || ''}`;
+    if (qText) qText.textContent = mediaState.questionText || '';
+
+    const rawUrl = mediaState.url || '';
+    const type = mediaState.type || (mediaState.images && mediaState.images.length > 0 ? 'slideshow' : (rawUrl.match(/\.(mp3|wav|ogg|m4a|aac)/i) ? 'audio' : (rawUrl.match(/\.(mp4|webm)|streamable|youtube/i) ? 'video' : 'image')));
+
+    const isNewToken = mediaState.playToken && mediaState.playToken !== lastMediaPlayToken;
+    if (isNewToken) {
+        lastMediaPlayToken = mediaState.playToken;
+    }
+
+    if (type === 'slideshow') {
+        if (vid) { vid.pause(); vid.src = ''; vid.style.display = 'none'; }
+        if (frame) { frame.src = 'about:blank'; frame.removeAttribute('data-src'); frame.style.display = 'none'; }
+        if (audioPlayer) { audioPlayer.pause(); audioPlayer.src = ''; }
+        if (audioContainer) audioContainer.style.display = 'none';
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        runSlideshow("overlaySlideContainer", "overlaySlideImg", "overlaySlideTimerText", "overlaySlideProgressBar", mediaState);
+    } else if (type === 'image') {
+        stopSlideshow("overlaySlideContainer");
+        if (slideBox) slideBox.style.display = "none";
+        if (vid) { vid.pause(); vid.src = ''; vid.style.display = 'none'; }
+        if (frame) { frame.src = 'about:blank'; frame.removeAttribute('data-src'); frame.style.display = 'none'; }
+        if (audioPlayer) { audioPlayer.pause(); audioPlayer.src = ''; }
+        if (audioContainer) audioContainer.style.display = 'none';
+        if (img) {
+            img.style.display = 'block';
+            if (img.src !== rawUrl) {
+                img.src = rawUrl;
+            }
+        }
+    } else if (type === 'audio') {
+        stopSlideshow("overlaySlideContainer");
+        if (slideBox) slideBox.style.display = "none";
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        if (vid) { vid.pause(); vid.src = ''; vid.style.display = 'none'; }
+        if (frame) { frame.src = 'about:blank'; frame.removeAttribute('data-src'); frame.style.display = 'none'; }
+        if (audioContainer && audioPlayer) {
+            audioContainer.style.display = 'flex';
+            if (audioPlayer.src !== rawUrl || isNewToken) {
+                audioPlayer.src = rawUrl;
+                audioPlayer.load();
+            }
+            audioPlayer.volume = currentVolume !== undefined ? currentVolume : 1.0;
+            if (mediaState.playing !== false) {
+                audioPlayer.play().catch(e => console.log('Audio autoplay error:', e));
+            } else {
+                audioPlayer.pause();
+            }
+        }
+    } else if (type === 'video') {
+        stopSlideshow("overlaySlideContainer");
+        if (slideBox) slideBox.style.display = "none";
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        if (audioPlayer) { audioPlayer.pause(); audioPlayer.src = ''; }
+        if (audioContainer) audioContainer.style.display = 'none';
+
+        const embedUrl = parseMediaEmbedUrl(rawUrl);
+        if (embedUrl) {
+            // Streamable or YouTube iframe
+            if (vid) { vid.pause(); vid.src = ''; vid.style.display = 'none'; }
+            if (frame) {
+                frame.style.display = 'block';
+                let targetSrc = embedUrl + (embedUrl.includes('?') ? '&' : '?') + 'autoplay=1&loop=0';
+                if (frame.getAttribute('data-src') !== targetSrc || isNewToken) {
+                    frame.src = targetSrc;
+                    frame.setAttribute('data-src', targetSrc);
+                }
+            }
+        } else {
+            // Direct video file (data:video/mp4, blob, or direct video file)
+            if (frame) { frame.src = 'about:blank'; frame.removeAttribute('data-src'); frame.style.display = 'none'; }
+            if (vid) {
+                vid.style.display = 'block';
+                if (vid.src !== rawUrl || isNewToken) {
+                    vid.src = rawUrl;
+                    vid.load();
+                }
+                vid.volume = currentVolume !== undefined ? currentVolume : 1.0;
+                if (mediaState.playing !== false) {
+                    vid.play().catch(e => console.log('Video autoplay error:', e));
+                } else {
+                    vid.pause();
+                }
+            }
+        }
+    }
+}
+
+/* =====================================================
+   ÁP DỤNG GAME STATE TỪ CONTROLLER
+===================================================== */
+function applyGameState(state) {
+    if (!state) return;
+
+    // 1. Cập nhật các ô trên bảng
+    if (state.panels && Array.isArray(state.panels)) {
+        state.panels.forEach(panelData => {
+            const elObj = panelElements[panelData.number];
+            if (!elObj) return;
+
+            const isSelected = state.selectedPanel === panelData.number;
+            const isUsed = !!panelData.used;
+
+            elObj.container.classList.toggle("active", isSelected);
+            elObj.container.classList.toggle("used", isUsed);
+
+            const colorMap = {
+                red: "RedPanel.png",
+                green: "GreenPanel.png",
+                white: "WhitePanel.png",
+                blue: "BluePanel.png"
+            };
+            const targetSrc = panelData.color ? (colorMap[panelData.color] || "DefaultPanel.png") : "DefaultPanel.png";
+
+            if (panelData.color) {
+                if (state.hiddenColors && state.hiddenColors[panelData.color]) {
+                    elObj.container.classList.add("color-hidden");
+                } else {
+                    elObj.container.classList.remove("color-hidden");
+                }
+            } else {
+                elObj.container.classList.remove("color-hidden");
+            }
+
+            if (!elObj.initialized) {
+                elObj.baseImg.src = targetSrc;
+                elObj.fadeImg.src = targetSrc;
+                elObj.fadeImg.style.transition = 'none';
+                elObj.fadeImg.style.opacity = '0';
+                elObj.currentSrc = targetSrc;
+                elObj.initialized = true;
+            } else if (elObj.currentSrc !== targetSrc) {
+                // Hiệu ứng Fade 0.5s mượt mà khi đổi màu / cướp ô theo luật Othello
+                if (elObj.fadeTimer) {
+                    clearTimeout(elObj.fadeTimer);
+                    elObj.fadeTimer = null;
+                }
+
+                elObj.fadeImg.src = targetSrc;
+                elObj.fadeImg.style.transition = 'none';
+                elObj.fadeImg.style.opacity = '0';
+
+                // Bắt buộc trình duyệt reflow layout để nhận opacity 0 trước khi transition
+                void elObj.fadeImg.offsetWidth;
+
+                // Fade dần sang màu người chiếm với duration 0.5s
+                elObj.fadeImg.style.transition = 'opacity 0.5s ease-in-out';
+                elObj.fadeImg.style.opacity = '1';
+
+                elObj.currentSrc = targetSrc;
+
+                elObj.fadeTimer = setTimeout(() => {
+                    elObj.baseImg.src = targetSrc;
+                    elObj.fadeImg.style.transition = 'none';
+                    elObj.fadeImg.style.opacity = '0';
+                    elObj.fadeTimer = null;
+                }, 500);
+            }
+        });
+
+        // Điểm của người chơi luôn đúng bằng số ô người đó chiếm được trên bảng
+        const redScore = state.panels.filter(p => p.color === 'red').length;
+        const greenScore = state.panels.filter(p => p.color === 'green').length;
+        const whiteScore = state.panels.filter(p => p.color === 'white').length;
+        const blueScore = state.panels.filter(p => p.color === 'blue').length;
+
+        setScore("red", redScore);
+        setScore("green", greenScore);
+        setScore("white", whiteScore);
+        setScore("blue", blueScore);
+    } else if (state.players) {
+        if (state.players.red) setScore("red", state.players.red.score);
+        if (state.players.green) setScore("green", state.players.green.score);
+        if (state.players.white) setScore("white", state.players.white.score);
+        if (state.players.blue) setScore("blue", state.players.blue.score);
+    }
+
+    // 2. Cập nhật tên người chơi
+    if (state.players) {
+        if (state.players.red) setPlayerName(1, state.players.red.name);
+        if (state.players.green) setPlayerName(2, state.players.green.name);
+        if (state.players.white) setPlayerName(3, state.players.white.name);
+        if (state.players.blue) setPlayerName(4, state.players.blue.name);
+    }
+
+    // 3. Cập nhật Buzzer Spotlight, Scoreboard Highlight & Banner
+    if (state.buzzer) {
+        updateBuzzerDisplay(state.buzzer, state.players);
+    }
+
+    // 4. Cập nhật Streamable Video Container & Playback
+    if (state.video) {
+        updateProjectorVideo(state.video);
+    }
+
+    // 5. Cập nhật Âm lượng Soundboard (0 - 100%)
+    if (state.soundVolume !== undefined) {
+        setProjectorVolume(state.soundVolume);
+    }
+
+    // 6. Cập nhật Trình chiếu Media câu hỏi (Full Cửa Sổ)
+    if (state.questionMedia !== undefined) {
+        updateProjectorQuestionMedia(state.questionMedia);
+    }
+}
+
+
+/* =====================================================
+   CẬP NHẬT GIAO DIỆN BUZZER VÀ HIGHLIGHT SCOREBOARD TRÊN PROJECTOR
+===================================================== */
+function updateBuzzerDisplay(buzzer, players) {
+    const playerIndexMap = { red: 1, green: 2, white: 3, blue: 4 };
+
+    // Reset all spotlights, scoreboard highlights, and name glows
+    ['red', 'green', 'white', 'blue'].forEach((color, idx) => {
+        const cap = color.charAt(0).toUpperCase() + color.slice(1);
+        const spot = document.getElementById("spotlight" + cap);
+        if (spot) spot.classList.remove("active");
+
+        const scoreBox = document.getElementById("scoreBox" + cap);
+        if (scoreBox) {
+            scoreBox.className = "score-item score-" + color;
+        }
+
+        const nameEl = document.getElementById("player" + (idx + 1));
+        if (nameEl) {
+            nameEl.classList.remove("buzzed-highlight");
+        }
+    });
+
+    if (buzzer.status === 'armed') {
+        // Armed state without banner
+    } else if (buzzer.status === 'buzzed' && buzzer.winner) {
+        const winnerColor = buzzer.winner;
+        const cap = winnerColor.charAt(0).toUpperCase() + winnerColor.slice(1);
+
+        // 1. Bật Spotlight ánh sáng màu tương ứng
+        const spot = document.getElementById("spotlight" + cap);
+        if (spot) spot.classList.add("active");
+
+        // 2. HIGHLIGHT SCOREBOARD người bấm tương ứng
+        const scoreBox = document.getElementById("scoreBox" + cap);
+        if (scoreBox) {
+            scoreBox.classList.add("buzzed-highlight", "buzzed-" + winnerColor);
+        }
+
+        // 3. HIGHLIGHT TÊN người chơi bấm chuông
+        const nameEl = document.getElementById("player" + playerIndexMap[winnerColor]);
+        if (nameEl) {
+            nameEl.classList.add("buzzed-highlight");
+        }
+    }
+}
+
+
+function showPrompt(title, defaultValue, onConfirm) {
+    let overlay = document.getElementById('customPromptModal');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'customPromptModal';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:inherit;';
+        overlay.innerHTML = `
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;max-width:480px;width:90%;color:#fff;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
+                <div id="customPromptTitle" style="font-size:15px;font-weight:bold;margin-bottom:12px;line-height:1.4;color:#f8fafc;"></div>
+                <input type="text" id="customPromptInput" style="width:100%;padding:10px 12px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:14px;margin-bottom:20px;box-sizing:border-box;outline:none;" />
+                <div style="display:flex;justify-content:flex-end;gap:10px;">
+                    <button id="customPromptCancel" style="padding:8px 16px;border-radius:6px;border:1px solid #475569;background:#334155;color:#fff;cursor:pointer;font-weight:bold;">Hủy</button>
+                    <button id="customPromptOk" style="padding:8px 16px;border-radius:6px;border:none;background:#2563eb;color:#fff;cursor:pointer;font-weight:bold;">Xác nhận</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+    const titleEl = overlay.querySelector('#customPromptTitle');
+    const inputEl = overlay.querySelector('#customPromptInput');
+    const okBtn = overlay.querySelector('#customPromptOk');
+    const cancelBtn = overlay.querySelector('#customPromptCancel');
+
+    titleEl.textContent = title;
+    inputEl.value = defaultValue || '';
+    overlay.style.display = 'flex';
+    setTimeout(() => inputEl.focus(), 50);
+
+    const close = () => {
+        overlay.style.display = 'none';
+        okBtn.onclick = null;
+        cancelBtn.onclick = null;
+        inputEl.onkeydown = null;
+    };
+
+    okBtn.onclick = () => {
+        const val = inputEl.value;
+        close();
+        if (onConfirm) onConfirm(val);
+    };
+
+    cancelBtn.onclick = () => {
+        close();
+    };
+
+    inputEl.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+            okBtn.click();
+        } else if (e.key === 'Escape') {
+            cancelBtn.click();
+        }
+    };
+}
+
+/* =====================================================
+   KẾT NỐI ĐỒNG BỘ THỜI GIAN THỰC (UNIVERSAL & CLOUD)
+===================================================== */
+function promptServerConfig() {
+    const current = localStorage.getItem('attack25_ws_server_host') || window.location.host || 'localhost:3000';
+    showPrompt("Nhập địa chỉ máy chủ WebSocket từ xa (Ví dụ: 192.168.1.10:3000 hoặc your-app.run.app):", current, (server) => {
+        if (server !== null && server !== undefined) {
+            Attack25Sync.setServerHost(server.trim());
+        }
+    });
+}
+
+document.getElementById('hudConnStatus')?.addEventListener('click', promptServerConfig);
+
+if (window.Attack25Sync) {
+    Attack25Sync.onStateChange((state) => {
+        applyGameState(state);
+    });
+    Attack25Sync.onSound((sound) => {
+        if (typeof sound === 'string' && sound.startsWith('volume:')) {
+            const vol = parseFloat(sound.replace('volume:', ''));
+            if (!isNaN(vol)) {
+                setProjectorVolume(vol * 100);
+            }
+            return;
+        }
+        playSound(sound);
+    });
+    Attack25Sync.onConnectionChange((conn) => {
+        const dot = document.getElementById('hudDot');
+        const text = document.getElementById('hudText');
+        const isOnline = typeof conn === 'object' ? conn.connected : !!conn;
+        const mode = typeof conn === 'object' ? conn.mode : 'websocket';
+
+        if (dot) {
+            dot.style.background = isOnline ? '#22c55e' : '#ef4444';
+            dot.style.boxShadow = isOnline ? '0 0 8px #22c55e' : '0 0 8px #ef4444';
+        }
+        if (text) {
+            if (isOnline) {
+                text.textContent = mode === 'websocket' ? 'REAL-TIME ONLINE' : 'LOCAL SYNC';
+            } else {
+                text.textContent = 'CONNECTING...';
+            }
+        }
+    });
+}
+
+</script>
+
+</body>
+</html>

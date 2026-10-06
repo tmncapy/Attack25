@@ -1,0 +1,65 @@
+# ====================================================================
+# DirectAdmin / Apache / LiteSpeed Configuration for Panel Quiz Attack 25
+# ====================================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. Reverse proxy WebSocket and API to Node.js backend on port 3000
+    <IfModule mod_proxy.c>
+        RewriteCond %{HTTP:Upgrade} =websocket [NC]
+        RewriteRule ^(.*)ws/?(.*)$ ws://127.0.0.1:3000/ws$2 [P,L,QSA]
+
+        RewriteRule ^(.*)api/(.*)$ http://127.0.0.1:3000/api/$2 [P,L,QSA]
+        RewriteRule ^(.*)state$ http://127.0.0.1:3000/api/state [P,L,QSA]
+        RewriteRule ^(.*)sync-action$ http://127.0.0.1:3000/api/sync-action [P,L,QSA]
+        RewriteRule ^(.*)verify-room$ http://127.0.0.1:3000/api/verify-room [P,L,QSA]
+        RewriteRule ^(.*)create-room$ http://127.0.0.1:3000/api/create-room [P,L,QSA]
+        RewriteRule ^(.*)upload-media$ http://127.0.0.1:3000/api/upload-media [P,L,QSA]
+    </IfModule>
+
+    # 2. Clean route rewrites for game roles
+    RewriteRule ^controller/?$ Controller.html [NC,L,QSA]
+    RewriteRule ^host/?$ Host.html [NC,L,QSA]
+    RewriteRule ^projector/?$ Projector.html [NC,L,QSA]
+    RewriteRule ^soundboard/?$ Soundboard.html [NC,L,QSA]
+    RewriteRule ^player/?$ Player.html [NC,L,QSA]
+    RewriteRule ^player1/?$ player1.html [NC,L,QSA]
+    RewriteRule ^player2/?$ player2.html [NC,L,QSA]
+    RewriteRule ^player3/?$ player3.html [NC,L,QSA]
+    RewriteRule ^player4/?$ player4.html [NC,L,QSA]
+    RewriteRule ^p1/?$ player1.html [NC,L,QSA]
+    RewriteRule ^p2/?$ player2.html [NC,L,QSA]
+    RewriteRule ^p3/?$ player3.html [NC,L,QSA]
+    RewriteRule ^p4/?$ player4.html [NC,L,QSA]
+
+    # 3. Case-insensitive alias rules
+    RewriteRule ^controller\.html$ Controller.html [NC,L,QSA]
+    RewriteRule ^host\.html$ Host.html [NC,L,QSA]
+    RewriteRule ^projector\.html$ Projector.html [NC,L,QSA]
+    RewriteRule ^soundboard\.html$ Soundboard.html [NC,L,QSA]
+    RewriteRule ^player\.html$ Player.html [NC,L,QSA]
+</IfModule>
+
+# MIME types for modern audio, fonts, and web assets
+<IfModule mod_mime.c>
+    AddType audio/mpeg .mp3
+    AddType audio/wav .wav
+    AddType audio/ogg .ogg
+    AddType video/mp4 .mp4
+    AddType video/webm .webm
+    AddType font/otf .otf
+    AddType font/ttf .ttf
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+    AddType application/javascript .js
+    AddType text/css .css
+    AddType application/json .json
+</IfModule>
+
+# CORS Headers for cross-domain and multi-device connections
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+</IfModule>
